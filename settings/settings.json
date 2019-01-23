@@ -1,0 +1,15 @@
+{
+    "dev_mode" : true,
+    "prefix" : "p!",
+    "beta_prefix" : "p!!",
+    "token" : "",
+    "beta_token" : "",
+    "embed_color" : 16752128,
+    "activity" : "@Pinano Bot help",
+    "bot_devs": [ "174511937151827969", "187548138456743936" ],
+    "pinano_guilds" : ["188345759408717825", "523774045439655956"],
+
+    "leaderboard_size" : 10,
+    "res_destruct_time" : 30,
+    "req_destruct_time" : 3
+}
