@@ -109,6 +109,20 @@ module.exports = client => {
                             res.current_session_playtime += client.moment().unix() - newMember.s_time
                             res.overall_session_playtime += client.moment().unix() - newMember.s_time
 
+                            let role = '529404918885384203'
+                            if(res.overall_session_playtime >= 144000 && !newMember.roles.has(role)){
+                                newMember.addRole(role)
+                                .catch(e => {
+                                    client.log(`error granting user ${newMember.username} role!`)
+                                })
+                                .then(() => {
+                                    newMember.send('You have achieved the 40 hour pracc role!')
+                                    .catch(e => {
+                                        client.log('Could not tell user they leveled!')
+                                    })
+                                })
+                            }
+
                             client.writeUserData(newMember.user.id, res, () => {
                                 client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${client.moment().unix() - newMember.s_time} seconds`)
                                 newMember.s_time = null
