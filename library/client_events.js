@@ -41,7 +41,7 @@ module.exports = client => {
         let msg = new client.discord.RichEmbed()
         msg.setTitle('Welcome!')
         msg.setDescription(`
-        Welcome to our humble corner of the Internet.  The heart of our server is the "Practice Rooms" section, where you'll find #practice-room-chat, our most active text channel, and voice channels where you can practice and accumulate time for the weekly and overall leaderboards or listen to others practicing (counted by our very own @Pinano Bot). You can check your own time using the command, "p!time."
+        Welcome to our humble corner of the Internet.  The heart of our server is the "Practice Rooms" section, where you'll find #practice-room-chat, our most active text channel, and voice channels where you can practice and accumulate time for the weekly and overall leaderboards or listen to others practicing (counted by our very own @Pinano Bot). You can check your own stats using the command, "p!stats."
         
         **We also host recitals on Saturdays alternating between 1PM Eastern Time(UTC-5) and 6PM China Standard Time (UTC+8), in a voice channel and text channel, which appear as needed. **
 
