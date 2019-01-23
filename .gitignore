@@ -1,4 +1,4 @@
 
-settings/
+settings/settings\.json
 node_modules/
 startBotAndDB\.bat
