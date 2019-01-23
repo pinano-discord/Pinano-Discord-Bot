@@ -1,0 +1,17 @@
+{
+  "name": "Pinano-Bot",
+  "version": "1.0.0",
+  "description": "A Discord bot for pinano",
+  "main": "app.js",
+  "author": "uber#0001",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.4.2",
+    "humanize-duration": "^3.16.0",
+    "jimp": "^0.6.0",
+    "moment": "^2.22.2",
+    "mongodb": "^3.1.8",
+    "node-cron": "^2.0.3",
+    "opusscript": "0.0.6"
+  }
+}

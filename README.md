@@ -1,1 +1,1 @@
-Pinano-Discord-Bot
+Pinano Bot
