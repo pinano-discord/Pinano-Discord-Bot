@@ -9,4 +9,4 @@ All help is welcome, if you have anything to improve you can either open an **is
 ## The discord server
 
 To see the bot in action or to become part of the official /r/piano discord, join [https://discordapp.com/invite/3q3gWuD](https://discordapp.com/invite/3q3gWuD)
-The bot developers listed under the **@Technician** role.
+The bot developers listed under the **@Bot Manager** role.
