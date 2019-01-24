@@ -1,6 +1,5 @@
 module.exports = client => {
 
-    //client bootup 
     client.on('ready', async () => {
         await client.log('Successfully connected to discord.')
         await client.user.setActivity(client.settings.activity, { type: 'Playing' }).catch(e => client.cannon.fire('Could not set activity.'))
@@ -13,7 +12,6 @@ module.exports = client => {
         })
     })
 
-    //on each message
     client.on('message', async message => {
         await client.loadUserData(message.author.id, res => {
            if(res == null){
@@ -27,7 +25,6 @@ module.exports = client => {
                })
            }
         })
-        message.content = message.content.toLowerCase()
         if(client.isValidCommand(message) == false) return
         if(client.commandExist(message) == false) return
         if(!client.settings.pinano_guilds.includes(message.guild.id)) return client.errorMessage(message, 'This bot can only be used on official Pinano servers.')
@@ -38,33 +35,42 @@ module.exports = client => {
     })
 
     client.on('guildMemberAdd', mem => {
-        let msg = new client.discord.RichEmbed()
-        msg.setTitle('Welcome!')
-        msg.setDescription(`
-        Welcome to our humble corner of the Internet.  The heart of our server is the "Practice Rooms" section, where you'll find #practice-room-chat, our most active text channel, and voice channels where you can practice and accumulate time for the weekly and overall leaderboards or listen to others practicing (counted by our very own @Pinano Bot). You can check your own stats using the command, "p!stats."
-        
-        **We also host recitals on Saturdays alternating between 1PM Eastern Time(UTC-5) and 6PM China Standard Time (UTC+8), in a voice channel and text channel, which appear as needed. **
+        if(mem.guild === null) return
+        client.loadGuildData(mem.guild.id, res => {
+            if(res == null) return
+            if(res.dm_welcome_toggle == true && res.dm_welcome_message != ''){
+                let msg = new client.discord.RichEmbed()
+                msg.setTitle('Welcome!')
+                msg.setDescription(res.dm_welcome_message)
+                msg.setColor(client.settings.embed_color)
+                msg.setTimestamp()
+                try {
+                    mem.send(msg)
+                } catch(e) {
+                    client.log(`unable to send to user ${mem.username}#${mem.discriminator}`)
+                }
+            }
+            if(res.welcome_toggle == true){
+                if(res.welcome_channel != ''){
+                    if(res.welcome_message == '') {res.welcome_message = client.settings.default_welcome}
+                    let mes = res.welcome_message.replace('{user}', `**${mem.displayName}**`)
+                    client.channels.get(res.welcome_channel).send(mes).catch(e => {console.log(e)})
+                }
+            }
+            
+        })
+    })
 
-        A few rules: 
-        -Be respectful, and be kind. In this server, this often means refraining from giving unsolicited advice. Unsolicited advice is annoying real life, and we've seen advice ranging from helpful to ineffective to dangerous. If you stick around long enough to build a good reputation, it's likely people will ask you for it.
-
-        **-Please be muted when you enter a voice channel where someone is unmuted.**
-
-        -Our other text channels include #general, #:musical_keyboard:classical, #:trumpet:non-classical, #:headphones:help-and-feedback, and #anime-memes-games. You may be asked to take tangents there; please do so, especially if it's a mod asking. 
-
-        -If you're asking for help, please post a screenshot or photo that doesn't just show 2 or 3 measures. Give us a screenshot that shows full lines, key signature, time signature, or just link us to the sheet, especially if this is public domain classical music!
-
-        -We have many different ages on the server. NSFW jokes should be kept to a minimum; NSFW jokes involving or directed to underage members of the server will not be tolerated at all.
-
-        **-If you're looking for your very first role on the server, check out #hand-reveal!**
-        `)
-        msg.setColor(client.settings.embed_color)
-        msg.setTimestamp()
-        try {
-            mem.send(msg)
-        } catch(e) {
-            client.log(`unable to send to user ${mem.username}#${mem.discriminator}`)
-        }
+    client.on('guildMemberRemove', mem => {
+        if(mem.guild === null) return
+        client.loadGuildData(mem.guild.id, res => {
+            if(res == null) return
+            if(res.leave_channel == '') return
+            if(res.leave_toggle == false) return
+            if(res.leave_message == '') {res.leave_message = client.settings.default_leave}
+            let mes = res.leave_message.replace('{user}', `**${mem.displayName}**`)
+            client.channels.get(res.leave_channel).send(mes)
+        })
     })
 
     client.on('voiceStateUpdate', async (oldMember, newMember) => {

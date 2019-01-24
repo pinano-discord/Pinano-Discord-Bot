@@ -32,7 +32,15 @@ module.exports = (client) => {
     client.createGuild = id => {
         let g = {
             guild : id,
-            permitted_channels : []
+            welcome_toggle : false,
+            leave_toggle : false,
+            dm_welcome_toggle : false,
+            welcome_channel : '',
+            leave_channel : '',
+            welcome_message : '',
+            dm_welcome_message : '',
+            leave_message : '',
+            permitted_channels : [],
         }
         client.writeGuildData(id, g, () => {})
     }

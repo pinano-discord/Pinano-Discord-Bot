@@ -9,6 +9,9 @@
     "bot_devs": [ "174511937151827969", "187548138456743936" ],
     "pinano_guilds" : ["188345759408717825", "523774045439655956"],
 
+    "default_welcome" : "Welcome {user} to the server!",
+    "default_leave" : "Goodbye {user}!",
+
     "leaderboard_size" : 10,
     "res_destruct_time" : 30,
     "req_destruct_time" : 3
