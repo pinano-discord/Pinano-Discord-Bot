@@ -35,7 +35,7 @@ module.exports.load = (client) => {
                     avatar = i
                 })
                 await avatar.resize(100, 100)
-                await source.composite(avatar, 12, 12)
+                await source.composite(avatar, 14, 14)
 
                 //write the text stuff
                 await client.jimp.loadFont(client.jimp.FONT_SANS_16_WHITE)
