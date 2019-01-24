@@ -94,7 +94,7 @@ module.exports = client => {
 
                 client.loadGuildData(newMember.guild.id, restwo => {
                     if(restwo == null){
-                        client.createGuild(message.guild.id)
+                        client.createGuild(newMember.guild.id)
                         client.log('Created new guild.')
                         return
                     } else {
