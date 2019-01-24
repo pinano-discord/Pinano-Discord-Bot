@@ -5,6 +5,10 @@
   "main": "app.js",
   "author": "uber#0001",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ubermadness/Pinano-Discord-Bot.git"
+  },
   "dependencies": {
     "discord.js": "^11.4.2",
     "humanize-duration": "^3.16.0",
