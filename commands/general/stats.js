@@ -34,7 +34,7 @@ module.exports.load = (client) => {
                 .then(i => {
                     avatar = i
                 })
-                await avatar.resize(100, 100)
+                await avatar.resize(98, 98)
                 await source.composite(avatar, 14, 14)
 
                 //write the text stuff
