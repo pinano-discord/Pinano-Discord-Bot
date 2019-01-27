@@ -92,13 +92,11 @@ module.exports = client => {
             client.createGuild(newMember.guild.id)
             client.log('Created new guild.')
           } else {
-            // if they are unmuted and a start time dosnt exist and they are in a good channel
             if (newMember.selfMute === false && newMember.serverMute === false && oldMember.s_time === null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
+              // if they are unmuted and a start time dosnt exist and they are in a good channel
               newMember.s_time = client.moment().unix()
-            }
-
-            // if a start time exist transfer it to new user object
-            else if (oldMember.s_time !== null) {
+            } else if (oldMember.s_time !== null) {
+              // if a start time exist transfer it to new user object
               newMember.s_time === oldMember.s_time
             }
 
