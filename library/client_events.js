@@ -97,7 +97,7 @@ module.exports = client => {
               newMember.s_time = client.moment().unix()
             } else if (oldMember.s_time !== null) {
               // if a start time exist transfer it to new user object
-              newMember.s_time === oldMember.s_time
+              newMember.s_time = oldMember.s_time
             }
 
             // if user gets muted or leaves or transfers to a bad channel
