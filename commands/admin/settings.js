@@ -64,23 +64,9 @@ module.exports.load = (client) => {
             return false
           }
 
-          // check if valid role format is met
-          function isValidRole (arg) {
-            if (arg.includes('<@') && arg.includes('>')) return true
-            return false
-          }
-
           // arg must be a string
           function setString (arg, setting) {
             res[setting] = arg
-            client.writeGuildData(message.guild.id, res, () => {
-              fin()
-            })
-          }
-
-          // arg must be role
-          function setRole (arg, setting) {
-            res[setting] = arg.replace(/[<@&>]/g, '')
             client.writeGuildData(message.guild.id, res, () => {
               fin()
             })
