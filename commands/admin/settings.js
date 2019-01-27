@@ -1,4 +1,5 @@
-
+/* eslint-disable no-inner-declarations */
+// Re-enable when we re-factor into proper objects
 module.exports.load = (client) => {
   client.commands['settings'] = {
     run (message) {
