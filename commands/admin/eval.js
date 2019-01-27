@@ -8,7 +8,7 @@ module.exports.load = (client) => {
         }
         try {
           const code = args.join(' ')
-          let evaled = eval(code)
+          let evaled = eval(code) // eslint-disable-line no-eval
           if (typeof evaled !== 'string') { evaled = require('util').inspect(evaled) }
           message.channel.send(clean(evaled), { code: 'xl' })
         } catch (err) {
