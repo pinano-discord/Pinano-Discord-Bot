@@ -2,7 +2,7 @@ module.exports.load = (client) => {
   client.commands['leaderboard'] = {
     run (message) {
       let args = message.content.split(' ').splice(1)
-      if (args[0] != 'weekly' && args[0] != 'overall') {
+      if (args[0] !== 'weekly' && args[0] !== 'overall') {
         client.getWeeklyLeaderboard(message, data => {
           let msg = new client.discord.RichEmbed()
           msg.setTitle('Weekly Leaderboard')
@@ -19,7 +19,7 @@ module.exports.load = (client) => {
         })
       }
 
-      if (args[0] == 'weekly') {
+      if (args[0] === 'weekly') {
         client.getWeeklyLeaderboard(message, data => {
           let msg = new client.discord.RichEmbed()
           msg.setTitle('Weekly Leaderboard')
@@ -34,7 +34,7 @@ module.exports.load = (client) => {
               }, client.settings.res_destruct_time * 1000)
             })
         })
-      } else if (args[0] == 'overall') {
+      } else if (args[0] === 'overall') {
         client.getOverallLeaderboard(message, data => {
           let msg = new client.discord.RichEmbed()
           msg.setTitle('Overall Leaderboard')

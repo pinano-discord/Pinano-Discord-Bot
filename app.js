@@ -11,7 +11,7 @@ client.fs = require('fs')
 client.jimp = require('jimp')
 
 // check devmode state
-if (client.settings.dev_mode == true) { client.settings.token = client.settings.beta_token; client.settings.prefix = client.settings.beta_prefix }
+if (client.settings.dev_mode === true) { client.settings.token = client.settings.beta_token; client.settings.prefix = client.settings.beta_prefix }
 
 // Require client events and functions
 require('./library/client_functions.js')(client)

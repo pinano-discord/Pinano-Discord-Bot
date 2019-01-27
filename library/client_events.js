@@ -13,7 +13,7 @@ module.exports = client => {
 
   client.on('message', async message => {
     await client.loadUserData(message.author.id, res => {
-      if (res == null) {
+      if (res === null) {
         let user = {
           'id': message.author.id,
           'current_session_playtime': 0,
@@ -24,8 +24,8 @@ module.exports = client => {
         })
       }
     })
-    if (client.isValidCommand(message) == false) return
-    if (client.commandExist(message) == false) return
+    if (client.isValidCommand(message) === false) return
+    if (client.commandExist(message) === false) return
     if (!client.settings.pinano_guilds.includes(message.guild.id)) return client.errorMessage(message, 'This bot can only be used on official Pinano servers.')
     await client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')].run(message)
     await setTimeout(() => {
@@ -36,8 +36,8 @@ module.exports = client => {
   client.on('guildMemberAdd', mem => {
     if (mem.guild === null) return
     client.loadGuildData(mem.guild.id, res => {
-      if (res == null) return
-      if (res.dm_welcome_toggle == true && res.dm_welcome_message != '') {
+      if (res === null) return
+      if (res.dm_welcome_toggle === true && res.dm_welcome_message !== '') {
         let msg = new client.discord.RichEmbed()
         msg.setTitle('Welcome!')
         msg.setDescription(res.dm_welcome_message)
@@ -49,9 +49,9 @@ module.exports = client => {
           client.log(`unable to send to user ${mem.username}#${mem.discriminator}`)
         }
       }
-      if (res.welcome_toggle == true) {
-        if (res.welcome_channel != '') {
-          if (res.welcome_message == '') { res.welcome_message = client.settings.default_welcome }
+      if (res.welcome_toggle === true) {
+        if (res.welcome_channel !== '') {
+          if (res.welcome_message === '') { res.welcome_message = client.settings.default_welcome }
           let mes = res.welcome_message.replace('{user}', `**${mem.displayName}**`)
           client.channels.get(res.welcome_channel).send(mes).catch(e => { console.log(e) })
         }
@@ -62,10 +62,10 @@ module.exports = client => {
   client.on('guildMemberRemove', mem => {
     if (mem.guild === null) return
     client.loadGuildData(mem.guild.id, res => {
-      if (res == null) return
-      if (res.leave_channel == '') return
-      if (res.leave_toggle == false) return
-      if (res.leave_message == '') { res.leave_message = client.settings.default_leave }
+      if (res === null) return
+      if (res.leave_channel === '') return
+      if (res.leave_toggle === false) return
+      if (res.leave_message === '') { res.leave_message = client.settings.default_leave }
       let mes = res.leave_message.replace('{user}', `**${mem.displayName}**`)
       client.channels.get(res.leave_channel).send(mes)
     })
@@ -77,7 +77,7 @@ module.exports = client => {
     // Time handler
     client.loadUserData(newMember.user.id, res => {
       // if the user dosnt exist create a user for the person
-      if (res == null) {
+      if (res === null) {
         let user = {
           'id': newMember.user.id,
           'current_session_playtime': 0,
@@ -88,23 +88,23 @@ module.exports = client => {
         })
       } else {
         client.loadGuildData(newMember.guild.id, restwo => {
-          if (restwo == null) {
+          if (restwo === null) {
             client.createGuild(newMember.guild.id)
             client.log('Created new guild.')
           } else {
             // if they are unmuted and a start time dosnt exist and they are in a good channel
-            if (newMember.selfMute == false && newMember.serverMute == false && oldMember.s_time == null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
+            if (newMember.selfMute === false && newMember.serverMute === false && oldMember.s_time === null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
               newMember.s_time = client.moment().unix()
             }
 
             // if a start time exist transfer it to new user object
-            else if (oldMember.s_time != null) {
-              newMember.s_time == oldMember.s_time
+            else if (oldMember.s_time !== null) {
+              newMember.s_time === oldMember.s_time
             }
 
             // if user gets muted or leaves or transfers to a bad channel
-            if (newMember.voiceChannelID == null || !restwo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute == true || newMember.serverMute == true) {
-              if (newMember.s_time == null) return
+            if (newMember.voiceChannelID === null || !restwo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute === true || newMember.serverMute === true) {
+              if (newMember.s_time === null) return
 
               res.current_session_playtime += client.moment().unix() - newMember.s_time
               res.overall_session_playtime += client.moment().unix() - newMember.s_time

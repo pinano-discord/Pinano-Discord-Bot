@@ -109,7 +109,7 @@ module.exports = (client, db) => {
       for (let i = 0; i <= score_array.length; i++) {
         if (score_array[i]) {
           let user = score_array[i].split('|')[0]
-          if (user == message.author.id) { pos = true_j + 1 }
+          if (user === message.author.id) { pos = true_j + 1 }
           true_j++
         }
       }
@@ -143,7 +143,7 @@ module.exports = (client, db) => {
       for (let i = 0; i <= score_array.length; i++) {
         if (score_array[i]) {
           let user = score_array[i].split('|')[0]
-          if (user == message.author.id) { pos = true_j + 1 }
+          if (user === message.author.id) { pos = true_j + 1 }
           true_j++
         }
       }

@@ -4,7 +4,7 @@ module.exports = client => {
   }
 
   client.commandExist = (message) => {
-    if (message.content.split(' ')[0].replace(client.settings.prefix, '').replace(/[<@!>]/g, '') == client.user.id) message.content = message.content.split(' ').splice(1).join(' ')
+    if (message.content.split(' ')[0].replace(client.settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) message.content = message.content.split(' ').splice(1).join(' ')
     if (client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')]) return true
     return false
   }
