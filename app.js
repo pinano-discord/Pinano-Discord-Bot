@@ -27,3 +27,7 @@ cron.schedule('0 0 * * mon', () => {
 
 // init
 client.login(client.settings.token)
+  .catch((error) => {
+    client.log(error)
+    process.exit(1)
+  })
