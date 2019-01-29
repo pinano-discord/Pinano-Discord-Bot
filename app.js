@@ -3,7 +3,6 @@ let client = new Discord.Client()
 
 // client appends
 client.settings = require('./settings/settings.json')
-client.hd = require('humanize-duration') // huminzes time from seconds
 client.cron = require('node-cron')
 client.discord = Discord
 client.fs = require('fs')

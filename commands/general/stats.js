@@ -1,3 +1,5 @@
+const hd = require('humanize-duration')
+
 module.exports.load = (client) => {
   client.commands['stats'] = {
     run (message) {
@@ -67,7 +69,7 @@ module.exports.load = (client) => {
           })
 
         function abbreviateTime (playtime) {
-          return client.hd(playtime * 1000, { units: ['h', 'm', 's'], round: true })
+          return hd(playtime * 1000, { units: ['h', 'm', 's'], round: true })
             .replace('hours', 'h')
             .replace('minutes', 'm')
             .replace('seconds', 's')
