@@ -1,3 +1,5 @@
+const moment = require('moment')
+
 module.exports = client => {
   client.on('ready', async () => {
     await client.log('Successfully connected to discord.')
@@ -122,7 +124,7 @@ module.exports = client => {
             // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
             if (!newMember.selfMute && !newMember.serverMute && oldMember.s_time == null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
               // if they are unmuted and a start time dosnt exist and they are in a good channel
-              newMember.s_time = client.moment().unix()
+              newMember.s_time = moment().unix()
             } else if (oldMember.s_time != null) {
               // if a start time exist transfer it to new user object
               newMember.s_time = oldMember.s_time
@@ -134,8 +136,9 @@ module.exports = client => {
                 return
               }
 
-              res.current_session_playtime += client.moment().unix() - newMember.s_time
-              res.overall_session_playtime += client.moment().unix() - newMember.s_time
+              const playtime = moment().unix() - newMember.s_time
+              res.current_session_playtime += playtime
+              res.overall_session_playtime += playtime
 
               const hourrole = '529404918885384203'
               // const activerole = '542790691617767424'
@@ -154,7 +157,7 @@ module.exports = client => {
               }
 
               client.writeUserData(newMember.user.id, res, () => {
-                client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${client.moment().unix() - newMember.s_time} seconds`)
+                client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${playtime} seconds`)
                 newMember.s_time = null
                 oldMember.s_time = null
               })
