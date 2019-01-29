@@ -1,4 +1,5 @@
 const moment = require('moment')
+const fs = require('fs')
 
 module.exports = client => {
   client.log = (string) => {
@@ -20,7 +21,7 @@ module.exports = client => {
 
   client.loadCommands = (callback) => {
     client.commands = {}
-    client.fs.readdir('./commands/general/', (err, files) => {
+    fs.readdir('./commands/general/', (err, files) => {
       if (err) {
         client.log(`Error loading general commands : ${err}`)
         return
@@ -30,7 +31,7 @@ module.exports = client => {
       })
     })
 
-    client.fs.readdir('./commands/admin/', (err, files) => {
+    fs.readdir('./commands/admin/', (err, files) => {
       if (err) {
         client.log(`Error loading admin commands : ${err}`)
         return
