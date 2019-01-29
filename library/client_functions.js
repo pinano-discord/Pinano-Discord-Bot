@@ -1,6 +1,8 @@
+const moment = require('moment')
+
 module.exports = client => {
   client.log = (string) => {
-    console.log(`${client.moment().format('MMMM Do YYYY, h:mm:ss a')} :: ${string}`)
+    console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')} :: ${string}`)
   }
 
   client.commandExist = (message) => {
