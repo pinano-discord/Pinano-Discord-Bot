@@ -1,3 +1,4 @@
+const jimp = require('jimp')
 const hd = require('humanize-duration')
 
 module.exports.load = (client) => {
@@ -20,7 +21,7 @@ module.exports.load = (client) => {
         })
 
         // load template
-        await client.jimp.read('./assets/time_card.png')
+        await jimp.read('./assets/time_card.png')
           .then(i => {
             source = i
           })
@@ -34,7 +35,7 @@ module.exports.load = (client) => {
         }
 
         // overlay avatar on template image
-        await client.jimp.read(av)
+        await jimp.read(av)
           .then(i => {
             avatar = i
           })
@@ -42,7 +43,7 @@ module.exports.load = (client) => {
         await source.composite(avatar, 14, 14)
 
         // write the text stuff
-        await client.jimp.loadFont(client.jimp.FONT_SANS_16_WHITE)
+        await jimp.loadFont(jimp.FONT_SANS_16_WHITE)
           .then(async font => {
             source.print(font, 245, 25, `${message.author.username}#${message.author.discriminator}`)
             source.print(font, 135, 90, abbreviateTime(res.current_session_playtime))
@@ -51,7 +52,7 @@ module.exports.load = (client) => {
           })
 
         // send the pic as png
-        await source.getBufferAsync(client.jimp.MIME_PNG)
+        await source.getBufferAsync(jimp.MIME_PNG)
           .then(buffer => {
             message.channel.send({
               files: [{

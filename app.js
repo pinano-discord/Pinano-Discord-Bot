@@ -7,7 +7,6 @@ let client = new Discord.Client()
 client.settings = require('./settings/settings.json')
 client.discord = Discord
 client.fs = require('fs')
-client.jimp = require('jimp')
 
 // check devmode state
 if (client.settings.dev_mode) {
