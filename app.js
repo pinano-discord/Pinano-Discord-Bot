@@ -1,9 +1,10 @@
+const cron = require('node-cron')
 let Discord = require('discord.js')
+
 let client = new Discord.Client()
 
 // client appends
 client.settings = require('./settings/settings.json')
-client.cron = require('node-cron')
 client.discord = Discord
 client.fs = require('fs')
 client.jimp = require('jimp')
@@ -20,7 +21,7 @@ require('./library/client_events.js')(client)
 require('./library/database_lib.js')(client)
 
 // weekly wipe at 12 am on monday
-client.cron.schedule('0 0 * * mon', () => {
+cron.schedule('0 0 * * mon', () => {
   client.submitweek()
   client.clearWeekResults()
   client.log('Cleared weekly results')
