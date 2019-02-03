@@ -14,8 +14,3 @@ if you just want to jump in without install `nodenv`, make sure you look at [`.n
 for the current version we are using.
 
 PS - MONGODB RUNNING IS REQUIRED!
-
-## The discord server
-
-To see the bot in action or to become part of the official /r/piano discord, join [https://discordapp.com/invite/3q3gWuD](https://discordapp.com/invite/3q3gWuD)
-The bot developers listed under the **@Bot Manager** role.
