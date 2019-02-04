@@ -13,10 +13,19 @@ if (client.settings.dev_mode) {
   client.settings.prefix = client.settings.beta_prefix
 }
 
-// Require client events and functions
 require('./library/client_functions.js')(client)
-require('./library/client_events.js')(client)
+client.log(`Loaded client functions`)
 require('./library/database_lib.js')(client)
+client.log(`Loaded database functions`)
+
+require('./library/client_events.js')(client)
+client.log(`Loaded client events`)
+
+let connect = () => {
+  return new Promise(resolve => {
+    client.connectDB(db => resolve(db))
+  })
+}
 
 // weekly wipe at 12 am on monday
 cron.schedule('0 0 * * mon', () => {
@@ -25,9 +34,14 @@ cron.schedule('0 0 * * mon', () => {
   client.log('Cleared weekly results')
 })
 
-// init
-client.login(client.settings.token)
-  .catch((error) => {
-    client.log(error)
-    process.exit(1)
-  })
+connect().then(db => {
+  client.log(`Connected Database`)
+  require('./library/leaderboard_fetch.js')(client, db)
+  client.log(`loaded leaderboard library`)
+
+  client.login(client.settings.token)
+    .catch((error) => {
+      client.log(error)
+      process.exit(1)
+    })
+})
