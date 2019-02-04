@@ -6,11 +6,6 @@ module.exports = client => {
     await client.user.setActivity(client.settings.activity, { type: 'Playing' }).catch(e => client.cannon.fire('Could not set activity.'))
     await client.log(`Successfully set activity to ${client.settings.activity}`)
     await client.loadCommands(() => client.log(`Successfully loaded commands!`))
-    await client.connectDB(db => {
-      client.log(`Connected Database`)
-      require('./leaderboard_fetch.js')(client, db)
-      client.log(`loaded leaderboard library`)
-    })
   })
 
   client.on('message', async message => {
