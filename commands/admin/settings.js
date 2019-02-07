@@ -4,7 +4,7 @@ module.exports.load = (client) => {
   client.commands['settings'] = {
     run (message) {
       let args = message.content.split(' ').splice(1)
-      if (!message.member.hasPermission('BAN_MEMBERS')) return client.errorMessage(message, `You require BAN_MEMBERS to use settings.`)
+      if (!message.member.hasRole('543138037832351765')) return client.errorMessage(message, `You require the bot manager role to use the settings command.`)
 
       client.loadGuildData(message.guild.id, res => {
         if (res === null) {
