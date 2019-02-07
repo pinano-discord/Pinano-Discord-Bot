@@ -4,17 +4,16 @@ module.exports = client => {
   }
 
   client.commandExist = (message) => {
-    if (message.content.split(' ')[0].replace(client.settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) message.content = message.content.split(' ').splice(1).join(' ')
-    if (client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')]) return true
-    return false
+    let tokenized = message.content.split(' ')
+    if (tokenized[0].replace(client.settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) {
+      return client.commands[tokenized[1].replace(client.settings.prefix, '')]
+    } else {
+      return client.commands[tokenized[0].replace(client.settings.prefix, '')]
+    }
   }
 
   client.isValidCommand = (message) => {
-    if (message.content.startsWith(client.settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)) {
-      return true
-    } else {
-      return false
-    }
+    return message.content.startsWith(client.settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)
   }
 
   client.loadCommands = (callback) => {
@@ -50,11 +49,11 @@ module.exports = client => {
         timestamp: new Date()
       }
     })
-      .then(m => {
-        setTimeout(() => {
-          m.delete()
-        }, client.settings.res_destruct_time * 1000)
-      })
+    .then(m => {
+      setTimeout(() => {
+        m.delete()
+      }, client.settings.res_destruct_time * 1000)
+    })
   }
 
   client.errorMessage = (message, msg) => {
@@ -66,10 +65,10 @@ module.exports = client => {
         timestamp: new Date()
       }
     })
-      .then(m => {
-        setTimeout(() => {
-          m.delete()
-        }, client.settings.res_destruct_time * 1000)
-      })
+    .then(m => {
+      setTimeout(() => {
+        m.delete()
+      }, client.settings.res_destruct_time * 1000)
+    })
   }
 }

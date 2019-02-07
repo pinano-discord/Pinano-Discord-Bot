@@ -24,9 +24,15 @@ module.exports = client => {
         })
       }
     })
-    if (client.isValidCommand(message) === false) return
-    if (client.commandExist(message) === false) return
-    if (!client.settings.pinano_guilds.includes(message.guild.id)) return client.errorMessage(message, 'This bot can only be used on official Pinano servers.')
+
+    if (!client.isValidCommand(message) || !client.commandExist(message)) {
+      return
+    }
+
+    if (!client.settings.pinano_guilds.includes(message.guild.id)) {
+      return client.errorMessage(message, 'This bot can only be used on official Pinano servers.')
+    }
+
     await client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')].run(message)
     await setTimeout(() => {
       message.delete()
@@ -34,9 +40,15 @@ module.exports = client => {
   })
 
   client.on('guildMemberAdd', mem => {
-    if (mem.guild === null) return
+    if (mem.guild === null) {
+      return
+    }
+
     client.loadGuildData(mem.guild.id, res => {
-      if (res === null) return
+      if (res === null) {
+        return
+      }
+
       if (res.dm_welcome_toggle === true && res.dm_welcome_message !== '') {
         let msg = new client.discord.RichEmbed()
         msg.setTitle('Welcome!')
@@ -49,9 +61,13 @@ module.exports = client => {
           client.log(`unable to send to user ${mem.username}#${mem.discriminator}`)
         }
       }
-      if (res.welcome_toggle === true) {
+
+      if (res.welcome_toggle) {
         if (res.welcome_channel !== '') {
-          if (res.welcome_message === '') { res.welcome_message = client.settings.default_welcome }
+          if (res.welcome_message === '') {
+            res.welcome_message = client.settings.default_welcome
+          }
+
           let mes = res.welcome_message.replace('{user}', `**${mem.displayName}**`)
           client.channels.get(res.welcome_channel).send(mes).catch(e => { console.log(e) })
         }
@@ -60,23 +76,32 @@ module.exports = client => {
   })
 
   client.on('guildMemberRemove', mem => {
-    if (mem.guild === null) return
+    if (mem.guild === null) {
+      return
+    }
+
     client.loadGuildData(mem.guild.id, res => {
-      if (res === null) return
-      if (res.leave_channel === '') return
-      if (res.leave_toggle === false) return
-      if (res.leave_message === '') { res.leave_message = client.settings.default_leave }
+      if (res === null || res.leave_channel === '' || !res.leave_toggle) {
+        return
+      }
+
+      if (res.leave_message === '') {
+        res.leave_message = client.settings.default_leave
+      }
+
       let mes = res.leave_message.replace('{user}', `**${mem.displayName}**`)
       client.channels.get(res.leave_channel).send(mes)
     })
   })
 
   client.on('voiceStateUpdate', async (oldMember, newMember) => {
-    if (!client.settings.pinano_guilds.includes(newMember.guild.id)) return
+    if (!client.settings.pinano_guilds.includes(newMember.guild.id)) {
+      return
+    }
 
-    // Time handler
+    // time handler
     client.loadUserData(newMember.user.id, res => {
-      // if the user dosnt exist create a user for the person
+      // if the user doesn't exist then create a user for the person
       if (res === null) {
         let user = {
           'id': newMember.user.id,
@@ -92,35 +117,40 @@ module.exports = client => {
             client.createGuild(newMember.guild.id)
             client.log('Created new guild.')
           } else {
-            if (newMember.selfMute === false && newMember.serverMute === false && oldMember.s_time === null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
+            // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
+            // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
+            // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
+            if (!newMember.selfMute && !newMember.serverMute && oldMember.s_time == null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
               // if they are unmuted and a start time dosnt exist and they are in a good channel
               newMember.s_time = client.moment().unix()
-            } else if (oldMember.s_time !== null) {
+            } else if (oldMember.s_time != null) {
               // if a start time exist transfer it to new user object
               newMember.s_time = oldMember.s_time
             }
 
             // if user gets muted or leaves or transfers to a bad channel
-            if (newMember.voiceChannelID === null || !restwo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute === true || newMember.serverMute === true) {
-              if (newMember.s_time === null) return
+            if (newMember.voiceChannelID === null || !restwo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute || newMember.serverMute) {
+              if (newMember.s_time == null) {
+                return
+              }
 
               res.current_session_playtime += client.moment().unix() - newMember.s_time
               res.overall_session_playtime += client.moment().unix() - newMember.s_time
 
-              let hourrole   = '529404918885384203'
-              let activerole = '542790691617767424'
+              const hourrole   = '529404918885384203'
+              const activerole = '542790691617767424'
 
-              if (res.overall_session_playtime >= 144000 && !newMember.roles.has(hourrole)) {
-                  newMember.addRole(hourrole)
-                  .catch(e => {
-                      client.log(`error granting user ${newMember.username} hourrole!`)
-                              })
-                  .then(() => {
-                    newMember.send('You have achieved the 40 hour pracker role!')
-                      .catch(e => {
-                          client.log('Could not tell user they leveled! (hourrole)')
-                                  })
-                              })
+              if (res.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourrole)) {
+                newMember.addRole(hourrole)
+                .catch(e => {
+                  client.log(`error granting user ${newMember.username} hourrole!`)
+                })
+                .then(() => {
+                  newMember.send('You have achieved the 40 hour pracker role!')
+                    .catch(e => {
+                      client.log('Could not tell user they leveled! (hourrole)')
+                    })
+                })
               }
 
               client.writeUserData(newMember.user.id, res, () => {

@@ -2,7 +2,10 @@ module.exports.load = (client) => {
   client.commands['stats'] = {
     run (message) {
       client.loadUserData(message.author.id, async res => {
-        if (res == null) { client.errorMessage(message, 'Error fetching your data from our servers, please try again.'); return }
+        if (res === null) {
+          client.errorMessage(message, 'Error fetching your data from our servers, please try again.')
+          return
+        }
 
         // set "semi-global" variabls
         let avatar
@@ -40,8 +43,8 @@ module.exports.load = (client) => {
         await client.jimp.loadFont(client.jimp.FONT_SANS_16_WHITE)
           .then(async font => {
             source.print(font, 245, 25, `${message.author.username}#${message.author.discriminator}`)
-            source.print(font, 135, 90, client.hd(res.current_session_playtime * 1000, { units: ['h', 'm', 's'], round: true }).replace('hours', 'h').replace('minutes', 'm').replace('seconds', 's').replace('hour', 'h').replace('minute', 'm').replace('second', 's')) // im so sorry for this
-            source.print(font, 280, 90, client.hd(res.overall_session_playtime * 1000, { units: ['h', 'm', 's'], round: true }).replace('hours', 'h').replace('minutes', 'm').replace('seconds', 's').replace('hour', 'h').replace('minute', 'm').replace('second', 's'))
+            source.print(font, 135, 90, abbreviateTime(res.current_session_playtime))
+            source.print(font, 280, 90, abbreviateTime(res.overall_session_playtime))
             source.print(font, 435, 90, poss)
           })
 
@@ -56,12 +59,22 @@ module.exports.load = (client) => {
             })
 
             // delete response after set time
-              .then(m => {
-                setTimeout(() => {
-                  m.delete()
-                }, client.settings.res_destruct_time * 1000)
-              })
+            .then(m => {
+              setTimeout(() => {
+                m.delete()
+              }, client.settings.res_destruct_time * 1000)
+            })
           })
+
+        function abbreviateTime(playtime) {
+          return client.hd(playtime * 1000, { units: ['h', 'm', 's'], round: true })
+                       .replace('hours', 'h')
+                       .replace('minutes', 'm')
+                       .replace('seconds', 's')
+                       .replace('hour', 'h')
+                       .replace('minute', 'm')
+                       .replace('second', 's')
+        }        
       })
     }
   }
