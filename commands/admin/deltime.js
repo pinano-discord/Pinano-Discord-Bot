@@ -2,7 +2,7 @@ module.exports.load = (client) => {
   client.commands['deltime'] = {
     run (message) {
       let args = message.content.split(' ').splice(1)
-      if (!message.member.hasRole('543138037832351765')) return client.errorMessage(message, `You must have \`BOT MANAGER\` role to use.`)
+      if (!message.member.roles.find('name', 'Bot Manager')) return client.errorMessage(message, `You must have \`BOT MANAGER\` role to use.`)
       if (args.length !== 2) return client.errorMessage(message, 'Invalid usage.')
       if (!args[0].startsWith('<@') || !args[0].includes('>')) return client.errorMessage(message, 'Invalid user.')
       if (!Number.isInteger(parseInt(args[1]))) return client.errorMessage(message, 'Invalid seconds to add.')
