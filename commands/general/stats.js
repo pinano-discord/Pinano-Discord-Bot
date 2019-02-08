@@ -58,23 +58,23 @@ module.exports.load = (client) => {
               }]
             })
 
-            // delete response after set time
-            .then(m => {
-              setTimeout(() => {
-                m.delete()
-              }, client.settings.res_destruct_time * 1000)
-            })
+              // delete response after set time
+              .then(m => {
+                setTimeout(() => {
+                  m.delete()
+                }, client.settings.res_destruct_time * 1000)
+              })
           })
 
-        function abbreviateTime(playtime) {
+        function abbreviateTime (playtime) {
           return client.hd(playtime * 1000, { units: ['h', 'm', 's'], round: true })
-                       .replace('hours', 'h')
-                       .replace('minutes', 'm')
-                       .replace('seconds', 's')
-                       .replace('hour', 'h')
-                       .replace('minute', 'm')
-                       .replace('second', 's')
-        }        
+            .replace('hours', 'h')
+            .replace('minutes', 'm')
+            .replace('seconds', 's')
+            .replace('hour', 'h')
+            .replace('minute', 'm')
+            .replace('second', 's')
+        }
       })
     }
   }

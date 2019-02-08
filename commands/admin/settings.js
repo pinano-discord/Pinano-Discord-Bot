@@ -35,7 +35,7 @@ module.exports.load = (client) => {
             return interpretOnOffToggle('welcome_toggle', args, `Welcomes can be either toggled on or off. Example: ${client.settings.prefix}settings welcomes on`)
 
           case 'practice_channels':
-            if (args.length != 3) {
+            if (args.length !== 3) {
               return client.errorMessage(message, `Practice channels can be added by using \`${client.settings.prefix}settings practice_channels add <#channel>\` and removed with \`del <#channel>\``)
             }
 
@@ -53,7 +53,9 @@ module.exports.load = (client) => {
               default:
                 return client.errorMessage(message, `Practice channels can be add by using \`${client.settings.prefix}settings practice_channels add <#channel>\` and removed with \`del <#channel>\``)
             }
-          
+
+            break
+
           case 'dm_welcomes':
             return interpretOnOffToggle('dm_welcome_toggle', args, `dm_welcomes can be either toggled on or off. Example: ${client.settings.prefix}settings dm_welcomes on`)
 
@@ -68,7 +70,7 @@ module.exports.load = (client) => {
             if (isValidChannel(args[1])) {
               return setChannel(args[1], 'welcome_channel')
             }
-            
+
             break
 
           case 'leave_channel':
@@ -96,9 +98,9 @@ module.exports.load = (client) => {
 
         // for toggle switches that are just on and off, this function interprets the second argument
         // and yells at the user if there are too many/not enough arguments, or the argument is not 'on' or 'off'.
-        function interpretOnOffToggle(toggle, args, usageString) {
+        function interpretOnOffToggle (toggle, args, usageString) {
           if (args.length !== 2) {
-            return client.errorMessage(usageString)
+            return client.errorMessage(message, usageString)
           }
 
           switch (args[1]) {
@@ -107,12 +109,12 @@ module.exports.load = (client) => {
             case 'off':
               return toggleSwitch(false, toggle)
             default:
-              return client.errorMessage(usageString)
+              return client.errorMessage(message, usageString)
           }
         }
 
         // toggle must be true or false
-        function toggleSwitch(toggle, setting) {
+        function toggleSwitch (toggle, setting) {
           res[setting] = toggle
           client.writeGuildData(message.guild.id, res, () => {
             fin()
@@ -120,9 +122,9 @@ module.exports.load = (client) => {
         }
 
         // interprets a string setting and yells at the user if there isn't a second argument.
-        function interpretStringSetting(setting, args, usageString) {
+        function interpretStringSetting (setting, args, usageString) {
           if (args.length === 1) {
-            return client.errorMessage(usageString)
+            return client.errorMessage(message, usageString)
           }
 
           res[setting] = args.splice(1).join(' ')
@@ -132,12 +134,12 @@ module.exports.load = (client) => {
         }
 
         // check if valid channel format is met
-        function isValidChannel(arg) {
+        function isValidChannel (arg) {
           return arg.startsWith('<#') && arg.endsWith('>')
         }
 
         // arg must be channel
-        function setChannel(arg, setting) {
+        function setChannel (arg, setting) {
           res[setting] = arg.replace(/[<#>]/g, '')
           client.writeGuildData(message.guild.id, res, () => {
             fin()
@@ -145,7 +147,7 @@ module.exports.load = (client) => {
         }
 
         // del practice channel from database
-        function delChannelPractice(arg) {
+        function delChannelPractice (arg) {
           if (!res['permitted_channels'].includes(arg.replace(/[<#>]/g, ''))) {
             return client.errorMessage(message, 'That channel is not in database.')
           }
@@ -157,7 +159,7 @@ module.exports.load = (client) => {
         }
 
         // add practice channel to database
-        function addChannelPractice(arg) {
+        function addChannelPractice (arg) {
           if (res['permitted_channels'].includes(arg.replace(/[<#>]/g, ''))) {
             return client.errorMessage(message, 'That channel is already added.')
           }
@@ -168,7 +170,7 @@ module.exports.load = (client) => {
           })
         }
 
-        function fin() {
+        function fin () {
           message.reply('Successfully updated settings!')
             .then(m => {
               setTimeout(() => {

@@ -23,7 +23,7 @@ module.exports.load = (client) => {
         if (res === null) {
           return client.errorMessage(message, 'User doesn\'t exist in DB')
         }
-        
+
         res.current_session_playtime += delta
         res.overall_session_playtime += delta
         client.writeUserData(args[0].replace(/[<@!>]/g, ''), res, () => {

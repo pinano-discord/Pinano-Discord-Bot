@@ -49,11 +49,11 @@ module.exports = client => {
         timestamp: new Date()
       }
     })
-    .then(m => {
-      setTimeout(() => {
-        m.delete()
-      }, client.settings.res_destruct_time * 1000)
-    })
+      .then(m => {
+        setTimeout(() => {
+          m.delete()
+        }, client.settings.res_destruct_time * 1000)
+      })
   }
 
   client.errorMessage = (message, msg) => {
@@ -65,10 +65,10 @@ module.exports = client => {
         timestamp: new Date()
       }
     })
-    .then(m => {
-      setTimeout(() => {
-        m.delete()
-      }, client.settings.res_destruct_time * 1000)
-    })
+      .then(m => {
+        setTimeout(() => {
+          m.delete()
+        }, client.settings.res_destruct_time * 1000)
+      })
   }
 }

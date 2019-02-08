@@ -17,7 +17,7 @@ module.exports.load = (client) => {
                   m.delete()
                 }, client.settings.res_destruct_time * 1000)
               })
-            })
+          })
 
           break
 
@@ -36,7 +36,7 @@ module.exports.load = (client) => {
                   m.delete()
                 }, client.settings.res_destruct_time * 1000)
               })
-            })
+          })
       }
     }
   }
