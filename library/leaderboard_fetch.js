@@ -57,7 +57,7 @@ module.exports = (client, db) => {
             msgStr += ``
           } else {
             let user = scoreArray[j].split('|')[0]
-            let time = client.hd(scoreArray[j].split('|')[1] * 1000, { units: ['h', 'm', 's'] })
+            let time = hd(scoreArray[j].split('|')[1] * 1000, { units: ['h', 'm', 's'] })
             if (client.users.get(user)) {
               msgStr += `**${j + 1}. ${client.users.get(user).username}#${client.users.get(user).discriminator}**\n \`${time}\`\n`
             } else {
@@ -102,7 +102,7 @@ module.exports = (client, db) => {
             msgStr += ``
           } else {
             let user = scoreArray[j].split('|')[0]
-            let time = client.hd(scoreArray[j].split('|')[1] * 1000, { units: ['h', 'm', 's'] })
+            let time = hd(scoreArray[j].split('|')[1] * 1000, { units: ['h', 'm', 's'] })
             if (client.users.get(user)) {
               msgStr += `**${j + 1}. ${client.users.get(user).username}#${client.users.get(user).discriminator}**\n \`${time}\`\n`
             } else {
