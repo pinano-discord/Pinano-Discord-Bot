@@ -137,15 +137,18 @@ module.exports = client => {
               res.current_session_playtime += client.moment().unix() - newMember.s_time
               res.overall_session_playtime += client.moment().unix() - newMember.s_time
 
-              if (res.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(40 Hour Pracker)) {
-                newMember.addRole(40 Hour Pracker)
+              const hourrole = '529404918885384203'
+              // const activerole = '542790691617767424'
+
+              if (res.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourrole)) {
+                newMember.addRole(hourrole)
                   .catch(e => {
-                    client.log(`error granting user ${newMember.username} 40 Hour Pracker!`)
+                    client.log(`error granting user ${newMember.username} hourrole!`)
                   })
                   .then(() => {
                     newMember.send('You have achieved the 40 hour pracker role!')
                       .catch(e => {
-                        client.log('Could not tell user they leveled! (40 Hour Pracker)')
+                        client.log('Could not tell user they leveled! (hourrole)')
                       })
                   })
               }
