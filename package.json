@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "jest": "^24.1.0",
+    "jest-date-mock": "^1.0.7",
     "standard": "^12.0.1"
   },
   "scripts": {
@@ -28,6 +29,11 @@
   "standard": {
     "env": [
       "jest"
+    ]
+  },
+  "jest": {
+    "setupFiles": [
+      "jest-date-mock"
     ]
   }
 }

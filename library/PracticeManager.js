@@ -21,10 +21,6 @@ class PracticeManager {
   currentPracticeTime (userId) {
     return moment().unix() - this.activePrackers.get(userId)
   }
-
-  async weeklyLeaderBoard (topN = 10) {
-    return []
-  }
 }
 
 module.exports = PracticeManager
