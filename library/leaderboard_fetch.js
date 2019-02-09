@@ -1,3 +1,5 @@
+const hd = require('humanize-duration')
+
 module.exports = (client, db) => {
   /**
      * Let me provide some context for this monstrosity of a library entry

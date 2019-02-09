@@ -1,14 +1,11 @@
+const moment = require('moment')
+
 module.exports = client => {
   client.on('ready', async () => {
     await client.log('Successfully connected to discord.')
     await client.user.setActivity(client.settings.activity, { type: 'Playing' }).catch(e => client.cannon.fire('Could not set activity.'))
     await client.log(`Successfully set activity to ${client.settings.activity}`)
     await client.loadCommands(() => client.log(`Successfully loaded commands!`))
-    await client.connectDB(db => {
-      client.log(`Connected Database`)
-      require('./leaderboard_fetch.js')(client, db)
-      client.log(`loaded leaderboard library`)
-    })
   })
 
   client.on('message', async message => {
@@ -122,7 +119,7 @@ module.exports = client => {
             // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
             if (!newMember.selfMute && !newMember.serverMute && oldMember.s_time == null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
               // if they are unmuted and a start time dosnt exist and they are in a good channel
-              newMember.s_time = client.moment().unix()
+              newMember.s_time = moment().unix()
             } else if (oldMember.s_time != null) {
               // if a start time exist transfer it to new user object
               newMember.s_time = oldMember.s_time
@@ -134,24 +131,28 @@ module.exports = client => {
                 return
               }
 
-              res.current_session_playtime += client.moment().unix() - newMember.s_time
-              res.overall_session_playtime += client.moment().unix() - newMember.s_time
+              const playtime = moment().unix() - newMember.s_time
+              res.current_session_playtime += playtime
+              res.overall_session_playtime += playtime
 
-              if (res.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(40 Hour Pracker)) {
-                newMember.addRole(40 Hour Pracker)
+              const hourrole = '529404918885384203'
+              // const activerole = '542790691617767424'
+
+              if (res.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourrole)) {
+                newMember.addRole(hourrole)
                   .catch(e => {
-                    client.log(`error granting user ${newMember.username} 40 Hour Pracker!`)
+                    client.log(`error granting user ${newMember.username} hourrole!`)
                   })
                   .then(() => {
                     newMember.send('You have achieved the 40 hour pracker role!')
                       .catch(e => {
-                        client.log('Could not tell user they leveled! (40 Hour Pracker)')
+                        client.log('Could not tell user they leveled! (hourrole)')
                       })
                   })
               }
 
               client.writeUserData(newMember.user.id, res, () => {
-                client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${client.moment().unix() - newMember.s_time} seconds`)
+                client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${playtime} seconds`)
                 newMember.s_time = null
                 oldMember.s_time = null
               })
