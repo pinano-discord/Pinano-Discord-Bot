@@ -1,5 +1,6 @@
 const jimp = require('jimp')
 const hd = require('humanize-duration')
+const moment = require('moment')
 
 module.exports.load = (client) => {
   client.commands['stats'] = {
@@ -44,11 +45,12 @@ module.exports.load = (client) => {
 
         // check if the user is actively pracking and update times live if necessary
         let activeTime = 0
-        client.findCurrentPrackers(message.guild.id, (currentPrackers) => {
-          if (currentPrackers.get(message.author.id) != null) {
-            activeTime = currentPrackers.get(message.author.id)
-          }
-        })
+        let guild = await client.loadGuildData(message.guild.id)
+        let mem = client.guilds.get(message.guild.id).members.get(message.author.id)
+        // these last two conditions should be equivalent but maybe they were already pracking when the bot came up
+        if (guild.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
+          activeTime = moment().unix() - mem.s_time
+        }
 
         // write the text stuff
         await jimp.loadFont(jimp.FONT_SANS_16_WHITE)

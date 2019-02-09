@@ -54,11 +54,15 @@ module.exports = (client) => {
     callback()
   }
 
-  client.loadGuildData = (guildID, callback) => {
-    db.collection('guilds').findOne({ guild: guildID }, (err, res) => {
-      if (err) client.log(err)
-      callback(res)
-    })
+  client.loadGuildData = async (guildID, callback) => {
+    if (typeof callback === 'function') {
+      db.collection('guilds').findOne({ guild: guildID }, (err, res) => {
+        if (err) client.log(err)
+        callback(res)
+      })
+    } else {
+      return db.collection('guilds').findOne({ guild: guildID })
+    }
   }
 
   client.clearWeekResults = async () => {

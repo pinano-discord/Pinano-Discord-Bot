@@ -1,4 +1,5 @@
 const hd = require('humanize-duration')
+const moment = require('moment')
 
 module.exports = (client, db) => {
   /**
@@ -19,7 +20,7 @@ module.exports = (client, db) => {
           vc.members.forEach(member => {
             // these conditions should be equivalent but maybe they were already pracking when the bot came up.
             if (!member.mute && member.s_time != null) {
-              currentPrackers.set(member.user.id, client.moment().unix() - member.s_time)
+              currentPrackers.set(member.user.id, moment().unix() - member.s_time)
             }
           })
         }
