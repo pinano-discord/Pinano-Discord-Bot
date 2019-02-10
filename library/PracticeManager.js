@@ -1,4 +1,5 @@
 const moment = require('moment')
+const EventEmitter = require('events')
 
 /*
  * The PracticeManager is intended to be a singleton that keeps
@@ -7,9 +8,13 @@ const moment = require('moment')
  * - current time: increments when actively practicing
  * - session time: sum of all time practiced between session resets (e.g., weekly)
  * - overall time: sum of all time practiced for all time
+ *
+ * The PracticeManager does not handle persistence or role assignment.
+ * Instead it emits events that others can handle if they wish.
  */
-class PracticeManager {
+class PracticeManager extends EventEmitter {
   constructor () {
+    super()
     this.activePrackers = new Map() // id -> start time in epoch seconds
     this.sessionTotal = new Map() // id -> total time in session
     this.overallTotal = new Map() // id -> total time overall
@@ -17,6 +22,7 @@ class PracticeManager {
 
   startPractice (userId) {
     this.activePrackers.set(userId, moment().unix())
+    this.emit('startPractice', userId, this.activePrackers.get(userId))
   }
 
   stopPractice (userId) {
@@ -28,6 +34,7 @@ class PracticeManager {
     this.sessionTotal.set(userId, (this.sessionTotal.get(userId) || 0) + delta)
 
     this.activePrackers.delete(userId)
+    this.emit('stopPractice', userId, delta)
   }
 
   isPracticing (userId) {

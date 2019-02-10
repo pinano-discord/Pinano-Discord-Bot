@@ -74,3 +74,27 @@ test('overall time remains after session reset', () => {
   expect(pm.sessionPracticeTime(prackUserId)).toBe(0)
   expect(pm.overallPracticeTime(prackUserId)).toBe(anHour.asSeconds())
 })
+
+test('emits startPractice event', () => {
+  const eventValidatorSpy = jest.fn(function (userId, epochTime) {
+    expect(userId).toBe(prackUserId)
+    expect(epochTime).toBe(moment(startTime).unix())
+  })
+  pm.on('startPractice', eventValidatorSpy)
+  pm.startPractice(prackUserId)
+  expect(eventValidatorSpy).toHaveBeenCalled()
+})
+
+test('emits stopPractice event', () => {
+  const eventValidatorSpy = jest.fn(function (userId, sessionTime) {
+    expect(userId).toBe(prackUserId)
+    expect(sessionTime).toBe(anHour.asSeconds())
+  })
+
+  pm.on('stopPractice', eventValidatorSpy)
+  pm.startPractice(prackUserId)
+  DateMock.advanceBy(anHour.asMilliseconds())
+  pm.stopPractice(prackUserId)
+
+  expect(eventValidatorSpy).toHaveBeenCalled()
+})
