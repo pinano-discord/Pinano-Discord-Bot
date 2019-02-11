@@ -2,8 +2,8 @@ const moment = require('moment')
 const EventEmitter = require('events')
 
 /*
- * The PracticeManager is intended to be a singleton that keeps
- * track of the total time that a user has practiced. There are
+ * The PracticeManager is intended to be a class that keeps
+ * track of the total time that a user has practiced in each guild. There are
  * three kinds of times:
  * - current time: increments when actively practicing
  * - session time: sum of all time practiced between session resets (e.g., weekly)
@@ -30,8 +30,8 @@ class PracticeManager extends EventEmitter {
       return
     }
     const delta = this.currentPracticeTime(userId)
-    this.overallTotal.set(userId, (this.overallTotal.get(userId) || 0) + delta)
     this.sessionTotal.set(userId, (this.sessionTotal.get(userId) || 0) + delta)
+    this.overallTotal.set(userId, (this.overallTotal.get(userId) || 0) + delta)
 
     this.activePrackers.delete(userId)
     this.emit('stopPractice', userId, delta)
