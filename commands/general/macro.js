@@ -17,7 +17,7 @@ module.exports.load = (client) => {
             msg.setColor(client.settings.embed_color)
             msg.setTimestamp()
 
-          break
+      break
 
         case 'chat':
             let msg = new client.discord.RichEmbed()
@@ -66,35 +66,21 @@ module.exports.load = (client) => {
 
   //      case 'recital':
   //          let msg = new client.discord.RichEmbed()
-  //          msg.setTitle('Discord chat channels information')
-  //          msg.setDescription( 'Heres a list of our chat channels' )
-  //          msg.addField('Chat channels', `
-  //                \`#Announcement\` - Stay up to date with the latest Pinano news with our announcements channel!
-  //                \`#General\` - Chat and get to know others in our general chat channel!
-  //                \`#Classical\` - Are you looking for fellow fans of the classical genre? Find them here!
-  //                \`#Non-Classical\` - Or looking for another genre? Find any other here!
-  //                \`#help-and-feedback\` - Do you have any piano related queries? Don't hesitate and ask here us here.
-  //                \`#Literature-quiz\` - Play in a 24/7 game and try to geuss the literature linked!
-  //                \`#Practice-room-chat\` - Are you listening to someone pratice and wish to talk with the practicers or other listeners? Do that here!
-  //                \`#Polls\` - (not-so) daily polls!
-  //                \`#Study-hall\` - for homework of all kinds.
-  //                \`#Hand-reveal\` - post a picture of your hand here to get @Hand Revealed role!
-  //                \`#Repertoire-list\` - post your repertoire here to get either @classical or @Non-Classical role!
-  //                \`#Anime-memes-games\` - As the title suggests, for all your anime, memes and games related conversations.
-  //                `, false)
+  //          msg.setTitle('Recital information')
+  //          msg.setDescription( 'Need desired information from staff'' )
   //          msg.setColor(client.settings.embed_color)
   //          msg.setTimestamp()
 
-        //  break
+  //    break
 
-            //      case 'beginner':
-              //        let msg = new client.discord.RichEmbed()
-                //      msg.setTitle('Useful resources for beginners')
-                  //    msg.setDescription( 'Need desired information from staff' )
-                    //  msg.setColor(client.settings.embed_color)
-                      //msg.setTimestamp()
+  //      case 'beginner':
+  //        let msg = new client.discord.RichEmbed()
+  //      msg.setTitle('Useful resources for beginners')
+  //    msg.setDescription( 'Need desired information from staff' )
+  //  msg.setColor(client.settings.embed_color)
+  //msg.setTimestamp()
 
-              //      break
+  //      break
 
           })
       }
