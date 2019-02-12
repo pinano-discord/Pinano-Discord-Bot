@@ -3,19 +3,20 @@ const { MongoClient } = require('mongodb')
 let client
 let db
 
-function connect (url = 'mongodb://localhost:27017', db = 'pinano') {
+function connect (url = 'mongodb://localhost:27017', dbName = 'pinano') {
   return MongoClient.connect(url, { useNewUrlParser: true }).then(client => {
-    db = client.db(db)
+    db = client.db(dbName)
     let userRepository = new MongoUserRepository({ userCollection: db.collection('users') })
     let guildRepository = new MongoGuildRepository({ guildCollection: db.collection('guilds') })
     return { userRepository, guildRepository }
   })
 }
 
+function _getDatabase () {
+  return db
+}
+
 async function shutdown () {
-  if (db) {
-    await db.close()
-  }
   if (client) {
     await client.close()
   }
@@ -55,6 +56,12 @@ class MongoUserRepository {
   async save (user) {
     return this.collection.updateOne({ id: user.id }, { $set: user }, { upsert: true })
   }
+
+  async resetSessionTimes () {
+    return this.collection.updateMany(
+      { current_session_playtime: { $gt: 0 } },
+      { $set: { current_session_playtime: 0 } })
+  }
 }
 
 function makeGuild (guildId) {
@@ -86,4 +93,4 @@ class MongoGuildRepository {
   }
 }
 
-module.exports = { connect, shutdown, makeUser, makeGuild }
+module.exports = { connect, shutdown, makeUser, makeGuild, client, _getDatabase }
