@@ -1,10 +1,11 @@
-const { connect, shutdown, makeUser, makeGuild } = require("../library/persistence")
+const { connect, shutdown, makeUser, makeGuild, _getDatabase } = require("../library/persistence")
 
 let userRepository
 let guildRepository
 
 beforeAll(async () => {
   results = await connect("mongodb://localhost:27017", "test_db")
+  await _getDatabase().dropDatabase()
   userRepository = results.userRepository
   guildRepository = results.guildRepository
 })
@@ -20,6 +21,11 @@ test('can store user', async () => {
   return expect(userRepository.save(newUser)).resolves.not.toBeNull()
 })
 
+test('return null for missing user', async () => {
+  const existingUser = await userRepository.load(987654321)
+  expect(existingUser).toBeNull()
+})
+
 test('can load user', async () => {
   const newUser = makeUser(1)
   await userRepository.save(newUser)
@@ -31,31 +37,38 @@ test('can load user', async () => {
 })
 
 test('can load top users', async () => {
-  const user1 = makeUser(1)
-  user1.current_session_playtime = 100
-  save1 = userRepository.save(user1)
-
-  const user2 = makeUser(2)
-  user2.current_session_playtime = 50
-  save2 = userRepository.save(user2)
-
-  const user3 = makeUser(3)
-  user3.current_session_playtime = 150
-  save3 = userRepository.save(user3)
-
-  const user4 = makeUser(4)
-  user4.current_session_playtime = 5 
-  save4 = userRepository.save(user4)
-
-  const user5 = makeUser(5)
-  user5.current_session_playtime = 25 
-  save5 = userRepository.save(user5)
-
-  await Promise.all([save1, save2, save3, save4, save5])
-
+  await createSomeUsers(10, () => randomInt(0, 3600))
   topThree = await userRepository.loadTopSession(3)
+
   expect(topThree).toHaveLength(3)
-  expect(topThree[0].id).toBe(3)
-  expect(topThree[1].id).toBe(1)
-  expect(topThree[2].id).toBe(2)
+  expect(topThree[0].current_session_playtime)
+    .toBeGreaterThan(topThree[1].current_session_playtime)
+  expect(topThree[1].current_session_playtime)
+    .toBeGreaterThan(topThree[2].current_session_playtime)
 })
+
+test('can reset session times', async () => {
+  await createSomeUsers(10, () => 3600) // everyone has an hour
+
+  await userRepository.resetSessionTimes()
+
+  let topUsers = await userRepository.loadTopSession(100)
+  for (let user of topUsers) {
+    expect(user.id).not.toBe(0)
+    expect(user.current_session_playtime).toBe(0)
+  }
+})
+
+function randomInt(low, high) {
+  return Math.floor(Math.random() * (high - low) + low)
+}
+
+function createSomeUsers (n, currentPlaytimeFn) {
+  let promises = []
+  for (let i = 0; i < n; i++) {
+    const user = makeUser(randomInt(1, 100))
+    user.current_session_playtime = currentPlaytimeFn()
+    promises.push(userRepository.save(user))
+  }
+  return Promise.all(promises)
+}
