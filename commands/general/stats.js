@@ -48,7 +48,7 @@ module.exports.load = (client) => {
         let guild = await client.loadGuildData(message.guild.id)
         let mem = client.guilds.get(message.guild.id).members.get(message.author.id)
         // these last two conditions should be equivalent but maybe they were already pracking when the bot came up
-        if (guild.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
+        if (mem.voiceChannel != null && guild.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
           activeTime = moment().unix() - mem.s_time
         }
 
