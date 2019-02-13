@@ -26,7 +26,7 @@ function makeUser (userId) {
   return {
     id: userId,
     current_session_playtime: 0,
-    overall_session_playtime: 0,
+    overall_session_playtime: 0
   }
 }
 
@@ -62,11 +62,42 @@ class MongoUserRepository {
       { current_session_playtime: { $gt: 0 } },
       { $set: { current_session_playtime: 0 } })
   }
+
+  async getOverallPos (userId) {
+    return this.collection.aggregate([
+      { $sort: { overall_session_playtime: -1 } },
+      { $group: {
+        _id: null,
+        user: { $push: {
+          id: '$id',
+          overall_session_playtime: '$overall_session_playtime'
+        } }
+      } },
+      { $unwind: { path: '$user', includeArrayIndex: 'overallRank' } },
+      { $match: { 'user.id': userId } }
+    ]).toArray().then(arr => arr[0].overallRank)
+  }
+
+  async getSessionPos (userId) {
+    let rank = 0
+    let rankedCursor = await this.collection.find().sort({ current_session_playtime: -1 })
+    let user = await rankedCursor.next()
+    while (user != null) {
+      if (user.id === userId) {
+        rankedCursor.close()
+        return rank
+      }
+      rank++
+      user = await rankedCursor.next()
+    }
+    rankedCursor.close()
+    return null
+  }
 }
 
 function makeGuild (guildId) {
   return {
-    guild: id,
+    guild: guildId,
     welcome_toggle: false,
     leave_toggle: false,
     dm_welcome_toggle: false,
