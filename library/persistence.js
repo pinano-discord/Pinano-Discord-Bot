@@ -4,7 +4,8 @@ let client
 let db
 
 function connect (url = 'mongodb://localhost:27017', dbName = 'pinano') {
-  return MongoClient.connect(url, { useNewUrlParser: true }).then(client => {
+  return MongoClient.connect(url, { useNewUrlParser: true }).then(newClient => {
+    client = newClient
     db = client.db(dbName)
     let userRepository = new MongoUserRepository({ userCollection: db.collection('users') })
     let guildRepository = new MongoGuildRepository({ guildCollection: db.collection('guilds') })
