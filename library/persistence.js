@@ -64,33 +64,33 @@ class MongoUserRepository {
   }
 
   async getOverallPos (userId) {
-    return this.collection.aggregate([
-      { $sort: { overall_session_playtime: -1 } },
-      { $group: {
-        _id: null,
-        user: { $push: {
-          id: '$id',
-          overall_session_playtime: '$overall_session_playtime'
-        } }
-      } },
-      { $unwind: { path: '$user', includeArrayIndex: 'overallRank' } },
-      { $match: { 'user.id': userId } }
-    ]).toArray().then(arr => arr[0].overallRank)
+    return this._getRankBy(userId, 'overall_session_playtime')
   }
 
   async getSessionPos (userId) {
+    return this._getRankBy(userId, 'current_session_playtime')
+  }
+
+  async _getRankBy (userId, key) {
+    try {
+      var rankedCursor = await this.collection.find().sort({ [key]: -1 })
+      let rank = await this._getRankFromCursor(userId, rankedCursor)
+      return rank
+    } finally {
+      rankedCursor.close()
+    }
+  }
+
+  async _getRankFromCursor (userId, cursor) {
     let rank = 0
-    let rankedCursor = await this.collection.find().sort({ current_session_playtime: -1 })
-    let user = await rankedCursor.next()
+    let user = await cursor.next()
     while (user != null) {
       if (user.id === userId) {
-        rankedCursor.close()
         return rank
       }
       rank++
-      user = await rankedCursor.next()
+      user = await cursor.next()
     }
-    rankedCursor.close()
     return null
   }
 }
