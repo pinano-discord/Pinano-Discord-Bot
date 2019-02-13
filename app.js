@@ -1,6 +1,6 @@
 const cron = require('node-cron')
 let Discord = require('discord.js')
-const { connect, shutdown, makeUser, makeGuild } = require('library/persistence')
+const { connect, makeUser, makeGuild } = require('library/persistence')
 
 let client = new Discord.Client()
 
@@ -35,7 +35,7 @@ cron.schedule('0 0 * * mon', () => {
   client.log('Cleared weekly results')
 })
 
-connect("mongodb://localhost:27017/", "pinano").then((userRepository, guildRepository) => {
+connect('mongodb://localhost:27017/', 'pinano').then((userRepository, guildRepository) => {
   client.log(`Connected Database`)
   client.userRepository = userRepository
   client.guildRepository = guildRepository
