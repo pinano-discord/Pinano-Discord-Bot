@@ -114,6 +114,17 @@ module.exports = client => {
             client.createGuild(newMember.guild.id)
             client.log('Created new guild.')
           } else {
+            // if in any practice channel, member has rights to speak in practice room chat (can be muted)
+            let prChan = client.channels.find(chan => chan.name === 'practice-room-chat')
+            if (prChan == null) {
+              client.log('Cannot find #practice-room-chat!')
+            } else if (restwo.permitted_channels.includes(newMember.voiceChannelID)) {
+              prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: true })
+            } else {
+              // remove the permission overwrite when member is no longer in a practice room
+              prChan.permissionOverwrites.get(newMember.user.id).delete()
+            }
+
             // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
             // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
             // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
