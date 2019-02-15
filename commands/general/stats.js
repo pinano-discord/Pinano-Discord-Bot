@@ -8,21 +8,22 @@ module.exports.load = (client) => {
       let args = message.content.split(' ').splice(1)
       let username
       let discriminator
+      let mem
       let userId
       let av = './assets/default_avatar.jpg'
 
-      if (args.length === 1) {
+      if (args.length >= 1) {
         // fqName: "fully qualified name"
         let fqName = args[0].split('#')
         if (fqName.length === 2) {
           username = fqName[0]
           discriminator = fqName[1]
-          let user = client.guilds.get(message.guild.id).members.find(val => val.user.username === username && val.user.discriminator === discriminator).user
-          if (user != null) {
-            userId = user.id
+          mem = client.guilds.get(message.guild.id).members.find(val => val.user.username === username && val.user.discriminator === discriminator)
+          if (mem != null) {
+            userId = mem.user.id
             // checks if user has pfp because discord dosnt return default pfp url >:C
-            if (user.avatarURL != null) {
-              av = user.avatarURL
+            if (mem.user.avatarURL != null) {
+              av = mem.user.avatarURL
             }
           } else {
             return client.errorMessage(message, `Unable to find user ${args[0]}.`)
@@ -34,6 +35,7 @@ module.exports.load = (client) => {
         username = message.author.username
         discriminator = message.author.discriminator
         userId = message.author.id
+        mem = client.guilds.get(message.guild.id).members.get(userId)
         if (message.author.avatarURL != null) {
           av = message.author.avatarURL
         }
@@ -72,7 +74,6 @@ module.exports.load = (client) => {
         // check if the user is actively pracking and update times live if necessary
         let activeTime = 0
         let guild = await client.loadGuildData(message.guild.id)
-        let mem = client.guilds.get(message.guild.id).members.get(userId)
         // these last two conditions should be equivalent but maybe they were already pracking when the bot came up
         if (mem.voiceChannel != null && guild.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
           activeTime = moment().unix() - mem.s_time
