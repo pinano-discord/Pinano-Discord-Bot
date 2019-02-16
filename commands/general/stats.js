@@ -5,19 +5,55 @@ const moment = require('moment')
 module.exports.load = (client) => {
   client.commands['stats'] = {
     run (message) {
-      client.loadUserData(message.author.id, async res => {
+      let args = message.content.split(' ').splice(1)
+      let username
+      let discriminator
+      let mem
+      let userId
+      let av = './assets/default_avatar.jpg'
+
+      if (args.length >= 1) {
+        // fqName: "fully qualified name"
+        let fqName = args[0].split('#')
+        if (fqName.length === 2) {
+          username = fqName[0]
+          discriminator = fqName[1]
+          mem = client.guilds.get(message.guild.id).members.find(val => val.user.username === username && val.user.discriminator === discriminator)
+          if (mem != null) {
+            userId = mem.user.id
+            // checks if user has pfp because discord dosnt return default pfp url >:C
+            if (mem.user.avatarURL != null) {
+              av = mem.user.avatarURL
+            }
+          } else {
+            return client.errorMessage(message, `Unable to find user ${args[0]}.`)
+          }
+        } else {
+          return client.errorMessage(message, `Invalid username format.`)
+        }
+      } else {
+        username = message.author.username
+        discriminator = message.author.discriminator
+        userId = message.author.id
+        mem = client.guilds.get(message.guild.id).members.get(userId)
+        if (message.author.avatarURL != null) {
+          av = message.author.avatarURL
+        }
+      }
+
+      client.loadUserData(userId, async res => {
         if (res === null) {
           client.errorMessage(message, 'Error fetching your data from our servers, please try again.')
           return
         }
 
-        // set "semi-global" variabls
+        // set "semi-global" variables
         let avatar
         let source
         let poss
 
         // get leaderboard pos
-        await client.fetchWeeklyLeaderboardPos(message, pos => {
+        await client.fetchWeeklyLeaderboardPos(message.guild.id, userId, pos => {
           poss = pos.replace(/`/g, '')
         })
 
@@ -26,14 +62,6 @@ module.exports.load = (client) => {
           .then(i => {
             source = i
           })
-
-        // checks if user has pfp because discord dosnt return default pfp url >:C
-        let av
-        if (message.author.avatarURL == null) {
-          av = './assets/default_avatar.jpg'
-        } else {
-          av = message.author.avatarURL
-        }
 
         // overlay avatar on template image
         await jimp.read(av)
@@ -46,7 +74,6 @@ module.exports.load = (client) => {
         // check if the user is actively pracking and update times live if necessary
         let activeTime = 0
         let guild = await client.loadGuildData(message.guild.id)
-        let mem = client.guilds.get(message.guild.id).members.get(message.author.id)
         // these last two conditions should be equivalent but maybe they were already pracking when the bot came up
         if (mem.voiceChannel != null && guild.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
           activeTime = moment().unix() - mem.s_time
@@ -55,7 +82,7 @@ module.exports.load = (client) => {
         // write the text stuff
         await jimp.loadFont(jimp.FONT_SANS_16_WHITE)
           .then(async font => {
-            source.print(font, 245, 25, `${message.author.username}#${message.author.discriminator}`)
+            source.print(font, 245, 25, `${username}#${discriminator}`)
             source.print(font, 135, 90, abbreviateTime(res.current_session_playtime + activeTime))
             source.print(font, 280, 90, abbreviateTime(res.overall_session_playtime + activeTime))
             source.print(font, 435, 90, poss)
