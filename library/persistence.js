@@ -1,25 +1,32 @@
 const { MongoClient } = require('mongodb')
 
-let client
-let db
-
 function connect (url = 'mongodb://localhost:27017', dbName = 'pinano') {
-  return MongoClient.connect(url, { useNewUrlParser: true }).then(newClient => {
-    client = newClient
-    db = client.db(dbName)
-    let userRepository = new MongoUserRepository({ userCollection: db.collection('users') })
-    let guildRepository = new MongoGuildRepository({ guildCollection: db.collection('guilds') })
-    return { userRepository, guildRepository }
+  return MongoClient.connect(url, { useNewUrlParser: true }).then(client => {
+    return new MongoManager(client, dbName)
   })
 }
 
-function _getDatabase () {
-  return db
-}
+class MongoManager {
+  constructor (client, dbName) {
+    this.client = client
+    this.dbName = dbName
+    this.db = this.client.db(this.dbName)
+  }
 
-async function shutdown () {
-  if (client) {
-    await client.close()
+  dropDatabase () {
+    return this.db.dropDatabase()
+  }
+
+  newUserRepository () {
+    return new MongoUserRepository({ userCollection: this.db.collection('users') })
+  }
+
+  newGuildRepository () {
+    return new MongoGuildRepository({ guildCollection: this.db.collection('guilds') })
+  }
+
+  async shutdown () {
+    await this.client.close()
   }
 }
 
@@ -125,4 +132,4 @@ class MongoGuildRepository {
   }
 }
 
-module.exports = { connect, shutdown, makeUser, makeGuild, client, _getDatabase }
+module.exports = { connect, makeUser, makeGuild }
