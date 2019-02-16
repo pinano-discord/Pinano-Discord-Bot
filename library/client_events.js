@@ -117,17 +117,20 @@ module.exports = client => {
             client.log('Created new guild.')
           } else {
             // if in any practice channel, member has rights to speak in practice room chat (can be muted)
-            let prChan = client.channels.find(chan => chan.name === 'practice-room-chat')
+            let prChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat')
             if (prChan == null) {
               client.log('Cannot find #practice-room-chat!')
             } else if (restwo.permitted_channels.includes(newMember.voiceChannelID)) {
               prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: true })
             } else {
-              // remove the permission overwrite when member is no longer in a practice room
               let existingOverride = prChan.permissionOverwrites.get(newMember.user.id)
-              // this shouldn't happen unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
+              // existingOverride shouldn't be null unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
               if (existingOverride != null) {
-                existingOverride.delete()
+                if (existingOverride.allowed.bitfield === 0x800 && existingOverride.denied.bitfield === 0) { // the only permission was allow SEND_MESSAGES
+                  existingOverride.delete()
+                } else {
+                  prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: null })
+                }
               }
             }
 
