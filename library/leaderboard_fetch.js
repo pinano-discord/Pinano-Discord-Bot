@@ -67,7 +67,7 @@ module.exports = (client, db) => {
           }
         }
 
-        client.fetchOverallLeaderboardPos(message, pos => {
+        client.fetchOverallLeaderboardPos(message.guild.id, message.author.id, pos => {
           msgStr = `**${message.author.username}**, you are rank ${pos}\n ${msgStr}`
           callback(msgStr)
         })
@@ -113,7 +113,7 @@ module.exports = (client, db) => {
         }
 
         if (message != null) {
-          client.fetchWeeklyLeaderboardPos(message, pos => {
+          client.fetchWeeklyLeaderboardPos(message.guild.id, message.author.id, pos => {
             msgStr = `**${message.author.username}**, you are rank ${pos}\n ${msgStr}`
             callback(msgStr)
           })
@@ -124,8 +124,8 @@ module.exports = (client, db) => {
     })
   }
 
-  client.fetchWeeklyLeaderboardPos = (message, callback) => {
-    client.findCurrentPrackers(message.guild.id, (currentPrackers) => {
+  client.fetchWeeklyLeaderboardPos = (guildId, userId, callback) => {
+    client.findCurrentPrackers(guildId, (currentPrackers) => {
       let scoreArray = []
       let msgStr = ''
       db.collection('users').find({}).toArray()
@@ -153,7 +153,7 @@ module.exports = (client, db) => {
         for (let i = 0; i <= scoreArray.length; i++) {
           if (scoreArray[i]) {
             let user = scoreArray[i].split('|')[0]
-            if (user === message.author.id) { pos = trueJ + 1 }
+            if (user === userId) { pos = trueJ + 1 }
             trueJ++
           }
         }
@@ -165,8 +165,8 @@ module.exports = (client, db) => {
     })
   }
 
-  client.fetchOverallLeaderboardPos = (message, callback) => {
-    client.findCurrentPrackers(message.guild.id, (currentPrackers) => {
+  client.fetchOverallLeaderboardPos = (guildId, userId, callback) => {
+    client.findCurrentPrackers(guildId, (currentPrackers) => {
       let scoreArray = []
       let msgStr = ''
       db.collection('users').find({}).toArray()
@@ -194,7 +194,7 @@ module.exports = (client, db) => {
         for (let i = 0; i <= scoreArray.length; i++) {
           if (scoreArray[i]) {
             let user = scoreArray[i].split('|')[0]
-            if (user === message.author.id) { pos = trueJ + 1 }
+            if (user === userId) { pos = trueJ + 1 }
             trueJ++
           }
         }

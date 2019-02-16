@@ -1,6 +1,8 @@
 const moment = require('moment')
 
 module.exports = client => {
+  client.on('error', client.log)
+
   client.on('ready', async () => {
     await client.log('Successfully connected to discord.')
     await client.user.setActivity(client.settings.activity, { type: 'Playing' }).catch(e => client.cannon.fire('Could not set activity.'))
