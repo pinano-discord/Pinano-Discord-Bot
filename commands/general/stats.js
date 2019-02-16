@@ -14,7 +14,7 @@ module.exports.load = (client) => {
 
       if (args.length >= 1) {
         // fqName: "fully qualified name"
-        let fqName = args.join(' ').split('#')
+        let fqName = args.join(' ').trim().split('#')
         if (fqName.length === 2) {
           username = fqName[0]
           discriminator = fqName[1]
