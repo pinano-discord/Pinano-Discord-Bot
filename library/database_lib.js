@@ -13,6 +13,10 @@ module.exports = (client) => {
     })
   }
 
+  client._setDB = (providedDb) => {
+    db = providedDb
+  }
+
   client.loadUserData = (discordID, callback) => {
     db.collection('users').findOne({ id: discordID }, (err, res) => {
       if (err) client.log(err)
