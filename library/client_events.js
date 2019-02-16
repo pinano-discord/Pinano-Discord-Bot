@@ -122,7 +122,11 @@ module.exports = client => {
               prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: true })
             } else {
               // remove the permission overwrite when member is no longer in a practice room
-              prChan.permissionOverwrites.get(newMember.user.id).delete()
+              let existingOverride = prChan.permissionOverwrites.get(newMember.user.id)
+              // this shouldn't happen unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
+              if (existingOverride != null) {
+                existingOverride.delete()
+              }
             }
 
             // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
