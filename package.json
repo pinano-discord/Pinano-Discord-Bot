@@ -14,7 +14,7 @@
     "humanize-duration": "^3.16.0",
     "jimp": "^0.6.0",
     "moment": "^2.22.2",
-    "mongodb": "^3.1.8",
+    "mongodb": "^3.1.13",
     "node-cron": "^2.0.3",
     "opusscript": "0.0.6"
   },
