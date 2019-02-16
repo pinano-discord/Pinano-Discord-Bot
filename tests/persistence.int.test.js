@@ -1,17 +1,19 @@
-const { connect, shutdown, makeUser, _getDatabase } = require('../library/persistence')
+const { connect, makeUser } = require('../library/persistence')
 
+let mongoManager
 let userRepository
 let guildRepository
 
 beforeAll(async () => {
-  let results = await connect('mongodb://localhost:27017', 'test_db')
-  userRepository = results.userRepository
-  guildRepository = results.guildRepository
+  mongoManager = await connect('mongodb://localhost:27017', 'test_db')
+  userRepository = mongoManager.newUserRepository()
+  guildRepository = mongoManager.newGuildRepository()
 })
-afterAll(shutdown)
-
 beforeEach(async () => {
-  await _getDatabase().dropDatabase()
+  await mongoManager.dropDatabase()
+})
+afterAll(async () => {
+  await mongoManager.shutdown()
 })
 
 test('connects to mongo', async () => {
