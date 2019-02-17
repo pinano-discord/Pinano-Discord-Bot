@@ -23,7 +23,9 @@
     "standard": "^12.0.1"
   },
   "scripts": {
-    "test": "standard --verbose && jest"
+    "test": "standard --verbose && jest",
+    "test:int": "standard --verbose && jest int --passWithNoTests",
+    "test:unit": "standard --verbose && jest unit --passWithNoTests"
   },
   "standard": {
     "env": [
