@@ -49,15 +49,17 @@ class MongoUserRepository {
   }
 
   async loadTopSession (n) {
-    return this.collection.aggregate([
-      { $sort: { current_session_playtime: -1 } },
-      { $limit: n }
-    ]).toArray()
+    return this._loadTopBy(n, 'current_session_playtime')
   }
 
   async loadTopOverall (n) {
+    return this._loadTopBy(n, 'overall_session_playtime')
+  }
+
+  async _loadTopBy (n, key) {
     return this.collection.aggregate([
-      { $sort: { overall_session_playtime: -1 } },
+      { $match: { [key]: { $gt: 0 } } },
+      { $sort: { [key]: -1 } },
       { $limit: n }
     ]).toArray()
   }
@@ -82,7 +84,7 @@ class MongoUserRepository {
 
   async _getRankBy (userId, key) {
     try {
-      var rankedCursor = await this.collection.find().sort({ [key]: -1 })
+      var rankedCursor = await this.collection.find({ [key]: { $gt: 0 } }).sort({ [key]: -1 })
       let rank = await this._getRankFromCursor(userId, rankedCursor)
       return rank
     } finally {
@@ -100,7 +102,7 @@ class MongoUserRepository {
       rank++
       user = await cursor.next()
     }
-    return null
+    return undefined
   }
 }
 

@@ -42,7 +42,7 @@ test('can load user', async () => {
 })
 
 test('can load top users', async () => {
-  await createSomeUsers(10, () => randomInt(0, 3600))
+  await createSomeUsers(10, () => randomInt(1, 3600))
   let topThree = await userRepository.loadTopSession(3)
 
   expect(topThree).toHaveLength(3)
@@ -53,7 +53,7 @@ test('can load top users', async () => {
 })
 
 test('can get overall rank', async () => {
-  await createSomeUsers(10, () => randomInt(0, 3600))
+  await createSomeUsers(10, () => randomInt(1, 3600))
   let topTen = await userRepository.loadTopOverall(10)
   for (let expectedRank = 0; expectedRank < topTen.length; expectedRank++) {
     let rank = await userRepository.getOverallPos(topTen[expectedRank].id)
@@ -61,12 +61,44 @@ test('can get overall rank', async () => {
   }
 })
 
-test('can get session rank', async () => {
-  await createSomeUsers(10, () => randomInt(0, 3600))
+test('session rank with zero time is undefined', async () => {
+  const user = makeUser(314159)
+  await userRepository.save(user)
+
+  let rank = await userRepository.getSessionPos(user.id)
+  expect(rank).toBeUndefined()
+})
+
+test('can get session rank by user', async () => {
+  await createSomeUsers(10, () => randomInt(1, 3600))
   let topTen = await userRepository.loadTopSession(10)
   for (let expectedRank = 0; expectedRank < topTen.length; expectedRank++) {
     let rank = await userRepository.getSessionPos(topTen[expectedRank].id)
     expect(rank).toBe(expectedRank)
+  }
+})
+
+test('session rank ignores zero practice time users', async () => {
+  await createSomeUsers(5, () => randomInt(1, 3600))
+  await createSomeUsers(10, () => 0)
+
+  let topUsers = await userRepository.loadTopSession(10)
+
+  expect(topUsers).toHaveLength(5)
+  for (let user of topUsers) {
+    expect(user.current_session_playtime).not.toBe(0)
+  }
+})
+
+test('overall rank ignores zero practice time users', async () => {
+  await createSomeUsers(5, () => randomInt(1, 3600))
+  await createSomeUsers(10, () => 0)
+
+  let topUsers = await userRepository.loadTopOverall(10)
+
+  expect(topUsers).toHaveLength(5)
+  for (let user of topUsers) {
+    expect(user.overall_session_playtime).not.toBe(0)
   }
 })
 
