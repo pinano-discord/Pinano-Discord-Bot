@@ -14,7 +14,7 @@ module.exports.load = (client) => {
 
       if (args.length >= 1) {
         // fqName: "fully qualified name"
-        let fqName = args[0].split('#')
+        let fqName = args.join(' ').trim().split('#')
         if (fqName.length === 2) {
           username = fqName[0]
           discriminator = fqName[1]
@@ -26,7 +26,7 @@ module.exports.load = (client) => {
               av = mem.user.avatarURL
             }
           } else {
-            return client.errorMessage(message, `Unable to find user ${args[0]}.`)
+            return client.errorMessage(message, `Unable to find user ${username}#${discriminator}.`)
           }
         } else {
           return client.errorMessage(message, `Invalid username format.`)

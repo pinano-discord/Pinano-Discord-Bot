@@ -42,8 +42,10 @@ module.exports = (client, db) => {
               time += currentPrackers.get(doc.id)
             }
 
-            let string = `${doc.id}|${time}`
-            scoreArray.push(string)
+            if (time > 0) {
+              let string = `${doc.id}|${time}`
+              scoreArray.push(string)
+            }
           })
           await con()
         })
@@ -87,8 +89,10 @@ module.exports = (client, db) => {
               time += currentPrackers.get(doc.id)
             }
 
-            let string = `${doc.id}|${time}`
-            scoreArray.push(string)
+            if (time > 0) {
+              let string = `${doc.id}|${time}`
+              scoreArray.push(string)
+            }
           })
           await con()
         })
@@ -136,8 +140,10 @@ module.exports = (client, db) => {
               time += currentPrackers.get(doc.id)
             }
 
-            let string = `${doc.id}|${time}`
-            scoreArray.push(string)
+            if (time > 0) {
+              let string = `${doc.id}|${time}`
+              scoreArray.push(string)
+            }
           })
           await con()
         })
@@ -158,7 +164,11 @@ module.exports = (client, db) => {
           }
         }
 
-        msgStr = `\`${pos}\` / \`${trueJ}\``
+        if (pos > 0) {
+          msgStr = `\`${pos}\` / \`${trueJ}\``
+        } else {
+          msgStr = 'N / A'
+        }
 
         callback(msgStr)
       }
@@ -177,8 +187,10 @@ module.exports = (client, db) => {
               time += currentPrackers.get(doc.id)
             }
 
-            let string = `${doc.id}|${time}`
-            scoreArray.push(string)
+            if (time > 0) {
+              let string = `${doc.id}|${time}`
+              scoreArray.push(string)
+            }
           })
           await con()
         })
@@ -199,7 +211,11 @@ module.exports = (client, db) => {
           }
         }
 
-        msgStr = `\`${pos}\` / \`${trueJ}\``
+        if (pos > 0) {
+          msgStr = `\`${pos}\` / \`${trueJ}\``
+        } else {
+          msgStr = 'N / A'
+        }
 
         callback(msgStr)
       }
