@@ -1,7 +1,8 @@
 const { MongoClient } = require('mongodb')
 
-function connect (url = 'mongodb://localhost:27017', dbName = 'pinano') {
-  return MongoClient.connect(url, { useNewUrlParser: true }).then(client => {
+function connect (url = 'mongodb://localhost:27017', dbName = 'pinano', options = {}) {
+  options.useNewUrlParser = true
+  return MongoClient.connect(url, options).then(client => {
     return new MongoManager(client, dbName)
   })
 }

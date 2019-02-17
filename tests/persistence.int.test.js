@@ -5,7 +5,7 @@ let userRepository
 let guildRepository
 
 beforeAll(async () => {
-  mongoManager = await connect('mongodb://localhost:27017', 'test_db')
+  mongoManager = await connect('mongodb://localhost:27017', 'test_db', { socketTimeoutMS: 500 })
   userRepository = mongoManager.newUserRepository()
   guildRepository = mongoManager.newGuildRepository()
 })
