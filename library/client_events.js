@@ -1,4 +1,5 @@
 const moment = require('moment')
+const Discord = require('discord.js')
 
 module.exports = client => {
   client.on('error', client.log)
@@ -126,7 +127,7 @@ module.exports = client => {
               let existingOverride = prChan.permissionOverwrites.get(newMember.user.id)
               // existingOverride shouldn't be null unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
               if (existingOverride != null) {
-                if (existingOverride.allowed.bitfield === 0x800 && existingOverride.denied.bitfield === 0) { // the only permission was allow SEND_MESSAGES
+                if (existingOverride.allowed.bitfield === Discord.Permissions.FLAGS.SEND_MESSAGES && existingOverride.denied.bitfield === 0) { // the only permission was allow SEND_MESSAGES
                   existingOverride.delete()
                 } else {
                   prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: null })
