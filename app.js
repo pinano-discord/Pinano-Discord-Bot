@@ -29,7 +29,7 @@ let connect = () => {
 
 // weekly wipe at 12 am on monday
 cron.schedule('0 0 * * mon', () => {
-  client.submitweek()
+//  client.submitweek()
   client.clearWeekResults()
   client.log('Cleared weekly results')
 })
