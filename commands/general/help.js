@@ -5,9 +5,9 @@ module.exports.load = (client) => {
       msg.setTitle('Help')
       msg.setDescription(`Here is a list of all currently available commands.`)
       msg.addField('General Commands', `
-            \`${client.settings.prefix}help\` - Get help for the bot!
-            \`${client.settings.prefix}stats\` - Get your practice stats!
-            \`${client.settings.prefix}{leaderboard/lb} {weekly/overall}\` - See the leaderboards!
+            \`${client.settings.prefix}help\` - Show a list of available commands!
+            \`${client.settings.prefix}stats {name}\` - Show a user's practice stats! \`IE: ${client.settings.prefix}stats theProject#2997\`
+            \`${client.settings.prefix}{leaderboard/lb} {weekly/overall}\` - See the leaderboards! \`IE: ${client.settings.prefix}lb overall\`
             `, false)
       msg.addField('Admin Commands', `
             \`${client.settings.prefix}settings\` - See settings commands
