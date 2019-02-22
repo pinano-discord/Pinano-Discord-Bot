@@ -19,7 +19,7 @@ module.exports.load = (client) => {
         if (args.length === 0) {
           let msg = new client.discord.RichEmbed()
           msg.setTitle('Settings')
-          msg.addField('Toggles {On/Off}', `\`\`\`welcomes leaves dm_welcomes\`\`\``, false)
+          msg.addField('Toggles {On/Off}', `\`\`\`welcomes leaves dm_welcomes voice_perm\`\`\``, false)
           msg.addField('Channels {<#ChannelID>}', `\`\`\`welcome_channel leave_channel\`\`\``, false)
           msg.addField('Strings {String}', `\`\`\`welcome_message leave_message dm_welcome_message\`\`\``, false)
           msg.addField('Other', `\`\`\`practice_channels\`\`\``, false)
@@ -61,6 +61,9 @@ module.exports.load = (client) => {
 
           case 'leaves':
             return interpretOnOffToggle('leave_toggle', args, `Leaves can be either toggled on or off. Example: ${client.settings.prefix}settings leaves on`)
+
+          case 'voice_perm':
+            return interpretOnOffToggle('voice_perm_toggle', args, `Assigning send_msg on voice chat join can be either toggled on or off. Example: ${client.settings.prefix}settings voice_perm on`)
 
           case 'welcome_channel':
             if (args.length !== 2) {

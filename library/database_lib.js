@@ -35,6 +35,7 @@ module.exports = (client) => {
       welcome_toggle: false,
       leave_toggle: false,
       dm_welcome_toggle: false,
+      voice_perm_toggle: false,
       welcome_channel: '',
       leave_channel: '',
       welcome_message: '',
