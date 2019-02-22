@@ -1,4 +1,5 @@
 const moment = require('moment')
+const Discord = require('discord.js')
 
 module.exports = client => {
   client.on('error', client.log)
@@ -116,6 +117,24 @@ module.exports = client => {
             client.createGuild(newMember.guild.id)
             client.log('Created new guild.')
           } else {
+            // if in any practice channel, member has rights to speak in practice room chat (can be muted)
+            let prChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat')
+            if (prChan == null) {
+              client.log('Cannot find #practice-room-chat!')
+            } else if (restwo.permitted_channels.includes(newMember.voiceChannelID)) {
+              prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: true })
+            } else {
+              let existingOverride = prChan.permissionOverwrites.get(newMember.user.id)
+              // existingOverride shouldn't be null unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
+              if (existingOverride != null) {
+                if (existingOverride.allowed.bitfield === Discord.Permissions.FLAGS.SEND_MESSAGES && existingOverride.denied.bitfield === 0) { // the only permission was allow SEND_MESSAGES
+                  existingOverride.delete()
+                } else {
+                  prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: null })
+                }
+              }
+            }
+
             // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
             // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
             // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
