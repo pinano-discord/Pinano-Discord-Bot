@@ -19,9 +19,17 @@
     "opusscript": "0.0.6"
   },
   "devDependencies": {
+    "jest": "^24.1.0",
     "standard": "^12.0.1"
   },
   "scripts": {
-    "test": "standard --verbose"
+    "test": "standard --verbose && jest",
+    "test:int": "standard --verbose && jest int --passWithNoTests",
+    "test:unit": "standard --verbose && jest unit --passWithNoTests"
+  },
+  "standard": {
+    "env": [
+      "jest"
+    ]
   }
 }

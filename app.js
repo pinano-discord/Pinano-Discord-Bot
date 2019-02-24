@@ -1,5 +1,6 @@
 const cron = require('node-cron')
 let Discord = require('discord.js')
+const { connect, makeUser, makeGuild } = require('./library/persistence')
 
 let client = new Discord.Client()
 
@@ -21,12 +22,6 @@ client.log(`Loaded database functions`)
 require('./library/client_events.js')(client)
 client.log(`Loaded client events`)
 
-let connect = () => {
-  return new Promise(resolve => {
-    client.connectDB(db => resolve(db))
-  })
-}
-
 // weekly wipe at 12 am on monday
 cron.schedule('0 0 * * mon', () => {
 //  client.submitweek()
@@ -34,11 +29,16 @@ cron.schedule('0 0 * * mon', () => {
   client.log('Cleared weekly results')
 })
 
-connect().then(db => {
+connect('mongodb://localhost:27017/', 'pinano').then(mongoManager => {
   client.log(`Connected Database`)
-  require('./library/leaderboard_fetch.js')(client, db)
-  client.log(`loaded leaderboard library`)
+  client._setDB(mongoManager.db) // for migration from legacy db
+  require('./library/leaderboard_fetch.js')(client, mongoManager.db)
+  client.log(`loaded legacy leaderboard library`)
 
+  client.userRepository = mongoManager.newUserRepository()
+  client.guildRepository = mongoManager.newGuildRepository()
+  client.makeUser = makeUser
+  client.makeGuild = makeGuild
   client.login(client.settings.token)
     .catch((error) => {
       client.log(error)

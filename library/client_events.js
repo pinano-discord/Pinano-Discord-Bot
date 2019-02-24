@@ -12,25 +12,19 @@ module.exports = client => {
   })
 
   client.on('message', async message => {
-    await client.loadUserData(message.author.id, res => {
-      if (res === null) {
-        let user = {
-          'id': message.author.id,
-          'current_session_playtime': 0,
-          'overall_session_playtime': 0
-        }
-        client.writeUserData(message.author.id, user, () => {
-          client.log(`User created for ${message.author.username}#${message.author.discriminator}`)
-        })
-      }
-    })
-
     if (!client.isValidCommand(message) || !client.commandExist(message)) {
       return
     }
 
     if (!client.settings.pinano_guilds.includes(message.guild.id)) {
       return client.errorMessage(message, 'This bot can only be used on official Pinano servers.')
+    }
+
+    let user = await client.userRepository.load(message.author.id)
+    if (user === null) {
+      user = client.makeUser(message.author.id)
+      await client.userRepository.save(user)
+      client.log(`User created for ${message.author.username}#${message.author.discriminator}`)
     }
 
     await client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')].run(message)
