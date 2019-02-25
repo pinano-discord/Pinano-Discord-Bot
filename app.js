@@ -27,6 +27,8 @@ cron.schedule('0 0 * * mon', () => {
 //  client.submitweek()
   client.clearWeekResults()
   client.log('Cleared weekly results')
+}, {
+  timezone: "America/New_York"
 })
 
 connect('mongodb://localhost:27017/', 'pinano').then(mongoManager => {
