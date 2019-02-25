@@ -27,6 +27,9 @@ module.exports = client => {
         return
       }
       files.forEach(file => {
+        if (!file.endsWith('.js')) {
+          return
+        }
         require(`../commands/general/${file}`).load(client)
       })
     })
@@ -37,6 +40,9 @@ module.exports = client => {
         return
       }
       files.forEach(file => {
+        if (!file.endsWith('.js')) {
+          return
+        }
         require(`../commands/admin/${file}`).load(client)
       })
     })
