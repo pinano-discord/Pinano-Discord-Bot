@@ -82,6 +82,10 @@ class MongoUserRepository {
     return this._getRankBy(userId, 'current_session_playtime')
   }
 
+  async getSessionCount () {
+    return this.collection.find({ current_session_playtime: { $gt: 0 } }).count()
+  }
+
   async _getRankBy (userId, key) {
     try {
       var rankedCursor = await this.collection.find({ [key]: { $gt: 0 } }).sort({ [key]: -1 })
