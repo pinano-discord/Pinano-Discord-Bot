@@ -8,6 +8,7 @@ module.exports.load = (client) => {
             \`${client.settings.prefix}help\` - Show a list of available commands!
             \`${client.settings.prefix}stats {name}\` - Show a user's practice stats! \`IE: ${client.settings.prefix}stats theProject#2997\`
             \`${client.settings.prefix}{leaderboard/lb} {weekly/overall}\` - See the leaderboards! \`IE: ${client.settings.prefix}lb overall\`
+            \`${client.settings.prefix}info help\` - Show all available information macros!
             `, false)
       msg.addField('Admin Commands', `
             \`${client.settings.prefix}settings\` - See settings commands
