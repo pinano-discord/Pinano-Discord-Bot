@@ -13,4 +13,4 @@ use the same version of Node as other developers. There are instructions at the 
 if you just want to jump in without install `nodenv`, make sure you look at [`.node-version`](.node-version)
 for the current version we are using.
 
-PS - MONGODB RUNNING IS REQUIRED!
+PS - You must have mongodb installed and running.
