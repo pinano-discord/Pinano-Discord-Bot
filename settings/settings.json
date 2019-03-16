@@ -5,7 +5,7 @@
     "token" : "",
     "beta_token" : "",
     "embed_color" : 16752128,
-    "activity" : "@Pinano Bot help",
+    "activity" : "type: p!help",
     "bot_devs": [ "174511937151827969", "187548138456743936" ],
     "pinano_guilds" : ["188345759408717825", "523774045439655956"],
 
