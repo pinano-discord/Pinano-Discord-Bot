@@ -2,7 +2,7 @@ const cron = require('node-cron')
 let Discord = require('discord.js')
 const { connect, makeUser, makeGuild } = require('./library/persistence')
 
-let client = new Discord.Client()
+let client = new Discord.Client({ fetchAllMembers: true })
 
 // client appends
 client.settings = require('./settings/settings.json')
