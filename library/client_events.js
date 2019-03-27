@@ -95,6 +95,44 @@ module.exports = client => {
 
     // time handler
     client.loadUserData(newMember.user.id, res => {
+      // auto-VC creation: create a room if all rooms are occupied. Muted or unmuted doesn't matter, because
+      // in general we want to discourage people from using rooms that are occupied even if all the participants
+      // are currently muted (one person could have been practicing there but just muted temporarily).
+      function areAllPracticeRoomsFull (restwo) {
+        let isFull = true
+        restwo.permitted_channels.forEach(chanId => {
+          if (client.guilds.get(newMember.guild.id).channels.get(chanId).members.size === 0) {
+            isFull = false
+          }
+        })
+
+        return isFull
+      }
+
+      // auto-VC creation: remove an extra room if 1) there are at least two empty rooms and 2) one of those
+      // rooms is a temp room. (We don't want to destroy the primary rooms.)
+      function removeTempRoomIfPossible (restwo) {
+        let emptyCount = 0
+        let tempChannelToRemove = null
+        restwo.permitted_channels.forEach(chanId => {
+          let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
+          if (chan.members.size === 0) {
+            emptyCount++
+            if (chan.name === 'Extra Practice Room') {
+              tempChannelToRemove = chan
+            }
+          }
+        })
+
+        // if tempChannelToRemove is null, it means we didn't find an empty temp channel. Don't do anything.
+        if (emptyCount >= 2 && tempChannelToRemove != null) {
+          // before removing the channel from the guild, remove it in the db.
+          restwo['permitted_channels'].splice(restwo.permitted_channels.indexOf(tempChannelToRemove.id), 1)
+          client.writeGuildData(newMember.guild.id, restwo, () => {})
+          tempChannelToRemove.delete()
+        }
+      }
+
       function updatePracticeRoomChatPermissions (restwo, newMember) {
         if (!restwo.voice_perm_toggle) {
           return
@@ -136,6 +174,21 @@ module.exports = client => {
             client.log('Created new guild.')
           } else {
             updatePracticeRoomChatPermissions(restwo, newMember)
+
+            // run auto-VC creation logic
+            if (areAllPracticeRoomsFull(restwo)) {
+              client.guilds.get(newMember.guild.id).createChannel('Extra Practice Room', 'voice').then(newChan => {
+                // make the new channel go in the right place
+                let categoryChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat').parent
+                newChan.setParent(categoryChan).then(newChan => newChan.setPosition(categoryChan.children.size))
+
+                // gotta update the db
+                restwo['permitted_channels'].push(newChan.id)
+                client.writeGuildData(newMember.guild.id, restwo, () => {})
+              })
+            } else {
+              removeTempRoomIfPossible(restwo)
+            }
 
             // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
             // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
