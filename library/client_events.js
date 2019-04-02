@@ -1,5 +1,8 @@
 const moment = require('moment')
+const Mutex = require('async-mutex').Mutex
 const Discord = require('discord.js')
+
+const mutex = new Mutex()
 
 module.exports = client => {
   client.on('error', client.log)
@@ -95,6 +98,46 @@ module.exports = client => {
 
     // time handler
     client.loadUserData(newMember.user.id, res => {
+      // auto-VC creation: create a room if all rooms are occupied. Muted or unmuted doesn't matter, because
+      // in general we want to discourage people from using rooms that are occupied even if all the participants
+      // are currently muted (one person could have been practicing there but just muted temporarily).
+      function areAllPracticeRoomsFull (restwo) {
+        let isFull = true
+        restwo.permitted_channels.forEach(chanId => {
+          let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
+          // channel being null might happen if we have a stale channel in the db - just ignore if this happens.
+          if (chan != null && chan.members.size === 0) {
+            isFull = false
+          }
+        })
+
+        return isFull
+      }
+
+      // auto-VC creation: remove an extra room if 1) there are at least two empty rooms and 2) one of those
+      // rooms is a temp room. (We don't want to destroy the primary rooms.)
+      function removeTempRoomIfPossible (restwo) {
+        let emptyCount = 0
+        let tempChannelToRemove = null
+        restwo.permitted_channels.forEach(chanId => {
+          let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
+          if (chan != null && chan.members.size === 0) {
+            emptyCount++
+            if (chan.name === 'Extra Practice Room') {
+              tempChannelToRemove = chan
+            }
+          }
+        })
+
+        // if tempChannelToRemove is null, it means we didn't find an empty temp channel. Don't do anything.
+        if (emptyCount >= 2 && tempChannelToRemove != null) {
+          // before removing the channel from the guild, remove it in the db.
+          restwo['permitted_channels'].splice(restwo.permitted_channels.indexOf(tempChannelToRemove.id), 1)
+          client.writeGuildData(newMember.guild.id, restwo, () => {})
+          tempChannelToRemove.delete()
+        }
+      }
+
       function updatePracticeRoomChatPermissions (restwo, newMember) {
         if (!restwo.voice_perm_toggle) {
           return
@@ -130,57 +173,74 @@ module.exports = client => {
           client.log(`User created for ${newMember.user.username}#${newMember.user.discriminator}`)
         })
       } else {
-        client.loadGuildData(newMember.guild.id, restwo => {
-          if (restwo === null) {
-            client.createGuild(newMember.guild.id)
-            client.log('Created new guild.')
-          } else {
-            updatePracticeRoomChatPermissions(restwo, newMember)
+        mutex.runExclusive(() => {
+          client.loadGuildData(newMember.guild.id, restwo => {
+            if (restwo === null) {
+              client.createGuild(newMember.guild.id)
+              client.log('Created new guild.')
+            } else {
+              updatePracticeRoomChatPermissions(restwo, newMember)
 
-            // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
-            // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
-            // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
-            if (!newMember.selfMute && !newMember.serverMute && oldMember.s_time == null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
-              // if they are unmuted and a start time dosnt exist and they are in a good channel
-              newMember.s_time = moment().unix()
-            } else if (oldMember.s_time != null) {
-              // if a start time exist transfer it to new user object
-              newMember.s_time = oldMember.s_time
-            }
+              // run auto-VC creation logic
+              if (areAllPracticeRoomsFull(restwo)) {
+                client.guilds.get(newMember.guild.id).createChannel('Extra Practice Room', 'voice').then(newChan => {
+                  // make the new channel go in the right place
+                  let categoryChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat').parent
+                  newChan.setParent(categoryChan).then(newChan => newChan.setPosition(categoryChan.children.size))
 
-            // if user gets muted or leaves or transfers to a bad channel
-            if (newMember.voiceChannelID === null || !restwo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute || newMember.serverMute) {
-              if (newMember.s_time == null) {
-                return
+                  // gotta update the db
+                  restwo['permitted_channels'].push(newChan.id)
+                  client.writeGuildData(newMember.guild.id, restwo, () => {})
+                })
+              } else {
+                removeTempRoomIfPossible(restwo)
               }
 
-              const playtime = moment().unix() - newMember.s_time
-              res.current_session_playtime += playtime
-              res.overall_session_playtime += playtime
-
-              const hourrole = '529404918885384203'
-              // const activerole = '542790691617767424'
-
-              if (res.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourrole)) {
-                newMember.addRole(hourrole)
-                  .catch(e => {
-                    client.log(`error granting user ${newMember.username} hourrole!`)
-                  })
-                  .then(() => {
-                    newMember.send('You have achieved the 40 hour pracker role!')
-                      .catch(e => {
-                        client.log('Could not tell user they leveled! (hourrole)')
-                      })
-                  })
+              // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
+              // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
+              // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
+              if (!newMember.selfMute && !newMember.serverMute && oldMember.s_time == null && restwo.permitted_channels.includes(newMember.voiceChannelID)) {
+                // if they are unmuted and a start time dosnt exist and they are in a good channel
+                newMember.s_time = moment().unix()
+              } else if (oldMember.s_time != null) {
+                // if a start time exist transfer it to new user object
+                newMember.s_time = oldMember.s_time
               }
 
-              client.writeUserData(newMember.user.id, res, () => {
-                client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${playtime} seconds`)
-                newMember.s_time = null
-                oldMember.s_time = null
-              })
+              // if user gets muted or leaves or transfers to a bad channel
+              if (newMember.voiceChannelID === null || !restwo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute || newMember.serverMute) {
+                if (newMember.s_time == null) {
+                  return
+                }
+
+                const playtime = moment().unix() - newMember.s_time
+                res.current_session_playtime += playtime
+                res.overall_session_playtime += playtime
+
+                const hourrole = '529404918885384203'
+                // const activerole = '542790691617767424'
+
+                if (res.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourrole)) {
+                  newMember.addRole(hourrole)
+                    .catch(e => {
+                      client.log(`error granting user ${newMember.username} hourrole!`)
+                    })
+                    .then(() => {
+                      newMember.send('You have achieved the 40 hour pracker role!')
+                        .catch(e => {
+                          client.log('Could not tell user they leveled! (hourrole)')
+                        })
+                    })
+                }
+
+                client.writeUserData(newMember.user.id, res, () => {
+                  client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${playtime} seconds`)
+                  newMember.s_time = null
+                  oldMember.s_time = null
+                })
+              }
             }
-          }
+          })
         })
       }
     })
