@@ -147,7 +147,7 @@ module.exports = client => {
         let prChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat')
         if (prChan == null) {
           client.log('Cannot find #practice-room-chat!')
-        } else if (restwo.permitted_channels.includes(newMember.voiceChannelID)) {
+        } else if (restwo.permitted_channels.includes(newMember.voiceChannelID) && !(newMember.mute && newMember.selfDeaf)) {
           prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: true })
         } else {
           let existingOverride = prChan.permissionOverwrites.get(newMember.user.id)
