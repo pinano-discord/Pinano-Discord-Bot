@@ -1,5 +1,7 @@
 # Pinano Bot
 
+[![Build Status](https://travis-ci.com/pinano-discord/Pinano-Discord-Bot.svg?branch=master)](https://travis-ci.com/pinano-discord/Pinano-Discord-Bot)
+
 This is the open source for the Pinano discord bot. The bot serves to track stats and help out in the Pinano discord community.
 
 ## Contributors
