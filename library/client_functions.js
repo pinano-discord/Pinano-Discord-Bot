@@ -1,5 +1,6 @@
 const moment = require('moment')
-const fs = require('fs')
+const promisify = require('util').promisify
+const readdir = promisify(require('fs').readdir)
 
 module.exports = client => {
   client.log = (string) => {
@@ -19,65 +20,54 @@ module.exports = client => {
     return message.content.startsWith(client.settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)
   }
 
-  client.loadCommands = (callback) => {
+  client.loadCommands = async () => {
     client.commands = {}
-    fs.readdir('./commands/general/', (err, files) => {
-      if (err) {
-        client.log(`Error loading general commands : ${err}`)
-        return
-      }
-      files.forEach(file => {
-        if (!file.endsWith('.js')) {
-          return
+    try {
+      let files = await readdir('./commands/general/')
+      await Promise.all(files.map(async file => {
+        if (file.endsWith('.js')) {
+          require(`../commands/general/${file}`).load(client)
         }
-        require(`../commands/general/${file}`).load(client)
-      })
-    })
+      }))
+    } catch (err) {
+      client.log(`Error loading general commands : ${err}`)
+    }
 
-    fs.readdir('./commands/admin/', (err, files) => {
-      if (err) {
-        client.log(`Error loading admin commands : ${err}`)
-        return
-      }
-      files.forEach(file => {
-        if (!file.endsWith('.js')) {
-          return
+    try {
+      let files = await readdir('./commands/admin/')
+      await Promise.all(files.map(async (file) => {
+        if (file.endsWith('.js')) {
+          require(`../commands/admin/${file}`).load(client)
         }
-        require(`../commands/admin/${file}`).load(client)
-      })
-    })
-    callback()
+      }))
+    } catch (err) {
+      client.log(`Error loading admin commands : ${err}`)
+    }
   }
 
-  client.successMessage = (message, msg) => {
-    message.channel.send({
+  client.successMessage = async (message, response) => {
+    let m = await message.channel.send({
       embed: {
         title: 'Success',
-        description: msg,
+        description: response,
         color: client.settings.embed_color,
         timestamp: new Date()
       }
     })
-      .then(m => {
-        setTimeout(() => {
-          m.delete()
-        }, client.settings.res_destruct_time * 1000)
-      })
+
+    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
   }
 
-  client.errorMessage = (message, msg) => {
-    message.channel.send({
+  client.errorMessage = async (message, response) => {
+    let m = await message.channel.send({
       embed: {
         title: 'Error',
-        description: msg,
+        description: response,
         color: client.settings.embed_color,
         timestamp: new Date()
       }
     })
-      .then(m => {
-        setTimeout(() => {
-          m.delete()
-        }, client.settings.res_destruct_time * 1000)
-      })
+
+    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
   }
 }
