@@ -5,10 +5,17 @@ module.exports = client => {
   client.on('error', client.log)
 
   client.on('ready', async () => {
-    await client.log('Successfully connected to discord.')
-    await client.user.setActivity(client.settings.activity, { type: 'Playing' }).catch(e => client.cannon.fire('Could not set activity.'))
-    await client.log(`Successfully set activity to ${client.settings.activity}`)
-    await client.loadCommands(() => client.log(`Successfully loaded commands!`))
+    client.log('Successfully connected to discord.')
+
+    try {
+      await client.user.setActivity(client.settings.activity, { type: 'Playing' })
+      client.log(`Successfully set activity to ${client.settings.activity}`)
+    } catch (err) {
+      client.log('Could not set activity.')
+    }
+
+    await client.loadCommands()
+    client.log('Successfully loaded commands!')
   })
 
   client.on('message', async message => {
@@ -28,9 +35,7 @@ module.exports = client => {
     }
 
     await client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')].run(message)
-    await setTimeout(() => {
-      message.delete()
-    }, client.settings.req_destruct_time * 1000)
+    setTimeout(() => message.delete(), client.settings.req_destruct_time * 1000)
   })
 
   client.on('guildMemberAdd', mem => {
