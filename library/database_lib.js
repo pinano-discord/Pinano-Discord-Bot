@@ -1,39 +1,19 @@
-let mongodb = require('mongodb')
-let MongoClient = mongodb.MongoClient
-let url = 'mongodb://localhost:27017/'
-
 module.exports = (client) => {
   let db
-
-  client.connectDB = (callback) => {
-    MongoClient.connect(url, (err, client) => {
-      if (err) client.log(err)
-      db = client.db('pinano')
-      callback(db)
-    })
-  }
 
   client._setDB = (providedDb) => {
     db = providedDb
   }
 
-  client.loadUserData = (discordID, callback) => {
-    db.collection('users').findOne({ id: discordID }, (err, res) => {
-      if (err) client.log(err)
-      callback(res)
-    })
+  client.loadUserData = async (discordID) => {
+    return db.collection('users').findOne({ id: discordID })
   }
 
-  client.writeUserData = (discordID, obj, callback) => {
-    db.collection('users').update(
-      ({ id: discordID }),
-      obj,
-      { upsert: true }
-    )
-    callback()
+  client.writeUserData = async (discordID, obj) => {
+    return db.collection('users').update({ id: discordID }, obj, { upsert: true })
   }
 
-  client.createGuild = id => {
+  client.createGuild = async (id) => {
     let g = {
       guild: id,
       welcome_toggle: false,
@@ -47,27 +27,16 @@ module.exports = (client) => {
       leave_message: '',
       permitted_channels: []
     }
-    client.writeGuildData(id, g, () => {})
+
+    return client.writeGuildData(id, g)
   }
 
-  client.writeGuildData = (guildID, obj, callback) => {
-    db.collection('guilds').update(
-      ({ guild: guildID }),
-      obj,
-      { upsert: true }
-    )
-    callback()
+  client.loadGuildData = async (guildID) => {
+    return db.collection('guilds').findOne({ guild: guildID })
   }
 
-  client.loadGuildData = async (guildID, callback) => {
-    if (typeof callback === 'function') {
-      db.collection('guilds').findOne({ guild: guildID }, (err, res) => {
-        if (err) client.log(err)
-        callback(res)
-      })
-    } else {
-      return db.collection('guilds').findOne({ guild: guildID })
-    }
+  client.writeGuildData = (guildID, obj) => {
+    return db.collection('guilds').update({ guild: guildID }, obj, { upsert: true })
   }
 
   client.clearWeekResults = async () => {

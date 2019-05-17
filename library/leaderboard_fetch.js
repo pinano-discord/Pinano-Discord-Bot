@@ -9,25 +9,24 @@ module.exports = (client, db) => {
      * this entire file in the upcoming days
     */
 
-  client.findCurrentPrackers = (guild, callback) => {
+  client.findCurrentPrackers = async (guild, callback) => {
     // playtimes only get updated when a user leaves/mutes a channel. Therefore, in order to keep up-to-date statistics,
     // find out what users are currently in permitted voice channels, then add their times as if current.
-    client.loadGuildData(guild, res => {
-      let currentPrackers = new Map()
-      res.permitted_channels.forEach(channel => {
-        let vc = client.guilds.get(guild).channels.get(channel)
-        if (vc != null) {
-          vc.members.forEach(member => {
-            // these conditions should be equivalent but maybe they were already pracking when the bot came up.
-            if (!member.mute && member.s_time != null) {
-              currentPrackers.set(member.user.id, moment().unix() - member.s_time)
-            }
-          })
-        }
-      })
+    let guildInfo = await client.loadGuildData(guild)
+    let currentPrackers = new Map()
+    await Promise.all(guildInfo.permitted_channels.map(async (channel) => {
+      let vc = client.guilds.get(guild).channels.get(channel)
+      if (vc != null) {
+        vc.members.forEach(member => {
+          // these conditions should be equivalent but maybe they were already pracking when the bot came up.
+          if (!member.mute && member.s_time != null) {
+            currentPrackers.set(member.user.id, moment().unix() - member.s_time)
+          }
+        })
+      }
+    }))
 
-      callback(currentPrackers)
-    })
+    callback(currentPrackers)
   }
 
   client.getOverallLeaderboard = (message, callback) => {

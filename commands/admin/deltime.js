@@ -1,6 +1,6 @@
 module.exports.load = (client) => {
   client.commands['deltime'] = {
-    run (message) {
+    async run (message) {
       let args = message.content.split(' ').splice(1)
       if (!message.member.roles.find('name', 'Bot Manager')) {
         return client.errorMessage(message, `You require the bot manager role to use this command.`)
@@ -19,22 +19,16 @@ module.exports.load = (client) => {
       }
 
       let delta = parseInt(args[1])
-      client.loadUserData(args[0].replace(/[<@!>]/g, ''), async res => {
-        if (res === null) {
-          return client.errorMessage(message, 'User doesn\'t exist in DB')
-        }
+      let userInfo = await client.loadUserData(args[0].replace(/[<@!>]/g, ''))
+      if (userInfo == null) {
+        return client.errorMessage(message, 'User doesn\'t exist in DB')
+      }
 
-        res.current_session_playtime = Math.max(0, res.current_session_playtime - delta)
-        res.overall_session_playtime = Math.max(0, res.overall_session_playtime - delta)
-        client.writeUserData(args[0].replace(/[<@!>]/g, ''), res, () => {
-          message.reply('Removed time from user.')
-            .then(m => {
-              setTimeout(() => {
-                m.delete()
-              }, client.settings.res_destruct_time * 1000)
-            })
-        })
-      })
+      userInfo.current_session_playtime = Math.max(0, userInfo.current_session_playtime - delta)
+      userInfo.overall_session_playtime = Math.max(0, userInfo.overall_session_playtime - delta)
+      await client.writeUserData(args[0].replace(/[<@!>]/g, ''), userInfo)
+      let m = await message.reply('removed time from user.')
+      setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
     }
   }
 }
