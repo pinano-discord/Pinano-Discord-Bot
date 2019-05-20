@@ -19,7 +19,7 @@ module.exports = (client, db) => {
       if (vc != null) {
         vc.members.forEach(member => {
           // these conditions should be equivalent but maybe they were already pracking when the bot came up.
-          if (!member.mute && member.s_time != null) {
+          if (!member.mute && member.s_time != null && !member.deleted) {
             currentPrackers.set(member.user.id, moment().unix() - member.s_time)
           }
         })

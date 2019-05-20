@@ -110,7 +110,7 @@ module.exports = client => {
       guildInfo.permitted_channels.forEach(chanId => {
         let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
         // channel being null might happen if we have a stale channel in the db - just ignore if this happens.
-        if (chan != null && chan.members.size === 0) {
+        if (chan != null && !chan.members.exists(m => !m.deleted)) {
           isFull = false
         }
       })
@@ -125,7 +125,7 @@ module.exports = client => {
       let tempChannelToRemove = null
       guildInfo.permitted_channels.forEach(chanId => {
         let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
-        if (chan != null && chan.members.size === 0) {
+        if (chan != null && !chan.members.exists(m => !m.deleted)) {
           emptyCount++
           if (chan.name === 'Extra Practice Room') {
             tempChannelToRemove = chan
