@@ -9,14 +9,13 @@ module.exports.load = (client) => {
       try {
         userInfo = selectTargetUser(message)
       } catch (err) {
-        console.log(err.stack)
-        return client.errorMessage(message, `Unable to identify user: ${err}`)
+        return client.errorMessage(message, err)
       }
 
       try {
         const [user, pos, tot, guild] = await Promise.all([
           client.userRepository.load(userInfo.userId),
-          client.userRepository.getSessionPos(userInfo.userId),
+          client.userRepository.getSessionRank(userInfo.userId),
           client.userRepository.getSessionCount(),
           client.guildRepository.load(message.guild.id)
         ])
@@ -25,11 +24,19 @@ module.exports.load = (client) => {
 
           userInfo.currentSession = user.current_session_playtime + activeTime
           userInfo.overallSession = user.overall_session_playtime + activeTime
-          userInfo.rank = `${pos + 1} / ${tot}`
+
+          if (activeTime > 0 || userInfo.currentSession === 0) {
+            // can't calculate accurate ranks for current prackers - either
+            // use the leaderboard command or mute to get an accurate position.
+            userInfo.rank = 'N / A'
+          } else {
+            userInfo.rank = `${pos} / ${tot}`
+          }
         } else {
+          // user exists in guild but not in the db - means they don't have time
           userInfo.currentSession = 0
           userInfo.overallSession = 0
-          userInfo.rank = `?? / ${tot}`
+          userInfo.rank = 'N / A'
         }
       } catch (err) {
         console.log(err.stack)
@@ -37,20 +44,15 @@ module.exports.load = (client) => {
           `Error fetching stats for ${userInfo.username}#${userInfo.discriminator}: ${err}`)
       }
 
-      render(userInfo).then(buffer => {
-        message.channel.send({
-          files: [{
-            attachment: buffer,
-            name: 'level.jpg'
-          }]
-        })
-        // delete response after set time
-          .then(m => {
-            setTimeout(() => {
-              m.delete()
-            }, client.settings.res_destruct_time * 1000)
-          })
+      let buffer = await render(userInfo)
+      let m = await message.channel.send({
+        files: [{
+          attachment: buffer,
+          name: 'level.jpg'
+        }]
       })
+
+      setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
     }
   }
 
@@ -128,13 +130,13 @@ module.exports.load = (client) => {
   }
 
   function getActiveTime (guild, mem) {
-    // check if the user is actively pracking and update times live if necessary
-    let activeTime = 0
+    // check if the user is actively pracking and update times live if necessary.
     // these last two conditions should be equivalent but maybe they were already pracking when the bot came up
     if (mem.voiceChannel != null && guild.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
-      activeTime = moment().unix() - mem.s_time
+      return moment().unix() - mem.s_time
     }
-    return activeTime
+
+    return 0
   }
 
   async function render ({ av, username, discriminator, currentSession, overallSession, rank }) {

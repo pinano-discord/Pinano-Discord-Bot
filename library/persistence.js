@@ -74,12 +74,14 @@ class MongoUserRepository {
       { $set: { current_session_playtime: 0 } })
   }
 
-  async getOverallPos (userId) {
-    return this._getRankBy(userId, 'overall_session_playtime')
+  async getOverallRank (userId) {
+    let rank = await this._getRankBy(userId, 'overall_session_playtime')
+    return (rank === undefined) ? rank : rank + 1
   }
 
-  async getSessionPos (userId) {
-    return this._getRankBy(userId, 'current_session_playtime')
+  async getSessionRank (userId) {
+    let rank = await this._getRankBy(userId, 'current_session_playtime')
+    return (rank === undefined) ? rank : rank + 1
   }
 
   async getSessionCount () {

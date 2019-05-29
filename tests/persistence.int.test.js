@@ -55,8 +55,8 @@ test('can load top users', async () => {
 test('can get overall rank', async () => {
   await createSomeUsers(10, () => randomInt(1, 3600))
   let topTen = await userRepository.loadTopOverall(10)
-  for (let expectedRank = 0; expectedRank < topTen.length; expectedRank++) {
-    let rank = await userRepository.getOverallPos(topTen[expectedRank].id)
+  for (let expectedRank = 1; expectedRank <= topTen.length; expectedRank++) {
+    let rank = await userRepository.getOverallRank(topTen[expectedRank - 1].id)
     expect(rank).toBe(expectedRank)
   }
 })
@@ -65,15 +65,15 @@ test('session rank with zero time is undefined', async () => {
   const user = makeUser(314159)
   await userRepository.save(user)
 
-  let rank = await userRepository.getSessionPos(user.id)
+  let rank = await userRepository.getSessionRank(user.id)
   expect(rank).toBeUndefined()
 })
 
 test('can get session rank by user', async () => {
   await createSomeUsers(10, () => randomInt(1, 3600))
   let topTen = await userRepository.loadTopSession(10)
-  for (let expectedRank = 0; expectedRank < topTen.length; expectedRank++) {
-    let rank = await userRepository.getSessionPos(topTen[expectedRank].id)
+  for (let expectedRank = 1; expectedRank <= topTen.length; expectedRank++) {
+    let rank = await userRepository.getSessionRank(topTen[expectedRank - 1].id)
     expect(rank).toBe(expectedRank)
   }
 })
