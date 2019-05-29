@@ -176,6 +176,21 @@ module.exports = client => {
       await client.writeUserData(newMember.user.id, userInfo)
       client.log(`User created for ${newMember.user.username}#${newMember.user.discriminator}`)
     } else {
+      if (newMember.serverMute && newMember.voiceChannel.locked_by == null && !newMember.roles.exists(r => r.name === 'Temp Muted')) {
+        // they're server muted, but they're in an unlocked channel - means they probably left a locked room.
+        try {
+          newMember.setMute(false)
+        } catch (err) {
+          // did they leave already?
+          console.log(err)
+        }
+      }
+
+      if (oldMember.voiceChannel != null && oldMember.voiceChannel.locked_by === oldMember.id && newMember.voiceChannelID !== oldMember.voiceChannelID) {
+        // user left a room they had locked; unlock it
+        await client.unlockPracticeRoom(oldMember.guild, oldMember.user, oldMember.voiceChannel)
+      }
+
       mutex.runExclusive(async () => {
         let guildInfo = await client.loadGuildData(newMember.guild.id)
         if (guildInfo == null) {
@@ -203,8 +218,13 @@ module.exports = client => {
           // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
           // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
           // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
-          if (!newMember.selfMute && !newMember.serverMute && oldMember.s_time == null && guildInfo.permitted_channels.includes(newMember.voiceChannelID)) {
-            // if they are unmuted and a start time dosnt exist and they are in a good channel
+          if (!newMember.selfMute &&
+            !newMember.serverMute &&
+            oldMember.s_time == null &&
+            guildInfo.permitted_channels.includes(newMember.voiceChannelID) &&
+            newMember.voiceChannel != null &&
+            (newMember.voiceChannel.locked_by == null || newMember.voiceChannel.locked_by === newMember.id)) {
+            // if they are unmuted and a start time dosnt exist and they are in a good channel and the room is not locked by someone else
             newMember.s_time = moment().unix()
           } else if (oldMember.s_time != null) {
             // if a start time exist transfer it to new user object
