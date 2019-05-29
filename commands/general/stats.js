@@ -25,9 +25,11 @@ module.exports.load = (client) => {
           userInfo.currentSession = user.current_session_playtime + activeTime
           userInfo.overallSession = user.overall_session_playtime + activeTime
 
-          if (activeTime > 0 || userInfo.currentSession === 0) {
+          if (activeTime > 0) {
             // can't calculate accurate ranks for current prackers - either
             // use the leaderboard command or mute to get an accurate position.
+            userInfo.rank = 'LIVE'
+          } else if (userInfo.currentSession === 0) {
             userInfo.rank = 'N / A'
           } else {
             userInfo.rank = `${pos} / ${tot}`

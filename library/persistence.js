@@ -133,11 +133,11 @@ class MongoGuildRepository {
   }
 
   async load (groupId) {
-    return this.collection.findOne({ id: groupId })
+    return this.collection.findOne({ guild: groupId })
   }
 
   async save (group) {
-    return this.collection.update({ id: group.id }, group, { upsert: true })
+    return this.collection.update({ guild: group.id }, group, { upsert: true })
   }
 }
 
