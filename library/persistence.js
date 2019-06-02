@@ -74,12 +74,18 @@ class MongoUserRepository {
       { $set: { current_session_playtime: 0 } })
   }
 
-  async getOverallPos (userId) {
-    return this._getRankBy(userId, 'overall_session_playtime')
+  async getOverallRank (userId) {
+    let rank = await this._getRankBy(userId, 'overall_session_playtime')
+    return (rank === undefined) ? rank : rank + 1
   }
 
-  async getSessionPos (userId) {
-    return this._getRankBy(userId, 'current_session_playtime')
+  async getSessionRank (userId) {
+    let rank = await this._getRankBy(userId, 'current_session_playtime')
+    return (rank === undefined) ? rank : rank + 1
+  }
+
+  async getSessionCount () {
+    return this.collection.find({ current_session_playtime: { $gt: 0 } }).count()
   }
 
   async _getRankBy (userId, key) {
@@ -127,11 +133,11 @@ class MongoGuildRepository {
   }
 
   async load (groupId) {
-    return this.collection.findOne({ id: groupId })
+    return this.collection.findOne({ guild: groupId })
   }
 
   async save (group) {
-    return this.collection.update({ id: group.id }, group, { upsert: true })
+    return this.collection.update({ guild: group.id }, group, { upsert: true })
   }
 }
 

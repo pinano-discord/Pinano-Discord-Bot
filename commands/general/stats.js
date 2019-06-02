@@ -5,116 +5,168 @@ const moment = require('moment')
 module.exports.load = (client) => {
   client.commands['stats'] = {
     async run (message) {
-      let args = message.content.split(' ').splice(1)
-      let username
-      let discriminator
-      let mem
-      let userId
-      let av = './assets/default_avatar.jpg'
+      let userInfo
+      try {
+        userInfo = selectTargetUser(message)
+      } catch (err) {
+        return client.errorMessage(message, err)
+      }
 
-      if (args.length >= 1) {
-        // fqName: "fully qualified name"
-        let fqName = args.join(' ').trim().split('#')
-        if (fqName.length === 2) {
-          username = fqName[0]
-          discriminator = fqName[1]
-          mem = client.guilds.get(message.guild.id).members.find(val => val.user.username === username && val.user.discriminator === discriminator)
-          if (mem != null) {
-            userId = mem.user.id
-            // checks if user has pfp because discord dosnt return default pfp url >:C
-            if (mem.user.avatarURL != null) {
-              av = mem.user.avatarURL
-            }
+      try {
+        const [user, pos, tot, guild] = await Promise.all([
+          client.userRepository.load(userInfo.userId),
+          client.userRepository.getSessionRank(userInfo.userId),
+          client.userRepository.getSessionCount(),
+          client.guildRepository.load(message.guild.id)
+        ])
+        if (user !== null) {
+          const activeTime = getActiveTime(guild, userInfo.mem)
+
+          userInfo.currentSession = user.current_session_playtime + activeTime
+          userInfo.overallSession = user.overall_session_playtime + activeTime
+
+          if (activeTime > 0) {
+            // can't calculate accurate ranks for current prackers - either
+            // use the leaderboard command or mute to get an accurate position.
+            userInfo.rank = 'LIVE'
+          } else if (userInfo.currentSession === 0) {
+            userInfo.rank = 'N / A'
           } else {
-            return client.errorMessage(message, `Unable to find user ${username}#${discriminator}.`)
+            userInfo.rank = `${pos} / ${tot}`
           }
         } else {
-          return client.errorMessage(message, `Invalid username format.`)
+          // user exists in guild but not in the db - means they don't have time
+          userInfo.currentSession = 0
+          userInfo.overallSession = 0
+          userInfo.rank = 'N / A'
         }
-      } else {
-        username = message.author.username
-        discriminator = message.author.discriminator
-        userId = message.author.id
-        mem = client.guilds.get(message.guild.id).members.get(userId)
-        if (message.author.avatarURL != null) {
-          av = message.author.avatarURL
-        }
+      } catch (err) {
+        console.log(err.stack)
+        return client.errorMessage(message,
+          `Error fetching stats for ${userInfo.username}#${userInfo.discriminator}: ${err}`)
       }
 
-      let userInfo = await client.loadUserData(userId)
-      if (userInfo === null) {
-        client.errorMessage(message, 'Error fetching your data from our servers, please try again.')
-        return
-      }
-
-      // set "semi-global" variables
-      let avatar
-      let source
-      let poss
-
-      // get leaderboard pos
-      await client.fetchWeeklyLeaderboardPos(message.guild.id, userId, pos => {
-        poss = pos.replace(/`/g, '')
+      let buffer = await render(userInfo)
+      let m = await message.channel.send({
+        files: [{
+          attachment: buffer,
+          name: 'level.jpg'
+        }]
       })
 
-      // load template
-      await jimp.read('./assets/time_card.png')
-        .then(i => {
-          source = i
-        })
+      setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
+    }
+  }
 
-      // overlay avatar on template image
-      await jimp.read(av)
-        .then(i => {
-          avatar = i
-        })
-      await avatar.resize(98, 98)
-      await source.composite(avatar, 14, 14)
+  /*
+   * The command works by building a userInfo structure with enough
+   * information to render a stats display for the user.
+   *
+   * userInfo = {
+   *   // via selectTargetUser
+   *   username,
+   *   discriminator,
+   *   // via selectTargetUser -> enrichUserData
+   *   userId,
+   *   mem,    // A discord.js GuildMember, with s_time
+   *   av,     // Avatar URL (or path)
+   *   // Our data
+   *   currentSession,
+   *   overallSession,
+   *   rank
+   * }
+   */
 
-      // check if the user is actively pracking and update times live if necessary
-      let activeTime = 0
-      let guildInfo = await client.loadGuildData(message.guild.id)
-      // these last two conditions should be equivalent but maybe they were already pracking when the bot came up
-      if (mem.voiceChannel != null && guildInfo.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
-        activeTime = moment().unix() - mem.s_time
+  function selectTargetUser (message) {
+    let args = message.content.split(' ').splice(1)
+    let userInfo
+    if (args.length >= 1) {
+      userInfo = parseUserInfo(args)
+      if (userInfo === null) {
+        throw new Error('Unable to parse as username#discriminator.')
       }
-
-      // write the text stuff
-      await jimp.loadFont(jimp.FONT_SANS_16_WHITE)
-        .then(async font => {
-          source.print(font, 245, 25, `${username}#${discriminator}`)
-          source.print(font, 135, 90, abbreviateTime(userInfo.current_session_playtime + activeTime))
-          source.print(font, 280, 90, abbreviateTime(userInfo.overall_session_playtime + activeTime))
-          source.print(font, 435, 90, poss)
-        })
-
-      // send the pic as png
-      await source.getBufferAsync(jimp.MIME_PNG)
-        .then(buffer => {
-          message.channel.send({
-            files: [{
-              attachment: buffer,
-              name: 'level.jpg'
-            }]
-          })
-
-            // delete response after set time
-            .then(m => {
-              setTimeout(() => {
-                m.delete()
-              }, client.settings.res_destruct_time * 1000)
-            })
-        })
-
-      function abbreviateTime (playtime) {
-        return hd(playtime * 1000, { units: ['h', 'm', 's'], round: true })
-          .replace('hours', 'h')
-          .replace('minutes', 'm')
-          .replace('seconds', 's')
-          .replace('hour', 'h')
-          .replace('minute', 'm')
-          .replace('second', 's')
+    } else {
+      userInfo = {
+        username: message.author.username,
+        discriminator: message.author.discriminator,
+        _finder: (members) => members.get(message.author.id)
       }
     }
+    const enriched = enrichUserInfo(userInfo, message.guild.id)
+    if (!enriched) {
+      throw new Error(`Unable to find user ${userInfo.username}#${userInfo.discriminator}.`)
+    }
+    return userInfo
+  }
+
+  function parseUserInfo (args) {
+    // fqName: "fully qualified name"
+    let fqName = args.join(' ').trim().split('#')
+    if (fqName.length !== 2) {
+      return null
+    }
+    return {
+      username: fqName[0],
+      discriminator: fqName[1],
+      _finder: (members) =>
+        members.find(val => val.user.username === fqName[0] &&
+          val.user.discriminator === fqName[1])
+    }
+  }
+
+  function enrichUserInfo (userInfo, guildId) {
+    const mem = userInfo._finder(client.guilds.get(guildId).members)
+    if (mem === null) {
+      return false
+    }
+
+    userInfo.mem = mem
+    userInfo.userId = mem.user.id
+    // checks if user has pfp because discord dosnt return default pfp url >:C
+    if (userInfo.mem.user.avatarURL != null) {
+      userInfo.av = userInfo.mem.user.avatarURL
+    } else {
+      userInfo.av = './assets/default_avatar.jpg'
+    }
+    return true
+  }
+
+  function getActiveTime (guild, mem) {
+    // check if the user is actively pracking and update times live if necessary.
+    // these last two conditions should be equivalent but maybe they were already pracking when the bot came up
+    if (mem.voiceChannel != null && guild.permitted_channels.includes(mem.voiceChannel.id) && !mem.mute && mem.s_time != null) {
+      return moment().unix() - mem.s_time
+    }
+
+    return 0
+  }
+
+  async function render ({ av, username, discriminator, currentSession, overallSession, rank }) {
+    // load template
+    let [source, avatar, font] = await Promise.all([
+      jimp.read('./assets/time_card.png'),
+      jimp.read(av),
+      jimp.loadFont(jimp.FONT_SANS_16_WHITE)
+    ])
+    await avatar.resize(98, 98)
+    await source.composite(avatar, 14, 14)
+
+    source.print(font, 245, 25, `${username}#${discriminator}`)
+    source.print(font, 135, 90, abbreviateTime(currentSession))
+    source.print(font, 280, 90, abbreviateTime(overallSession))
+    source.print(font, 435, 90, rank)
+
+    // send the pic as png
+    return source.getBufferAsync(jimp.MIME_PNG)
+  }
+
+  function abbreviateTime (playtime) {
+    return hd(playtime * 1000, { units: ['h', 'm', 's'], round: true })
+      .replace('hours', 'h')
+      .replace('minutes', 'm')
+      .replace('seconds', 's')
+      .replace('hour', 'h')
+      .replace('minute', 'm')
+      .replace('second', 's')
   }
 }
