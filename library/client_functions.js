@@ -72,20 +72,20 @@ module.exports = client => {
     setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
   }
 
-  client.unlockPracticeRoom = async (guild, user, channel) => {
+  client.unlockPracticeRoom = async (guild, userId, channel) => {
     channel.locked_by = null
 
     // remove permissions overrides
     let everyone = guild.roles.find('name', '@everyone')
     channel.overwritePermissions(everyone, { SPEAK: null })
 
-    let personalOverride = channel.permissionOverwrites.get(user.id)
+    let personalOverride = channel.permissionOverwrites.get(userId)
     // existingOverride shouldn't be null unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
     if (personalOverride != null) {
       if (personalOverride.allowed.bitfield === Discord.Permissions.FLAGS.SPEAK && personalOverride.denied.bitfield === 0) { // the only permission was allow SPEAK
         personalOverride.delete()
       } else {
-        channel.overwritePermissions(user, { SPEAK: null })
+        channel.overwritePermissions(userId, { SPEAK: null })
       }
     }
 

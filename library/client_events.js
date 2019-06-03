@@ -188,7 +188,7 @@ module.exports = client => {
 
       if (oldMember.voiceChannel != null && oldMember.voiceChannel.locked_by === oldMember.id && newMember.voiceChannelID !== oldMember.voiceChannelID) {
         // user left a room they had locked; unlock it
-        await client.unlockPracticeRoom(oldMember.guild, oldMember.user, oldMember.voiceChannel)
+        await client.unlockPracticeRoom(oldMember.guild, oldMember.id, oldMember.voiceChannel)
       }
 
       mutex.runExclusive(async () => {

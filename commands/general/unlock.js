@@ -20,7 +20,7 @@ module.exports.load = (client) => {
         return client.errorMessage(message, 'You do not have this channel locked.')
       }
 
-      await client.unlockPracticeRoom(message.guild, message.author, channel)
+      await client.unlockPracticeRoom(message.guild, channel.locked_by, channel)
 
       let m = await message.reply(`unlocked channel <#${channel.id}>.`)
       setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
