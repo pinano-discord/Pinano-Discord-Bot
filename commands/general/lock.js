@@ -21,7 +21,7 @@ module.exports.load = (client) => {
       channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
       try {
         await Promise.all(channel.members.map(async (m) => {
-          if (m !== message.member) {
+          if (m !== message.member && !m.deleted) {
             return m.setMute(true)
           }
         }))

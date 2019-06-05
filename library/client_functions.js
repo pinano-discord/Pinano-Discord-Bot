@@ -91,7 +91,7 @@ module.exports = client => {
 
     try {
       await Promise.all(channel.members.map(async m => {
-        if (!m.roles.exists(r => r.name === 'Temp Muted')) {
+        if (!m.deleted && !m.roles.exists(r => r.name === 'Temp Muted')) {
           return m.setMute(false)
         }
       }))
