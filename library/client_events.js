@@ -176,7 +176,7 @@ module.exports = client => {
       await client.writeUserData(newMember.user.id, userInfo)
       client.log(`User created for ${newMember.user.username}#${newMember.user.discriminator}`)
     } else {
-      if (newMember.serverMute && newMember.voiceChannel.locked_by == null && !newMember.roles.exists(r => r.name === 'Temp Muted')) {
+      if (newMember.serverMute && newMember.voiceChannel != null && newMember.voiceChannel.locked_by == null && !newMember.roles.exists(r => r.name === 'Temp Muted')) {
         // they're server muted, but they're in an unlocked channel - means they probably left a locked room.
         try {
           newMember.setMute(false)
