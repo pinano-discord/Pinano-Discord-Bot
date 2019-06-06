@@ -206,6 +206,25 @@ module.exports = client => {
             // make the new channel go in the right place
             let categoryChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat').parent
             newChan = await newChan.setParent(categoryChan)
+
+            // set bitrate and permissions on the new room
+            newChan.setBitrate(256)
+
+            let tempMutedRole = newMember.guild.roles.find('name', 'Temp Muted')
+            if (tempMutedRole != null) {
+              newChan.overwritePermissions(tempMutedRole, { SPEAK: false })
+            }
+
+            let mutedRole = newMember.guild.roles.find('name', 'Muted')
+            if (mutedRole != null) {
+              newChan.overwritePermissions(mutedRole, { SPEAK: false })
+            }
+
+            let verificationRequiredRole = newMember.guild.roles.find('name', 'Verification Required')
+            if (verificationRequiredRole != null) {
+              newChan.overwritePermissions(verificationRequiredRole, { VIEW_CHANNEL: false })
+            }
+
             newChan.setPosition(categoryChan.children.size)
 
             // gotta update the db
