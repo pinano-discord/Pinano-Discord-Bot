@@ -102,7 +102,7 @@ module.exports = client => {
     // time handler
     let userInfo = await client.loadUserData(newMember.user.id)
 
-    // auto-VC creation: create a room if all rooms are occupied. Muted or unmuted doesn't matter, because
+    // auto-VC creation: create a room if all high-bitrate rooms are occupied. Muted or unmuted doesn't matter, because
     // in general we want to discourage people from using rooms that are occupied even if all the participants
     // are currently muted (one person could have been practicing there but just muted temporarily).
     function areAllPracticeRoomsFull (guildInfo) {
@@ -110,7 +110,7 @@ module.exports = client => {
       guildInfo.permitted_channels.forEach(chanId => {
         let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
         // channel being null might happen if we have a stale channel in the db - just ignore if this happens.
-        if (chan != null && !chan.members.exists(m => !m.deleted)) {
+        if (chan != null && chan.bitrate !== 64 && !chan.members.exists(m => !m.deleted)) {
           isFull = false
         }
       })
