@@ -125,7 +125,7 @@ module.exports = client => {
       let tempChannelToRemove = null
       guildInfo.permitted_channels.forEach(chanId => {
         let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
-        if (chan != null && !chan.members.exists(m => !m.deleted)) {
+        if (chan != null && chan.bitrate !== 64 && !chan.members.exists(m => !m.deleted)) {
           emptyCount++
           if (chan.name === 'Extra Practice Room') {
             tempChannelToRemove = chan
