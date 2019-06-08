@@ -16,3 +16,24 @@ if you just want to jump in without install `nodenv`, make sure you look at [`.n
 for the current version we are using.
 
 PS - You must have mongodb installed and running.
+
+## Development setup
+
+To test your own instance of the bot, do the following:
+
+* Create your own personal testing server
+* [Enable developer mode](https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-)
+ in discord to be able to get guild IDs and client IDs
+* [Create an application](https://discordjs.guide/preparations/setting-up-a-bot-application.html)
+ for your bot
+* [Add the bot to your server](https://discordjs.guide/preparations/adding-your-bot-to-servers.html#bot-invite-links)
+* [Create a role for your bot](https://support.discordapp.com/hc/en-us/articles/206029707-How-do-I-set-up-Permissions-)
+ and give it the permissions to manage messages, manage channels, and all the voice related permissions.
+ 
+### Populate settings.json
+
+* Copy the guild ID of your server under `pinano_guilds`
+* Copy the token of the bot under `beta_token`
+* Set `dev_mode` to `true`
+* Copy your user ID under `bot_devs`
+
