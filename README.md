@@ -37,3 +37,9 @@ To test your own instance of the bot, do the following:
 * Set `dev_mode` to `true`
 * Copy your user ID under `bot_devs`
 
+### Create the initial mongo entries
+
+To create the initial guild object in the mongo database,
+join a voice channel and say something.
+This will trigger the creation of the guild information.
+
