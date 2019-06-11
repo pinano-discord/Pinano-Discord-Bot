@@ -112,6 +112,30 @@ class Commands {
     selfDestructMessage(() => message.reply('sent you the command list.'))
   }
 
+  _sendLeaderboard (channel, data, type, other) {
+    let msg = new Discord.RichEmbed()
+    msg.setTitle(`${type} Leaderboard`)
+    msg.setDescription(data)
+    msg.setFooter(`To view the ${other} leaderboard use ${settings.prefix}leaderboard ${other}`)
+    msg.setColor(settings.embed_color)
+    msg.setTimestamp()
+    selfDestructMessage(() => channel.send(msg))
+  }
+
+  async leaderboard (message) {
+    let args = message.content.split(' ').splice(1)
+    if (args.length === 0 || args[0] === 'weekly') {
+      let data = await this.client.getWeeklyLeaderboard(message.guild, message.author)
+      this._sendLeaderboard(message.channel, data, 'Weekly', 'overall')
+    } else if (args[0] === 'overall') {
+      let data = await this.client.getOverallLeaderboard(message.guild, message.author)
+      this._sendLeaderboard(message.channel, data, 'Overall', 'weekly')
+    } else {
+      let command = message.content.split(' ')[0]
+      throw new Error(`Usage: \`${command} [ weekly | overall ]\``)
+    }
+  }
+
   async lock (message) {
     var channel = message.member.voiceChannel
     if (channel == null) {
@@ -257,6 +281,7 @@ function loadCommands (client) {
   client.commands['addtime'] = (message) => { return c.addtime(message) }
   client.commands['deltime'] = (message) => { return c.deltime(message) }
   client.commands['help'] = (message) => { return c.help(message) }
+  client.commands['leaderboard'] = client.commands['lb'] = (message) => { return c.leaderboard(message) }
   client.commands['lock'] = (message) => { return c.lock(message) }
   client.commands['rooms'] = (message) => { return c.rooms(message) }
   client.commands['settings'] = (message) => { return c.settings(message) }
