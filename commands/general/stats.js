@@ -3,59 +3,57 @@ const hd = require('humanize-duration')
 const moment = require('moment')
 
 module.exports.load = (client) => {
-  client.commands['stats'] = {
-    async run (message) {
-      let userInfo
-      try {
-        userInfo = selectTargetUser(message)
-      } catch (err) {
-        return client.errorMessage(message, err)
-      }
-
-      try {
-        const [user, pos, tot, guild] = await Promise.all([
-          client.userRepository.load(userInfo.userId),
-          client.userRepository.getSessionRank(userInfo.userId),
-          client.userRepository.getSessionCount(),
-          client.guildRepository.load(message.guild.id)
-        ])
-        if (user !== null) {
-          const activeTime = getActiveTime(guild, userInfo.mem)
-
-          userInfo.currentSession = user.current_session_playtime + activeTime
-          userInfo.overallSession = user.overall_session_playtime + activeTime
-
-          if (activeTime > 0) {
-            // can't calculate accurate ranks for current prackers - either
-            // use the leaderboard command or mute to get an accurate position.
-            userInfo.rank = 'LIVE'
-          } else if (userInfo.currentSession === 0) {
-            userInfo.rank = 'N / A'
-          } else {
-            userInfo.rank = `${pos} / ${tot}`
-          }
-        } else {
-          // user exists in guild but not in the db - means they don't have time
-          userInfo.currentSession = 0
-          userInfo.overallSession = 0
-          userInfo.rank = 'N / A'
-        }
-      } catch (err) {
-        console.log(err.stack)
-        return client.errorMessage(message,
-          `Error fetching stats for ${userInfo.username}#${userInfo.discriminator}: ${err}`)
-      }
-
-      let buffer = await render(userInfo)
-      let m = await message.channel.send({
-        files: [{
-          attachment: buffer,
-          name: 'level.jpg'
-        }]
-      })
-
-      setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
+  client.commands['stats'] = async (message) => {
+    let userInfo
+    try {
+      userInfo = selectTargetUser(message)
+    } catch (err) {
+      return client.errorMessage(message, err)
     }
+
+    try {
+      const [user, pos, tot, guild] = await Promise.all([
+        client.userRepository.load(userInfo.userId),
+        client.userRepository.getSessionRank(userInfo.userId),
+        client.userRepository.getSessionCount(),
+        client.guildRepository.load(message.guild.id)
+      ])
+      if (user !== null) {
+        const activeTime = getActiveTime(guild, userInfo.mem)
+
+        userInfo.currentSession = user.current_session_playtime + activeTime
+        userInfo.overallSession = user.overall_session_playtime + activeTime
+
+        if (activeTime > 0) {
+          // can't calculate accurate ranks for current prackers - either
+          // use the leaderboard command or mute to get an accurate position.
+          userInfo.rank = 'LIVE'
+        } else if (userInfo.currentSession === 0) {
+          userInfo.rank = 'N / A'
+        } else {
+          userInfo.rank = `${pos} / ${tot}`
+        }
+      } else {
+        // user exists in guild but not in the db - means they don't have time
+        userInfo.currentSession = 0
+        userInfo.overallSession = 0
+        userInfo.rank = 'N / A'
+      }
+    } catch (err) {
+      console.log(err.stack)
+      return client.errorMessage(message,
+        `Error fetching stats for ${userInfo.username}#${userInfo.discriminator}: ${err}`)
+    }
+
+    let buffer = await render(userInfo)
+    let m = await message.channel.send({
+      files: [{
+        attachment: buffer,
+        name: 'level.jpg'
+      }]
+    })
+
+    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
   }
 
   /*
