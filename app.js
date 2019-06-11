@@ -16,16 +16,14 @@ if (client.settings.dev_mode) {
 
 require('./library/client_functions.js')(client)
 client.log(`Loaded client functions`)
-require('./library/database_lib.js')(client)
-client.log(`Loaded database functions`)
 
 require('./library/client_events.js')(client)
 client.log(`Loaded client events`)
 
 // weekly wipe at 12 am on monday
-cron.schedule('0 0 * * mon', () => {
-  client.submitWeek()
-  client.clearWeekResults()
+cron.schedule('0 0 * * mon', async () => {
+  await client.submitWeek()
+  await client.userRepository.resetSessionTimes()
   client.log('Cleared weekly results')
 }, {
   timezone: 'America/New_York'
@@ -33,7 +31,6 @@ cron.schedule('0 0 * * mon', () => {
 
 connect('mongodb://localhost:27017/', 'pinano').then(mongoManager => {
   client.log(`Connected Database`)
-  client._setDB(mongoManager.db) // for migration from legacy db
   require('./library/leaderboard_fetch.js')(client, mongoManager.db)
   client.log(`loaded legacy leaderboard library`)
 
