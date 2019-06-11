@@ -2,235 +2,160 @@ const hd = require('humanize-duration')
 const moment = require('moment')
 
 module.exports = (client, db) => {
-  /**
-     * Let me provide some context for this monstrosity of a library entry
-     * It was 2 am and i had to get the leaderboard finished to publish
-     * the bot on christmas night, so plz no be mean :c Going to re-write
-     * this entire file in the upcoming days
-    */
-
-  client.findCurrentPrackers = async (guild, callback) => {
+  client.findCurrentPrackers = async (guild) => {
     // playtimes only get updated when a user leaves/mutes a channel. Therefore, in order to keep up-to-date statistics,
     // find out what users are currently in permitted voice channels, then add their times as if current.
-    let guildInfo = await client.loadGuildData(guild)
+    let guildInfo = await client.loadGuildData(guild.id)
     let currentPrackers = new Map()
-    await Promise.all(guildInfo.permitted_channels.map(async (channel) => {
-      let vc = client.guilds.get(guild).channels.get(channel)
-      if (vc != null) {
-        vc.members.forEach(member => {
-          // these conditions should be equivalent but maybe they were already pracking when the bot came up.
-          if (!member.mute && member.s_time != null && !member.deleted) {
-            currentPrackers.set(member.user.id, moment().unix() - member.s_time)
-          }
-        })
-      }
-    }))
 
-    callback(currentPrackers)
-  }
-
-  client.getOverallLeaderboard = (message, callback) => {
-    client.findCurrentPrackers(message.guild.id, (currentPrackers) => {
-      let scoreArray = []
-      let msgStr = ''
-      db.collection('users').find({}).toArray()
-        .then(async res => {
-          await res.forEach(doc => {
-            let time = doc.overall_session_playtime
-            if (currentPrackers.get(doc.id) != null) {
-              time += currentPrackers.get(doc.id)
-            }
-
-            if (time > 0) {
-              let string = `${doc.id}|${time}`
-              scoreArray.push(string)
-            }
-          })
-          await con()
-        })
-      function con () {
-        scoreArray.sort((a, b) => {
-          a = a.split('|').splice(1).join('')
-          b = b.split('|').splice(1).join('')
-          return b - a
-        })
-        for (let j = 0; j < client.settings.leaderboard_size; j++) {
-          if (!scoreArray[j]) {
-            msgStr += ``
-          } else {
-            let user = scoreArray[j].split('|')[0]
-            let time = hd(scoreArray[j].split('|')[1] * 1000, { units: ['h', 'm', 's'] })
-            if (client.users.get(user)) {
-              msgStr += `**${j + 1}. ${client.users.get(user).username}#${client.users.get(user).discriminator}**\n \`${time}\`\n`
-            } else {
-              msgStr += `**${j + 1}.** *${user}* \n \`${time}\`\n`
-            }
-          }
-        }
-
-        client.fetchOverallLeaderboardPos(message.guild.id, message.author.id, pos => {
-          msgStr = `**${message.author.username}**, you are rank ${pos}\n ${msgStr}`
-          callback(msgStr)
-        })
-      }
-    })
-  }
-
-  client.getWeeklyLeaderboard = (message, callback) => {
-    client.findCurrentPrackers(message.guild.id, (currentPrackers) => {
-      let scoreArray = []
-      let msgStr = ''
-      db.collection('users').find({}).toArray()
-        .then(async res => {
-          await res.forEach(doc => {
-            let time = doc.current_session_playtime
-            if (currentPrackers.get(doc.id) != null) {
-              time += currentPrackers.get(doc.id)
-            }
-
-            if (time > 0) {
-              let string = `${doc.id}|${time}`
-              scoreArray.push(string)
-            }
-          })
-          await con()
-        })
-      function con () {
-        scoreArray.sort((a, b) => {
-          a = a.split('|').splice(1).join('')
-          b = b.split('|').splice(1).join('')
-          return b - a
-        })
-        for (let j = 0; j < client.settings.leaderboard_size; j++) {
-          if (!scoreArray[j]) {
-            msgStr += ``
-          } else {
-            let user = scoreArray[j].split('|')[0]
-            let time = hd(scoreArray[j].split('|')[1] * 1000, { units: ['h', 'm', 's'] })
-            if (client.users.get(user)) {
-              msgStr += `**${j + 1}. ${client.users.get(user).username}#${client.users.get(user).discriminator}**\n \`${time}\`\n`
-            } else {
-              msgStr += `**${j + 1}.** *${user}* \n \`${time}\`\n`
-            }
-          }
-        }
-
-        if (message != null) {
-          client.fetchWeeklyLeaderboardPos(message.guild.id, message.author.id, pos => {
-            msgStr = `**${message.author.username}**, you are rank ${pos}\n ${msgStr}`
-            callback(msgStr)
-          })
-        } else {
-          callback(msgStr)
-        }
-      }
-    })
-  }
-
-  client.fetchWeeklyLeaderboardPos = (guildId, userId, callback) => {
-    client.findCurrentPrackers(guildId, (currentPrackers) => {
-      let scoreArray = []
-      let msgStr = ''
-      db.collection('users').find({}).toArray()
-        .then(async res => {
-          await res.forEach(doc => {
-            let time = doc.current_session_playtime
-            if (currentPrackers.get(doc.id) != null) {
-              time += currentPrackers.get(doc.id)
-            }
-
-            if (time > 0) {
-              let string = `${doc.id}|${time}`
-              scoreArray.push(string)
-            }
-          })
-          await con()
-        })
-      function con () {
-        scoreArray.sort((a, b) => {
-          a = a.split('|').splice(1).join('')
-          b = b.split('|').splice(1).join('')
-          return b - a
-        })
-
-        let pos = 0
-        let trueJ = 0
-        for (let i = 0; i <= scoreArray.length; i++) {
-          if (scoreArray[i]) {
-            let user = scoreArray[i].split('|')[0]
-            if (user === userId) { pos = trueJ + 1 }
-            trueJ++
-          }
-        }
-
-        if (pos > 0) {
-          msgStr = `\`${pos}\` / \`${trueJ}\``
-        } else {
-          msgStr = 'N / A'
-        }
-
-        callback(msgStr)
-      }
-    })
-  }
-
-  client.fetchOverallLeaderboardPos = (guildId, userId, callback) => {
-    client.findCurrentPrackers(guildId, (currentPrackers) => {
-      let scoreArray = []
-      let msgStr = ''
-      db.collection('users').find({}).toArray()
-        .then(async res => {
-          await res.forEach(doc => {
-            let time = doc.overall_session_playtime
-            if (currentPrackers.get(doc.id) != null) {
-              time += currentPrackers.get(doc.id)
-            }
-
-            if (time > 0) {
-              let string = `${doc.id}|${time}`
-              scoreArray.push(string)
-            }
-          })
-          await con()
-        })
-      function con () {
-        scoreArray.sort((a, b) => {
-          a = a.split('|').splice(1).join('')
-          b = b.split('|').splice(1).join('')
-          return b - a
-        })
-
-        let pos = 0
-        let trueJ = 0
-        for (let i = 0; i <= scoreArray.length; i++) {
-          if (scoreArray[i]) {
-            let user = scoreArray[i].split('|')[0]
-            if (user === userId) { pos = trueJ + 1 }
-            trueJ++
-          }
-        }
-
-        if (pos > 0) {
-          msgStr = `\`${pos}\` / \`${trueJ}\``
-        } else {
-          msgStr = 'N / A'
-        }
-
-        callback(msgStr)
-      }
-    })
-  }
-
-  client.submitweek = () => {
-    client.getWeeklyLeaderboard(null, data => {
-      let msg = new client.discord.RichEmbed()
-      msg.setTitle('Weekly Leaderboard')
-      msg.setDescription(data)
-      msg.setColor(client.settings.embed_color)
-      msg.setTimestamp()
-      client.fetchUser(client.settings.submit_id, true).then(m => {
-        m.send(msg)
+    guildInfo.permitted_channels
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null)
+      .forEach(chan => {
+        chan.members
+          .filter(member => !member.mute && member.s_time != null && !member.deleted)
+          .forEach(member => currentPrackers.set(member.user.id, moment().unix() - member.s_time))
       })
-    })
+
+    return currentPrackers
+  }
+
+  client.getOverallLeaderboard = async (guild, user) => {
+    let msgStr = await client.getLeaderboard(guild, p => p.overall_session_playtime,
+      size => client.userRepository.loadTopOverall(size))
+    let posStr = await client.getOverallLeaderboardPos(guild, user.id)
+    return `**${user.username}**, you are rank ${posStr}\n${msgStr}`
+  }
+
+  client.getWeeklyLeaderboard = async (guild, user) => {
+    let msgStr = await client.getLeaderboard(guild, p => p.current_session_playtime,
+      size => client.userRepository.loadTopSession(size))
+
+    if (user != null) {
+      let posStr = await client.getWeeklyLeaderboardPos(guild, user.id)
+      return `**${user.username}**, you are rank ${posStr}\n${msgStr}`
+    } else {
+      return msgStr
+    }
+  }
+
+  client.getLeaderboard = async (guild, playtimeFn, loadTopFn) => {
+    let leaderboard = []
+
+    let topPrackers = await loadTopFn(client.settings.leaderboard_size)
+    topPrackers.forEach(pracker => leaderboard.push({ userId: pracker.id, time: playtimeFn(pracker) }))
+
+    let currentPrackers = await client.findCurrentPrackers(guild)
+    for (let [currentId, currentTime] of currentPrackers) {
+      let lbEntry = leaderboard.find(p => p.userId === currentId)
+      if (lbEntry == null) {
+        // we didn't get this current pracker as part of the top N, so pull from DB and calculate their total time.
+        let currentPracker = await client.userRepository.load(currentId)
+        if (currentPracker != null) {
+          currentTime += playtimeFn(currentPracker)
+        }
+
+        leaderboard.push({ userId: currentId, time: currentTime })
+      } else {
+        // this current pracker is part of the top N. Calculate their total time.
+        lbEntry.time += currentTime
+      }
+    }
+
+    leaderboard.sort((a, b) => b.time - a.time)
+
+    let msgStr = ''
+    for (let j = 0; j < client.settings.leaderboard_size; j++) {
+      if (leaderboard[j] == null || leaderboard[j].time === 0) {
+        break
+      }
+
+      let timeStr = hd(leaderboard[j].time * 1000, { units: ['h', 'm', 's'] })
+      let user = client.users.get(leaderboard[j].userId)
+      if (user != null) {
+        msgStr += `**${j + 1}. ${user.username}#${user.discriminator}**\n \`${timeStr}\`\n`
+      } else {
+        msgStr += `**${j + 1}.** *${leaderboard[j].userId}* \n \`${timeStr}\`\n`
+      }
+    }
+
+    return msgStr
+  }
+
+  client.getOverallLeaderboardPos = async (guild, userId) => {
+    return client.getLeaderboardPos(guild, userId,
+      p => p.overall_session_playtime,
+      () => client.userRepository.getOverallCount(),
+      userId => client.userRepository.getOverallRank(userId),
+      totalTime => client.userRepository.getOverallRankByTime(totalTime))
+  }
+
+  client.getWeeklyLeaderboardPos = async (guild, userId) => {
+    return client.getLeaderboardPos(guild, userId,
+      p => p.current_session_playtime,
+      () => client.userRepository.getSessionCount(),
+      userId => client.userRepository.getSessionRank(userId),
+      totalTime => client.userRepository.getSessionRankByTime(totalTime))
+  }
+
+  client.getLeaderboardPos = async (guild, userId, playtimeFn, userCountFn, getRankFn, getRankByTimeFn) => {
+    let currentPrackers = await client.findCurrentPrackers(guild)
+
+    let tentativeRank, totalTime
+    let totalCount = await userCountFn()
+    if (currentPrackers.has(userId)) {
+      // the calling user is live. Need to figure out where their rank is after accounting for active time.
+      let user = await client.userRepository.load(userId)
+      if (user == null) {
+        // we've never seen them before... consider their DB time to be zero.
+        totalTime = currentPrackers.get(userId)
+      } else {
+        totalTime = currentPrackers.get(userId) + playtimeFn(user)
+      }
+
+      tentativeRank = await getRankByTimeFn(totalTime)
+    } else {
+      let user = await client.userRepository.load(userId)
+      if (user == null || playtimeFn(user) === 0) {
+        // calling user has zero time, active or stored
+        return 'N / A'
+      }
+
+      totalTime = playtimeFn(user)
+      tentativeRank = await getRankFn(userId)
+    }
+
+    // now figure out how many active prackers (if any) they've been passed by.
+    for (const [currentId, currentTime] of currentPrackers.entries()) {
+      if (currentId !== userId) {
+        let otherUser = await client.userRepository.load(currentId)
+        let otherTime = 0
+        if (otherUser == null || playtimeFn(otherUser) === 0) {
+          // an active user who won't show up in getSessionCount() => increment the total number of users
+          totalCount++
+        } else {
+          otherTime += playtimeFn(otherUser)
+        }
+
+        otherTime += currentTime
+        if (otherTime > totalTime) {
+          // this active user has passed us
+          tentativeRank++
+        }
+      }
+    }
+
+    return `\`${tentativeRank}\` / \`${totalCount}\``
+  }
+
+  client.submitWeek = async () => {
+    let pinano = client.guilds.get('188345759408717825')
+    let data = await client.getWeeklyLeaderboard(pinano, null)
+    let msg = new client.discord.RichEmbed()
+    msg.setTitle('Weekly Leaderboard - Results')
+    msg.setDescription(data)
+    msg.setColor(client.settings.embed_color)
+    msg.setTimestamp()
+    pinano.channels.find(chan => chan.name === 'practice-room-chat').send(msg)
   }
 }
