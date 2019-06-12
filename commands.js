@@ -180,8 +180,8 @@ class Commands {
     let args = message.content.split(' ').splice(1)
     if (args.length !== 0) {
       let usageStr = `${settings.prefix}rooms [ [ add | del | delete ] <#CHANNEL_ID> ]`
-      requireParameterCount(args, 2)
-      requireParameterFormat(args[1], arg => arg.startsWith('<#') && arg.endsWith('>'))
+      requireParameterCount(args, 2, usageStr)
+      requireParameterFormat(args[1], arg => arg.startsWith('<#') && arg.endsWith('>'), usageStr)
 
       let chanId = args[1].replace(/[<#>]/g, '')
       switch (args[0]) {
