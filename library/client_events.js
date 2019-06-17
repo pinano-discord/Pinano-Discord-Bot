@@ -41,59 +41,6 @@ module.exports = client => {
     setTimeout(() => message.delete(), client.settings.req_destruct_time * 1000)
   })
 
-  client.on('guildMemberAdd', async (mem) => {
-    if (mem.guild == null) {
-      return
-    }
-
-    let guildInfo = await client.loadGuildData(mem.guild.id)
-    if (guildInfo == null) {
-      return
-    }
-
-    if (guildInfo.dm_welcome_toggle && guildInfo.dm_welcome_message !== '') {
-      let msg = new client.discord.RichEmbed()
-      msg.setTitle('Welcome!')
-      msg.setDescription(guildInfo.dm_welcome_message)
-      msg.setColor(client.settings.embed_color)
-      msg.setTimestamp()
-      try {
-        mem.send(msg)
-      } catch (e) {
-        client.log(`unable to send to user ${mem.username}#${mem.discriminator}`)
-      }
-    }
-
-    if (guildInfo.welcome_toggle) {
-      if (guildInfo.welcome_channel !== '') {
-        if (guildInfo.welcome_message === '') {
-          guildInfo.welcome_message = client.settings.default_welcome
-        }
-
-        let mes = guildInfo.welcome_message.replace('{user}', `**${mem.displayName}**`)
-        client.channels.get(guildInfo.welcome_channel).send(mes)
-      }
-    }
-  })
-
-  client.on('guildMemberRemove', async (mem) => {
-    if (mem.guild === null) {
-      return
-    }
-
-    let guildInfo = await client.loadGuildData(mem.guild.id)
-    if (guildInfo == null || guildInfo.leave_channel === '' || !guildInfo.leave_toggle) {
-      return
-    }
-
-    if (guildInfo.leave_message === '') {
-      guildInfo.leave_message = client.settings.default_leave
-    }
-
-    let mes = guildInfo.leave_message.replace('{user}', `**${mem.displayName}**`)
-    client.channels.get(guildInfo.leave_channel).send(mes)
-  })
-
   client.on('voiceStateUpdate', async (oldMember, newMember) => {
     if (!client.settings.pinano_guilds.includes(newMember.guild.id)) {
       return
@@ -145,10 +92,6 @@ module.exports = client => {
     }
 
     function updatePracticeRoomChatPermissions (guildInfo, newMember) {
-      if (!guildInfo.voice_perm_toggle) {
-        return
-      }
-
       // if in any practice channel, member has rights to speak in practice room chat (can be muted)
       let prChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat')
       if (prChan == null) {

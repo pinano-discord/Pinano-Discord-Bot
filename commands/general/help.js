@@ -7,13 +7,13 @@ module.exports.load = (client) => {
       msg.setTitle('Help')
       msg.addField(`\`${client.settings.prefix}help\``,
         'Displays this help message')
-      msg.addField(`\`${client.settings.prefix}stats [username#discriminator]\``,
+      msg.addField(`\`${client.settings.prefix}stats [ USERNAME#DISCRIMINATOR ]\``,
         'Displays practice statistics for the specified user (default: calling user)')
       msg.addField(`\`${client.settings.prefix}lb, ${client.settings.prefix}leaderboard [ weekly | overall ]\``,
         'Displays the weekly or overall leaderboard (default: weekly)')
 
       if (isBotManager) {
-        msg.addField(`\`${client.settings.prefix}unlock [<#channel_id>]\``,
+        msg.addField(`\`${client.settings.prefix}unlock [ <#CHANNEL_ID> ]\``,
           'Unlocks the specified room for shared use (default: currently occupied room)')
       } else {
         msg.addField(`\`${client.settings.prefix}unlock\``,
@@ -26,11 +26,11 @@ module.exports.load = (client) => {
         'Locks the currently occupied room for exclusive use')
 
       if (isBotManager) {
-        msg.addField(`\`${client.settings.prefix}settings\``,
-          'Displays/modifies bot settings (including registering/unregistering practice rooms)')
-        msg.addField(`\`${client.settings.prefix}addtime @user [time_in_seconds]\``,
+        msg.addField(`\`${client.settings.prefix}rooms [ [ add | del | delete ] <#CHANNEL_ID> ]\``,
+          'Lists, registers or unregisters practice rooms')
+        msg.addField(`\`${client.settings.prefix}addtime @user TIME_IN_SECONDS\``,
           'Adds practice time to a user\'s record')
-        msg.addField(`\`${client.settings.prefix}deltime @user [time_in_seconds]\``,
+        msg.addField(`\`${client.settings.prefix}deltime @user TIME_IN_SECONDS\``,
           'Removes practice time from a user\'s record')
       }
 
