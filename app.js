@@ -17,20 +17,18 @@ client.log('Loaded client functions')
 require('./library/client_events.js')(client)
 client.log('Loaded client events')
 
-require('./library/leaderboard_fetch.js')(client)
-client.log('Loaded leaderboard functions')
+require('./library/leaderboard.js')(client)
+client.log('Loaded leaderboard library')
 
-// weekly wipe at 12 am on monday
+// weekly wipe at midnight on Monday (local time zone)
 cron.schedule('0 0 * * mon', async () => {
   await client.submitWeek()
   await client.userRepository.resetSessionTimes()
   client.log('Cleared weekly results')
-}, {
-  timezone: 'America/New_York'
 })
 
 connect('mongodb://localhost:27017/', 'pinano').then(mongoManager => {
-  client.log(`Connected Database`)
+  client.log('Connected to database')
 
   client.userRepository = mongoManager.newUserRepository()
   client.guildRepository = mongoManager.newGuildRepository()

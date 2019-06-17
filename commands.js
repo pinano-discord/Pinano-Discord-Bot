@@ -1,4 +1,7 @@
 const Discord = require('discord.js')
+const hd = require('humanize-duration')
+const jimp = require('jimp')
+const moment = require('moment')
 const settings = require('./settings/settings.json')
 
 function requireRole (member, roleName = 'Bot Manager', errorMessage = 'You require the bot manager role to use this command.') {
@@ -22,6 +25,16 @@ function requireParameterFormat (arg, formatFn, usageStr) {
 async function selfDestructMessage (messageFn) {
   let m = await messageFn()
   setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
+}
+
+function abbreviateTime (playtime) {
+  return hd(playtime * 1000, { units: ['h', 'm', 's'], round: true })
+    .replace('hours', 'h')
+    .replace('minutes', 'm')
+    .replace('seconds', 's')
+    .replace('hour', 'h')
+    .replace('minute', 'm')
+    .replace('second', 's')
 }
 
 class Commands {
@@ -247,6 +260,129 @@ class Commands {
     }
   }
 
+  /*
+   * The stats command works by building a userInfo structure with enough
+   * information to render a stats card for the user.
+   *
+   * userInfo = {
+   *   username,        // via _selectTargetUser
+   *   discriminator,   // via _selectTargetUser
+   *   mem,             // the GuildMember, via _selectTargetUser -> _enrichUserData
+   *   av,              // the avatar URL or path, via _selectTargetUser -> _enrichUserData
+   *   currentSession,  // current session time (computed from db current session time + active time)
+   *   overallSession,  // overall session time (computed from db overall session time + active time)
+   *   rank             // rank computed by leaderboard library (accounts for active time)
+   * }
+   */
+  _selectTargetUser (message) {
+    let args = message.content.split(' ').splice(1)
+    let userInfo
+    if (args.length >= 1) {
+      userInfo = this._parseUserInfo(args)
+      if (userInfo === null) {
+        throw new Error('Unable to parse as username#discriminator.')
+      }
+    } else {
+      userInfo = {
+        username: message.author.username,
+        discriminator: message.author.discriminator,
+        _finder: (members) => members.get(message.author.id)
+      }
+    }
+
+    const enriched = this._enrichUserInfo(userInfo, message.guild)
+    if (!enriched) {
+      throw new Error(`Unable to find user ${userInfo.username}#${userInfo.discriminator}.`)
+    }
+
+    return userInfo
+  }
+
+  _parseUserInfo (args) {
+    // fqName: "fully qualified name"
+    let fqName = args.join(' ').trim().split('#')
+    if (fqName.length !== 2) {
+      return null
+    }
+
+    return {
+      username: fqName[0],
+      discriminator: fqName[1],
+      _finder: (members) =>
+        members.find(val => val.user.username === fqName[0] &&
+          val.user.discriminator === fqName[1])
+    }
+  }
+
+  _enrichUserInfo (userInfo, guild) {
+    const mem = userInfo._finder(guild.members)
+    if (mem == null) {
+      return false
+    }
+
+    userInfo.mem = mem
+    // checks if user has pfp because discord dosnt return default pfp url >:C
+    if (userInfo.mem.user.avatarURL != null) {
+      userInfo.av = userInfo.mem.user.avatarURL
+    } else {
+      userInfo.av = './assets/default_avatar.jpg'
+    }
+
+    return true
+  }
+
+  async _render ({ av, username, discriminator, currentSession, overallSession, rank }) {
+    // load template
+    let [source, avatar, font] = await Promise.all([
+      jimp.read('./assets/time_card.png'),
+      jimp.read(av),
+      jimp.loadFont(jimp.FONT_SANS_16_WHITE)
+    ])
+
+    await avatar.resize(98, 98)
+    await source.composite(avatar, 14, 14)
+
+    source.print(font, 245, 25, `${username}#${discriminator}`)
+    source.print(font, 135, 90, abbreviateTime(currentSession))
+    source.print(font, 280, 90, abbreviateTime(overallSession))
+    source.print(font, 435, 90, rank)
+
+    // send the pic as png
+    return source.getBufferAsync(jimp.MIME_PNG)
+  }
+
+  async stats (message) {
+    let userInfo = this._selectTargetUser(message)
+
+    const user = await this.client.userRepository.load(userInfo.mem.id)
+    if (user != null) {
+      userInfo.currentSession = user.current_session_playtime
+      userInfo.overallSession = user.overall_session_playtime
+    } else {
+      userInfo.currentSession = 0
+      userInfo.overallSession = 0
+    }
+
+    userInfo.rank = await this.client.getWeeklyLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
+    userInfo.rank = userInfo.rank.replace(/[`]/g, '')
+
+    const guild = await this.client.guildRepository.load(message.guild.id)
+    const mem = userInfo.mem
+    if (guild.permitted_channels.includes(mem.voiceChannelId) && !mem.mute && mem.s_time != null) {
+      let activeTime = moment().unix() - mem.s_time
+      userInfo.currentSession += activeTime
+      userInfo.overallSession += activeTime
+    }
+
+    let buffer = await this._render(userInfo)
+    selfDestructMessage(() => message.channel.send({
+      files: [{
+        attachment: buffer,
+        name: 'level.jpg'
+      }]
+    }))
+  }
+
   async unlock (message) {
     let args = message.content.split(' ').splice(1)
     let channel
@@ -278,6 +414,8 @@ class Commands {
 
 function loadCommands (client) {
   let c = new Commands(client)
+  client.commands = {}
+
   client.commands['addtime'] = (message) => { return c.addtime(message) }
   client.commands['deltime'] = (message) => { return c.deltime(message) }
   client.commands['help'] = (message) => { return c.help(message) }
@@ -285,6 +423,7 @@ function loadCommands (client) {
   client.commands['lock'] = (message) => { return c.lock(message) }
   client.commands['rooms'] = (message) => { return c.rooms(message) }
   client.commands['settings'] = (message) => { return c.settings(message) }
+  client.commands['stats'] = (message) => { return c.stats(message) }
   client.commands['unlock'] = (message) => { return c.unlock(message) }
 }
 

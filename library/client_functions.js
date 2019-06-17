@@ -1,8 +1,6 @@
-const moment = require('moment')
-const promisify = require('util').promisify
-const readdir = promisify(require('fs').readdir)
 const Discord = require('discord.js')
-const settings = require('./settings/settings.json')
+const moment = require('moment')
+const settings = require('../settings/settings.json')
 
 module.exports = client => {
   client.log = (string) => {
@@ -23,31 +21,10 @@ module.exports = client => {
   }
 
   client.loadCommands = async () => {
-    client.commands = {}
-    try {
-      let files = await readdir('./commands/general/')
-      await Promise.all(files.map(async file => {
-        if (file.endsWith('.js')) {
-          require(`../commands/general/${file}`).load(client)
-        }
-      }))
-    } catch (err) {
-      client.log(`Error loading general commands : ${err}`)
-    }
-
-    try {
-      let files = await readdir('./commands/admin/')
-      await Promise.all(files.map(async (file) => {
-        if (file.endsWith('.js')) {
-          require(`../commands/admin/${file}`).load(client)
-        }
-      }))
-    } catch (err) {
-      client.log(`Error loading admin commands : ${err}`)
-    }
-
     let loadCommands = require('../commands.js')
     loadCommands(client)
+
+    require('../eval.js').load(client)
   }
 
   client.errorMessage = async (message, response) => {

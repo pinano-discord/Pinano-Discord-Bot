@@ -1,6 +1,6 @@
 const hd = require('humanize-duration')
 const moment = require('moment')
-const settings = require('./settings/settings.json')
+const settings = require('../settings/settings.json')
 
 module.exports = (client) => {
   client.findCurrentPrackers = async (guild) => {

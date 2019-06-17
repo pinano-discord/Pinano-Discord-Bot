@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const moment = require('moment')
-const settings = require('./settings/settings.json')
+const settings = require('../settings/settings.json')
 
 module.exports = client => {
   client.on('error', client.log)
