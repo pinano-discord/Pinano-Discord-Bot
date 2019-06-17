@@ -24,7 +24,7 @@ client.log(`Loaded client events`)
 
 // weekly wipe at 12 am on monday
 cron.schedule('0 0 * * mon', () => {
-//  client.submitweek()
+  client.submitWeek()
   client.clearWeekResults()
   client.log('Cleared weekly results')
 }, {

@@ -44,6 +44,9 @@ module.exports = client => {
     } catch (err) {
       client.log(`Error loading admin commands : ${err}`)
     }
+
+    let loadCommands = require('../commands.js')
+    loadCommands(client)
   }
 
   client.successMessage = async (message, response) => {

@@ -37,7 +37,12 @@ module.exports = client => {
       client.log(`User created for ${message.author.username}#${message.author.discriminator}`)
     }
 
-    await client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')].run(message)
+    try {
+      await client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')](message)
+    } catch (err) {
+      client.errorMessage(message, err.message)
+    }
+
     setTimeout(() => message.delete(), client.settings.req_destruct_time * 1000)
   })
 

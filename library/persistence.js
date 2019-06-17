@@ -79,9 +79,21 @@ class MongoUserRepository {
     return (rank === undefined) ? rank : rank + 1
   }
 
+  async getOverallRankByTime (time) {
+    return await this._getRankByTime(time, 'overall_session_playtime') + 1
+  }
+
   async getSessionRank (userId) {
     let rank = await this._getRankBy(userId, 'current_session_playtime')
     return (rank === undefined) ? rank : rank + 1
+  }
+
+  async getSessionRankByTime (time) {
+    return await this._getRankByTime(time, 'current_session_playtime') + 1
+  }
+
+  async getOverallCount () {
+    return this.collection.find({ overall_session_playtime: { $gt: 0 } }).count()
   }
 
   async getSessionCount () {
@@ -91,18 +103,28 @@ class MongoUserRepository {
   async _getRankBy (userId, key) {
     try {
       var rankedCursor = await this.collection.find({ [key]: { $gt: 0 } }).sort({ [key]: -1 })
-      let rank = await this._getRankFromCursor(userId, rankedCursor)
+      let rank = await this._getRankFromCursor(user => user.id === userId, rankedCursor)
       return rank
     } finally {
       rankedCursor.close()
     }
   }
 
-  async _getRankFromCursor (userId, cursor) {
+  async _getRankByTime (time, key, cursor) {
+    try {
+      var rankedCursor = await this.collection.find({ [key]: { $gt: 0 } }).sort({ [key]: -1 })
+      let rank = await this._getRankFromCursor(user => user[key] <= time, rankedCursor)
+      return rank
+    } finally {
+      rankedCursor.close()
+    }
+  }
+
+  async _getRankFromCursor (stoppingFn, cursor) {
     let rank = 0
     let user = await cursor.next()
     while (user != null) {
-      if (user.id === userId) {
+      if (stoppingFn(user)) {
         return rank
       }
       rank++
