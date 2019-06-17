@@ -166,8 +166,8 @@ class MongoGuildRepository {
     return this.collection.updateOne({ guild: group.guild }, { $pull: { [field]: value } })
   }
 
-  async insert (group) {
-    return this.collection.insert(group)
+  async save (group) {
+    return this.collection.updateOne({ guild: group.guild }, { $set: group }, { upsert: true })
   }
 }
 
