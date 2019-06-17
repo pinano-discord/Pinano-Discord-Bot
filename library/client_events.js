@@ -52,7 +52,7 @@ module.exports = client => {
     }
 
     // time handler
-    let userInfo = await client.loadUserData(newMember.user.id)
+    let userInfo = await client.userRepository.load(newMember.user.id)
 
     // auto-VC creation: create a room if all high-bitrate rooms are occupied. Muted or unmuted doesn't matter, because
     // in general we want to discourage people from using rooms that are occupied even if all the participants
@@ -90,7 +90,7 @@ module.exports = client => {
         if (tempChannelToRemove != null) {
           // before removing the channel from the guild, remove it in the db.
           guildInfo['permitted_channels'].splice(guildInfo.permitted_channels.indexOf(tempChannelToRemove.id), 1)
-          await client.writeGuildData(newMember.guild.id, guildInfo)
+          await client.guildRepository.save(guildInfo)
           tempChannelToRemove.delete()
         }
       }
@@ -123,7 +123,7 @@ module.exports = client => {
         'current_session_playtime': 0,
         'overall_session_playtime': 0
       }
-      await client.writeUserData(newMember.user.id, userInfo)
+      await client.userRepository.save(userInfo)
       client.log(`User created for ${newMember.user.username}#${newMember.user.discriminator}`)
     } else {
       if (newMember.serverMute && newMember.voiceChannel != null && newMember.voiceChannel.locked_by == null && !newMember.roles.exists(r => r.name === 'Temp Muted')) {
@@ -142,9 +142,10 @@ module.exports = client => {
       }
 
       mutex.runExclusive(async () => {
-        let guildInfo = await client.loadGuildData(newMember.guild.id)
+        let guildInfo = await client.guildRepository.load(newMember.guild.id)
         if (guildInfo == null) {
-          await client.createGuild(newMember.guild.id)
+          guildInfo = client.makeGuild(newMember.guild.id)
+          await client.guildRepository.save(guildInfo)
           client.log('Created new guild.')
         } else {
           updatePracticeRoomChatPermissions(guildInfo, newMember)
@@ -179,7 +180,7 @@ module.exports = client => {
 
             // gotta update the db
             guildInfo['permitted_channels'].push(newChan.id)
-            await client.writeGuildData(newMember.guild.id, guildInfo)
+            await client.guildRepository.save(guildInfo)
           } else {
             removeTempRoomIfPossible(guildInfo)
           }
@@ -222,7 +223,7 @@ module.exports = client => {
               }
             }
 
-            await client.writeUserData(newMember.user.id, userInfo)
+            await client.userRepository.save(userInfo)
             client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${playtime} seconds`)
             newMember.s_time = null
             oldMember.s_time = null

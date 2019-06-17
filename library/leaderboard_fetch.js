@@ -5,7 +5,7 @@ module.exports = (client, db) => {
   client.findCurrentPrackers = async (guild) => {
     // playtimes only get updated when a user leaves/mutes a channel. Therefore, in order to keep up-to-date statistics,
     // find out what users are currently in permitted voice channels, then add their times as if current.
-    let guildInfo = await client.loadGuildData(guild.id)
+    let guildInfo = await client.guildRepository.load(guild.id)
     let currentPrackers = new Map()
 
     guildInfo.permitted_channels

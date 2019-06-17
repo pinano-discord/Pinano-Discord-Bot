@@ -39,14 +39,14 @@ class Commands {
     requireParameterFormat(args[1], arg => Number.isInteger(parseInt(arg)), usageStr)
 
     let delta = parseInt(args[1])
-    let userInfo = await this.client.loadUserData(args[0].replace(/[<@!>]/g, ''))
+    let userInfo = await this.client.userRepository.load(args[0].replace(/[<@!>]/g, ''))
     if (userInfo == null) {
       throw new Error('The user was not found in the database.')
     }
 
     userInfo.current_session_playtime += delta
     userInfo.overall_session_playtime += delta
-    await this.client.writeUserData(args[0].replace(/[<@!>]/g, ''), userInfo)
+    await this.client.userRepository.save(userInfo)
     selfDestructMessage(() => message.reply('added time to user.'))
   }
 
@@ -60,14 +60,14 @@ class Commands {
     requireParameterFormat(args[1], arg => Number.isInteger(parseInt(arg)), usageStr)
 
     let delta = parseInt(args[1])
-    let userInfo = await this.client.loadUserData(args[0].replace(/[<@!>]/g, ''))
+    let userInfo = await this.client.userRepository.load(args[0].replace(/[<@!>]/g, ''))
     if (userInfo == null) {
       throw new Error('The user was not found in the database.')
     }
 
     userInfo.current_session_playtime = Math.max(0, userInfo.current_session_playtime - delta)
     userInfo.overall_session_playtime = Math.max(0, userInfo.overall_session_playtime - delta)
-    await this.client.writeUserData(args[0].replace(/[<@!>]/g, ''), userInfo)
+    await this.client.userRepository.save(userInfo)
     selfDestructMessage(() => message.reply('removed time from user.'))
   }
 
@@ -142,7 +142,7 @@ class Commands {
       throw new Error('You are not currently in a channel.')
     }
 
-    let guildInfo = await this.client.loadGuildData(message.guild.id)
+    let guildInfo = await this.client.guildRepository.load(message.guild.id)
     if (!guildInfo.permitted_channels.includes(message.member.voiceChannelID)) {
       throw new Error('This channel is not a registered practice room.')
     }
@@ -172,7 +172,7 @@ class Commands {
   async rooms (message) {
     requireRole(message.member)
 
-    let guildInfo = await this.client.loadGuildData(message.guild.id)
+    let guildInfo = await this.client.guildRepository.load(message.guild.id)
     if (guildInfo == null) {
       throw new Error('No data for this guild.')
     }
@@ -192,7 +192,7 @@ class Commands {
           }
 
           guildInfo['permitted_channels'].push(chanId)
-          await this.client.writeGuildData(message.guild.id, guildInfo)
+          await this.client.guildRepository.save(guildInfo)
           selfDestructMessage(() => message.reply(`added ${args[1]} to practice channels.`))
           return
         }
@@ -204,7 +204,7 @@ class Commands {
           }
 
           guildInfo['permitted_channels'].splice(guildInfo.permitted_channels.indexOf(chanId), 1)
-          await this.client.writeGuildData(message.guild.id, guildInfo)
+          await this.client.guildRepository.save(guildInfo)
           selfDestructMessage(() => message.reply(`removed ${args[1]} from practice channels.`))
           return
         }
