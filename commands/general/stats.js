@@ -1,6 +1,7 @@
 const jimp = require('jimp')
 const hd = require('humanize-duration')
 const moment = require('moment')
+const settings = require('./settings/settings.json')
 
 module.exports.load = (client) => {
   client.commands['stats'] = async (message) => {
@@ -53,7 +54,7 @@ module.exports.load = (client) => {
       }]
     })
 
-    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
+    setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
   }
 
   /*

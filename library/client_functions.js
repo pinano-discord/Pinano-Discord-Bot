@@ -2,6 +2,7 @@ const moment = require('moment')
 const promisify = require('util').promisify
 const readdir = promisify(require('fs').readdir)
 const Discord = require('discord.js')
+const settings = require('./settings/settings.json')
 
 module.exports = client => {
   client.log = (string) => {
@@ -10,15 +11,15 @@ module.exports = client => {
 
   client.commandExist = (message) => {
     let tokenized = message.content.split(' ')
-    if (tokenized[0].replace(client.settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) {
-      return client.commands[tokenized[1].replace(client.settings.prefix, '')]
+    if (tokenized[0].replace(settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) {
+      return client.commands[tokenized[1].replace(settings.prefix, '')]
     } else {
-      return client.commands[tokenized[0].replace(client.settings.prefix, '')]
+      return client.commands[tokenized[0].replace(settings.prefix, '')]
     }
   }
 
   client.isValidCommand = (message) => {
-    return message.content.startsWith(client.settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)
+    return message.content.startsWith(settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)
   }
 
   client.loadCommands = async () => {
@@ -49,30 +50,17 @@ module.exports = client => {
     loadCommands(client)
   }
 
-  client.successMessage = async (message, response) => {
-    let m = await message.channel.send({
-      embed: {
-        title: 'Success',
-        description: response,
-        color: client.settings.embed_color,
-        timestamp: new Date()
-      }
-    })
-
-    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
-  }
-
   client.errorMessage = async (message, response) => {
     let m = await message.channel.send({
       embed: {
         title: 'Error',
         description: response,
-        color: client.settings.embed_color,
+        color: settings.embed_color,
         timestamp: new Date()
       }
     })
 
-    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
+    setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
   }
 
   client.unlockPracticeRoom = async (guild, userId, channel) => {

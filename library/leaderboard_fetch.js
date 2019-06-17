@@ -1,7 +1,8 @@
 const hd = require('humanize-duration')
 const moment = require('moment')
+const settings = require('./settings/settings.json')
 
-module.exports = (client, db) => {
+module.exports = (client) => {
   client.findCurrentPrackers = async (guild) => {
     // playtimes only get updated when a user leaves/mutes a channel. Therefore, in order to keep up-to-date statistics,
     // find out what users are currently in permitted voice channels, then add their times as if current.
@@ -42,7 +43,7 @@ module.exports = (client, db) => {
   client.getLeaderboard = async (guild, playtimeFn, loadTopFn) => {
     let leaderboard = []
 
-    let topPrackers = await loadTopFn(client.settings.leaderboard_size)
+    let topPrackers = await loadTopFn(settings.leaderboard_size)
     topPrackers.forEach(pracker => leaderboard.push({ userId: pracker.id, time: playtimeFn(pracker) }))
 
     let currentPrackers = await client.findCurrentPrackers(guild)
@@ -65,7 +66,7 @@ module.exports = (client, db) => {
     leaderboard.sort((a, b) => b.time - a.time)
 
     let msgStr = ''
-    for (let j = 0; j < client.settings.leaderboard_size; j++) {
+    for (let j = 0; j < settings.leaderboard_size; j++) {
       if (leaderboard[j] == null || leaderboard[j].time === 0) {
         break
       }
@@ -151,11 +152,13 @@ module.exports = (client, db) => {
   client.submitWeek = async () => {
     let pinano = client.guilds.get('188345759408717825')
     let data = await client.getWeeklyLeaderboard(pinano, null)
-    let msg = new client.discord.RichEmbed()
-    msg.setTitle('Weekly Leaderboard - Results')
-    msg.setDescription(data)
-    msg.setColor(client.settings.embed_color)
-    msg.setTimestamp()
-    pinano.channels.find(chan => chan.name === 'practice-room-chat').send(msg)
+    pinano.channels.find(chan => chan.name === 'practice-room-chat').send({
+      embed: {
+        title: 'Weekly Leaderboard - Results',
+        description: data,
+        color: settings.embed_color,
+        timestamp: Date.now()
+      }
+    })
   }
 }

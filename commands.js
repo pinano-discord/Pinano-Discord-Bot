@@ -113,13 +113,15 @@ class Commands {
   }
 
   _sendLeaderboard (channel, data, type, other) {
-    let msg = new Discord.RichEmbed()
-    msg.setTitle(`${type} Leaderboard`)
-    msg.setDescription(data)
-    msg.setFooter(`To view the ${other} leaderboard use ${settings.prefix}leaderboard ${other}`)
-    msg.setColor(settings.embed_color)
-    msg.setTimestamp()
-    selfDestructMessage(() => channel.send(msg))
+    selfDestructMessage(() => channel.send({
+      embed: {
+        title: `${type} Leaderboard`,
+        description: data,
+        footer: `To view the ${other} leaderboard use ${settings.prefix}leaderboard ${other}`,
+        color: settings.embed_color,
+        timestamp: Date.now()
+      }
+    }))
   }
 
   async leaderboard (message) {

@@ -1,6 +1,7 @@
 const moment = require('moment')
 const Mutex = require('async-mutex').Mutex
 const Discord = require('discord.js')
+const settings = require('./settings/settings.json')
 
 const mutex = new Mutex()
 
@@ -11,8 +12,8 @@ module.exports = client => {
     client.log('Successfully connected to discord.')
 
     try {
-      await client.user.setActivity(client.settings.activity, { type: 'Playing' })
-      client.log(`Successfully set activity to ${client.settings.activity}`)
+      await client.user.setActivity(settings.activity, { type: 'Playing' })
+      client.log(`Successfully set activity to ${settings.activity}`)
     } catch (err) {
       client.log('Could not set activity.')
     }
@@ -26,7 +27,7 @@ module.exports = client => {
       return
     }
 
-    if (!client.settings.pinano_guilds.includes(message.guild.id)) {
+    if (!settings.pinano_guilds.includes(message.guild.id)) {
       return client.errorMessage(message, 'This bot can only be used on official Pinano servers.')
     }
 
@@ -38,16 +39,16 @@ module.exports = client => {
     }
 
     try {
-      await client.commands[message.content.split(' ')[0].replace(client.settings.prefix, '')](message)
+      await client.commands[message.content.split(' ')[0].replace(settings.prefix, '')](message)
     } catch (err) {
       client.errorMessage(message, err.message)
     }
 
-    setTimeout(() => message.delete(), client.settings.req_destruct_time * 1000)
+    setTimeout(() => message.delete(), settings.req_destruct_time * 1000)
   })
 
   client.on('voiceStateUpdate', async (oldMember, newMember) => {
-    if (!client.settings.pinano_guilds.includes(newMember.guild.id)) {
+    if (!settings.pinano_guilds.includes(newMember.guild.id)) {
       return
     }
 
