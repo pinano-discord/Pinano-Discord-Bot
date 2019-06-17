@@ -54,7 +54,7 @@ module.exports = client => {
     // time handler
     let userInfo = await client.userRepository.load(newMember.user.id)
 
-    // auto-VC creation: create a room if all rooms are occupied. Muted or unmuted doesn't matter, because
+    // auto-VC creation: create a room if all high-bitrate rooms are occupied. Muted or unmuted doesn't matter, because
     // in general we want to discourage people from using rooms that are occupied even if all the participants
     // are currently muted (one person could have been practicing there but just muted temporarily).
     function areAllPracticeRoomsFull (guildInfo) {
@@ -62,7 +62,7 @@ module.exports = client => {
       guildInfo.permitted_channels.forEach(chanId => {
         let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
         // channel being null might happen if we have a stale channel in the db - just ignore if this happens.
-        if (chan != null && !chan.members.exists(m => !m.deleted)) {
+        if (chan != null && chan.bitrate !== 64 && !chan.members.exists(m => !m.deleted)) {
           isFull = false
         }
       })
@@ -73,24 +73,26 @@ module.exports = client => {
     // auto-VC creation: remove an extra room if 1) there are at least two empty rooms and 2) one of those
     // rooms is a temp room. (We don't want to destroy the primary rooms.)
     async function removeTempRoomIfPossible (guildInfo) {
-      let emptyCount = 0
-      let tempChannelToRemove = null
-      guildInfo.permitted_channels.forEach(chanId => {
-        let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
-        if (chan != null && !chan.members.exists(m => !m.deleted)) {
-          emptyCount++
-          if (chan.name === 'Extra Practice Room') {
-            tempChannelToRemove = chan
-          }
-        }
-      })
+      let emptyRooms = guildInfo.permitted_channels
+        .map(chanId => client.guilds.get(newMember.guild.id).channels.get(chanId))
+        .filter(chan => chan != null && !chan.members.exists(m => !m.deleted))
 
-      // if tempChannelToRemove is null, it means we didn't find an empty temp channel. Don't do anything.
-      if (emptyCount >= 2 && tempChannelToRemove != null) {
-        // before removing the channel from the guild, remove it in the db.
-        guildInfo['permitted_channels'].splice(guildInfo.permitted_channels.indexOf(tempChannelToRemove.id), 1)
-        await client.guildRepository.save(guildInfo)
-        tempChannelToRemove.delete()
+      if (emptyRooms.length >= 2) {
+        let tempChannelToRemove = null
+        if (emptyRooms.filter(chan => chan.bitrate !== 64).length <= 1) {
+          // there's at most one high-bitrate room - remove the first temp channel that's low-bitrate, if it exists
+          tempChannelToRemove = emptyRooms.find(c => c.bitrate === 64 && c.name === 'Extra Practice Room')
+        } else {
+          // just remove the first temp channel, regardless of bitrate
+          tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room')
+        }
+
+        if (tempChannelToRemove != null) {
+          // before removing the channel from the guild, remove it in the db.
+          guildInfo['permitted_channels'].splice(guildInfo.permitted_channels.indexOf(tempChannelToRemove.id), 1)
+          await client.guildRepository.save(guildInfo)
+          tempChannelToRemove.delete()
+        }
       }
     }
 
@@ -155,6 +157,25 @@ module.exports = client => {
             // make the new channel go in the right place
             let categoryChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat').parent
             newChan = await newChan.setParent(categoryChan)
+
+            // set bitrate and permissions on the new room
+            newChan.setBitrate(256)
+
+            let tempMutedRole = newMember.guild.roles.find('name', 'Temp Muted')
+            if (tempMutedRole != null) {
+              newChan.overwritePermissions(tempMutedRole, { SPEAK: false })
+            }
+
+            let mutedRole = newMember.guild.roles.find('name', 'Muted')
+            if (mutedRole != null) {
+              newChan.overwritePermissions(mutedRole, { SPEAK: false })
+            }
+
+            let verificationRequiredRole = newMember.guild.roles.find('name', 'Verification Required')
+            if (verificationRequiredRole != null) {
+              newChan.overwritePermissions(verificationRequiredRole, { VIEW_CHANNEL: false })
+            }
+
             newChan.setPosition(categoryChan.children.size)
 
             // gotta update the db
