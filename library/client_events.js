@@ -1,9 +1,6 @@
-const moment = require('moment')
-const Mutex = require('async-mutex').Mutex
 const Discord = require('discord.js')
+const moment = require('moment')
 const settings = require('./settings/settings.json')
-
-const mutex = new Mutex()
 
 module.exports = client => {
   client.on('error', client.log)
@@ -63,7 +60,7 @@ module.exports = client => {
       guildInfo.permitted_channels.forEach(chanId => {
         let chan = client.guilds.get(newMember.guild.id).channels.get(chanId)
         // channel being null might happen if we have a stale channel in the db - just ignore if this happens.
-        if (chan != null && chan.bitrate !== 64 && !chan.members.exists(m => !m.deleted)) {
+        if (chan != null && chan.bitrate !== 64 && !chan.members.some(m => !m.deleted)) {
           isFull = false
         }
       })
@@ -76,7 +73,7 @@ module.exports = client => {
     async function removeTempRoomIfPossible (guildInfo) {
       let emptyRooms = guildInfo.permitted_channels
         .map(chanId => client.guilds.get(newMember.guild.id).channels.get(chanId))
-        .filter(chan => chan != null && !chan.members.exists(m => !m.deleted))
+        .filter(chan => chan != null && !chan.members.some(m => !m.deleted))
 
       if (emptyRooms.length >= 2) {
         let tempChannelToRemove = null
@@ -90,8 +87,7 @@ module.exports = client => {
 
         if (tempChannelToRemove != null) {
           // before removing the channel from the guild, remove it in the db.
-          guildInfo['permitted_channels'].splice(guildInfo.permitted_channels.indexOf(tempChannelToRemove.id), 1)
-          await client.guildRepository.save(guildInfo)
+          await client.guildRepository.removeFromField(guildInfo, 'permitted_channels', tempChannelToRemove.id)
           tempChannelToRemove.delete()
         }
       }
@@ -127,7 +123,7 @@ module.exports = client => {
       await client.userRepository.save(userInfo)
       client.log(`User created for ${newMember.user.username}#${newMember.user.discriminator}`)
     } else {
-      if (newMember.serverMute && newMember.voiceChannel != null && newMember.voiceChannel.locked_by == null && !newMember.roles.exists(r => r.name === 'Temp Muted')) {
+      if (newMember.serverMute && newMember.voiceChannel != null && newMember.voiceChannel.locked_by == null && !newMember.roles.some(r => r.name === 'Temp Muted')) {
         // they're server muted, but they're in an unlocked channel - means they probably left a locked room.
         try {
           newMember.setMute(false)
@@ -142,95 +138,88 @@ module.exports = client => {
         await client.unlockPracticeRoom(oldMember.guild, oldMember.id, oldMember.voiceChannel)
       }
 
-      mutex.runExclusive(async () => {
-        let guildInfo = await client.guildRepository.load(newMember.guild.id)
-        if (guildInfo == null) {
-          guildInfo = client.makeGuild(newMember.guild.id)
-          await client.guildRepository.save(guildInfo)
-          client.log('Created new guild.')
+      let guildInfo = await client.guildRepository.load(newMember.guild.id)
+      if (guildInfo == null) {
+        guildInfo = client.makeGuild(newMember.guild.id)
+        await client.guildRepository.insert(guildInfo)
+        client.log('Created new guild.')
+      } else {
+        updatePracticeRoomChatPermissions(guildInfo, newMember)
+
+        // run auto-VC creation logic
+        if (areAllPracticeRoomsFull(guildInfo)) {
+          let categoryChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat').parent
+          let tempMutedRole = newMember.guild.roles.find(r => r.name === 'Temp Muted')
+          let mutedRole = newMember.guild.roles.find(r => r.name === 'Muted')
+          let verificationRequiredRole = newMember.guild.roles.find(r => r.name === 'Verification Required')
+
+          let newChan = await client.guilds.get(newMember.guild.id).createChannel('Extra Practice Room', {
+            type: 'voice',
+            parent: categoryChan,
+            bitrate: settings.dev_mode ? 96000 : 256000,
+            position: categoryChan.children.size,
+            permissionOverwrites: [{
+              id: tempMutedRole,
+              deny: ['SPEAK']
+            }, {
+              id: mutedRole,
+              deny: ['SPEAK']
+            }, {
+              id: verificationRequiredRole,
+              deny: ['VIEW_CHANNEL']
+            }]
+          })
+
+          // update the db
+          await client.guildRepository.addToField(guildInfo, 'permitted_channels', newChan.id)
         } else {
-          updatePracticeRoomChatPermissions(guildInfo, newMember)
-
-          // run auto-VC creation logic
-          if (areAllPracticeRoomsFull(guildInfo)) {
-            let newChan = await client.guilds.get(newMember.guild.id).createChannel('Extra Practice Room', 'voice')
-
-            // make the new channel go in the right place
-            let categoryChan = client.guilds.get(newMember.guild.id).channels.find(chan => chan.name === 'practice-room-chat').parent
-            newChan = await newChan.setParent(categoryChan)
-
-            // set bitrate and permissions on the new room
-            newChan.setBitrate(256)
-
-            let tempMutedRole = newMember.guild.roles.find('name', 'Temp Muted')
-            if (tempMutedRole != null) {
-              newChan.overwritePermissions(tempMutedRole, { SPEAK: false })
-            }
-
-            let mutedRole = newMember.guild.roles.find('name', 'Muted')
-            if (mutedRole != null) {
-              newChan.overwritePermissions(mutedRole, { SPEAK: false })
-            }
-
-            let verificationRequiredRole = newMember.guild.roles.find('name', 'Verification Required')
-            if (verificationRequiredRole != null) {
-              newChan.overwritePermissions(verificationRequiredRole, { VIEW_CHANNEL: false })
-            }
-
-            newChan.setPosition(categoryChan.children.size)
-
-            // gotta update the db
-            guildInfo['permitted_channels'].push(newChan.id)
-            await client.guildRepository.save(guildInfo)
-          } else {
-            removeTempRoomIfPossible(guildInfo)
-          }
-
-          // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
-          // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
-          // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
-          if (!newMember.selfMute &&
-            !newMember.serverMute &&
-            oldMember.s_time == null &&
-            guildInfo.permitted_channels.includes(newMember.voiceChannelID) &&
-            newMember.voiceChannel != null &&
-            (newMember.voiceChannel.locked_by == null || newMember.voiceChannel.locked_by === newMember.id)) {
-            // if they are unmuted and a start time dosnt exist and they are in a good channel and the room is not locked by someone else
-            newMember.s_time = moment().unix()
-          } else if (oldMember.s_time != null) {
-            // if a start time exist transfer it to new user object
-            newMember.s_time = oldMember.s_time
-          }
-
-          // if user gets muted or leaves or transfers to a bad channel
-          if (newMember.voiceChannelID === null || !guildInfo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute || newMember.serverMute) {
-            if (newMember.s_time == null) {
-              return
-            }
-
-            const playtime = moment().unix() - newMember.s_time
-            userInfo.current_session_playtime += playtime
-            userInfo.overall_session_playtime += playtime
-
-            const hourrole = '529404918885384203'
-            // const activerole = '542790691617767424'
-
-            if (userInfo.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourrole)) {
-              try {
-                await newMember.addRole(hourrole)
-                await newMember.send('You have achieved the 40 hour pracker role!')
-              } catch (err) {
-                client.log(`error awarding user ${newMember.username} the forty hour role`)
-              }
-            }
-
-            await client.userRepository.save(userInfo)
-            client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${playtime} seconds`)
-            newMember.s_time = null
-            oldMember.s_time = null
-          }
+          removeTempRoomIfPossible(guildInfo)
         }
-      })
+
+        // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
+        // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
+        // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
+        if (!newMember.selfMute &&
+          !newMember.serverMute &&
+          oldMember.s_time == null &&
+          guildInfo.permitted_channels.includes(newMember.voiceChannelID) &&
+          newMember.voiceChannel != null &&
+          (newMember.voiceChannel.locked_by == null || newMember.voiceChannel.locked_by === newMember.id)) {
+          // if they are unmuted and a start time dosnt exist and they are in a good channel and the room is not locked by someone else
+          newMember.s_time = moment().unix()
+        } else if (oldMember.s_time != null) {
+          // if a start time exist transfer it to new user object
+          newMember.s_time = oldMember.s_time
+        }
+
+        // if user gets muted or leaves or transfers to a bad channel
+        if (newMember.voiceChannelID === null || !guildInfo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute || newMember.serverMute) {
+          if (newMember.s_time == null) {
+            return
+          }
+
+          const playtime = moment().unix() - newMember.s_time
+          userInfo.current_session_playtime += playtime
+          userInfo.overall_session_playtime += playtime
+
+          const hourrole = '529404918885384203'
+          // const activerole = '542790691617767424'
+
+          if (userInfo.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourrole)) {
+            try {
+              await newMember.addRole(hourrole)
+              await newMember.send('You have achieved the 40 hour pracker role!')
+            } catch (err) {
+              client.log(`error awarding user ${newMember.username} the forty hour role`)
+            }
+          }
+
+          await client.userRepository.save(userInfo)
+          client.log(`User ${newMember.user.username}#${newMember.user.discriminator} practiced for ${playtime} seconds`)
+          newMember.s_time = null
+          oldMember.s_time = null
+        }
+      }
     }
   })
 }

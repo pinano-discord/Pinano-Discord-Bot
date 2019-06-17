@@ -155,7 +155,7 @@ class Commands {
 
     channel.locked_by = message.author.id
     channel.overwritePermissions(message.author, { SPEAK: true })
-    let everyone = message.guild.roles.find('name', '@everyone')
+    let everyone = message.guild.roles.find(r => r.name === '@everyone')
     channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
     try {
       await Promise.all(channel.members.map(async (m) => {
@@ -193,8 +193,7 @@ class Commands {
             throw new Error(`${args[1]} is already registered.`)
           }
 
-          guildInfo['permitted_channels'].push(chanId)
-          await this.client.guildRepository.save(guildInfo)
+          await this.client.guildRepository.addToField(guildInfo, 'permitted_channels', chanId)
           selfDestructMessage(() => message.reply(`added ${args[1]} to practice channels.`))
           return
         }
@@ -205,8 +204,7 @@ class Commands {
             throw new Error(`${args[1]} is not currently registered.`)
           }
 
-          guildInfo['permitted_channels'].splice(guildInfo.permitted_channels.indexOf(chanId), 1)
-          await this.client.guildRepository.save(guildInfo)
+          await this.client.guildRepository.removeFromField(guildInfo, 'permitted_channels', chanId)
           selfDestructMessage(() => message.reply(`removed ${args[1]} from practice channels.`))
           return
         }

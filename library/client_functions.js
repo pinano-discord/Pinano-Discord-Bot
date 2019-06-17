@@ -67,7 +67,7 @@ module.exports = client => {
     channel.locked_by = null
 
     // remove permissions overrides
-    let everyone = guild.roles.find('name', '@everyone')
+    let everyone = guild.roles.find(r => r.name === '@everyone')
     channel.overwritePermissions(everyone, { SPEAK: null })
 
     let personalOverride = channel.permissionOverwrites.get(userId)
@@ -82,7 +82,7 @@ module.exports = client => {
 
     try {
       await Promise.all(channel.members.map(async m => {
-        if (!m.deleted && !m.roles.exists(r => r.name === 'Temp Muted')) {
+        if (!m.deleted && !m.roles.some(r => r.name === 'Temp Muted')) {
           return m.setMute(false)
         }
       }))
