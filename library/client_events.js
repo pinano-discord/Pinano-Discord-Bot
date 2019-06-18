@@ -194,13 +194,13 @@ module.exports = client => {
         userInfo.current_session_playtime += playtime
         userInfo.overall_session_playtime += playtime
 
-        const hourRole = newMember.guild.roles.get(r => r.name === '40 Hour Pracker')
+        const hourRole = newMember.guild.roles.find(r => r.name === '40 Hour Pracker')
         if (userInfo.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourRole)) {
           try {
             await newMember.addRole(hourRole)
             await newMember.send('You have achieved the 40 hour pracker role!')
           } catch (err) {
-            client.log(`error awarding user ${newMember.username} the forty hour role`)
+            client.log(`Error awarding user ${newMember.user.username} the forty hour role`)
           }
         }
 
