@@ -195,7 +195,7 @@ module.exports = client => {
         userInfo.overall_session_playtime += playtime
 
         const hourRole = newMember.guild.roles.find(r => r.name === '40 Hour Pracker')
-        if (userInfo.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourRole)) {
+        if (userInfo.overall_session_playtime >= 40 * 60 * 60 && !newMember.roles.has(hourRole.id)) {
           try {
             await newMember.addRole(hourRole)
             await newMember.send('You have achieved the 40 hour pracker role!')
