@@ -133,7 +133,7 @@ module.exports = client => {
         let mutedRole = newMember.guild.roles.find(r => r.name === 'Muted')
         let verificationRequiredRole = newMember.guild.roles.find(r => r.name === 'Verification Required')
 
-        let newChan = await client.guilds.get(newMember.guild.id).createChannel('Extra Practice Room', {
+        let newChan = await newMember.guild.createChannel('Extra Practice Room', {
           type: 'voice',
           parent: categoryChan,
           bitrate: settings.dev_mode ? 96000 : 256000,

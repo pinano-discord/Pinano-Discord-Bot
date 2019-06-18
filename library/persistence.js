@@ -158,7 +158,7 @@ class MongoGuildRepository {
     return this.collection.findOne({ guild: groupId })
   }
 
-  async insertIntoField (group, field, value) {
+  async addToField (group, field, value) {
     return this.collection.updateOne({ guild: group.guild }, { $addToSet: { [field]: value } })
   }
 
