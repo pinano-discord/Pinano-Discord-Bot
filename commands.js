@@ -368,7 +368,7 @@ class Commands {
 
     const guild = await this.client.guildRepository.load(message.guild.id)
     const mem = userInfo.mem
-    if (guild.permitted_channels.includes(mem.voiceChannelId) && !mem.mute && mem.s_time != null) {
+    if (guild.permitted_channels.includes(mem.voiceChannelID) && !mem.mute && mem.s_time != null) {
       let activeTime = moment().unix() - mem.s_time
       userInfo.currentSession += activeTime
       userInfo.overallSession += activeTime
