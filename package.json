@@ -10,7 +10,7 @@
     "url": "https://github.com/ubermadness/Pinano-Discord-Bot.git"
   },
   "dependencies": {
-    "discord.js": "^11.4.2",
+    "discord.js": "^11.5.1",
     "humanize-duration": "^3.16.0",
     "jimp": "^0.6.0",
     "moment": "^2.22.2",

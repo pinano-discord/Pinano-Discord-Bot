@@ -1,7 +1,6 @@
-const moment = require('moment')
-const promisify = require('util').promisify
-const readdir = promisify(require('fs').readdir)
 const Discord = require('discord.js')
+const moment = require('moment')
+const settings = require('../settings/settings.json')
 
 module.exports = client => {
   client.log = (string) => {
@@ -10,56 +9,22 @@ module.exports = client => {
 
   client.commandExist = (message) => {
     let tokenized = message.content.split(' ')
-    if (tokenized[0].replace(client.settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) {
-      return client.commands[tokenized[1].replace(client.settings.prefix, '')]
+    if (tokenized[0].replace(settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) {
+      return client.commands[tokenized[1].replace(settings.prefix, '')]
     } else {
-      return client.commands[tokenized[0].replace(client.settings.prefix, '')]
+      return client.commands[tokenized[0].replace(settings.prefix, '')]
     }
   }
 
   client.isValidCommand = (message) => {
-    return message.content.startsWith(client.settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)
+    return message.content.startsWith(settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)
   }
 
   client.loadCommands = async () => {
-    client.commands = {}
-    try {
-      let files = await readdir('./commands/general/')
-      await Promise.all(files.map(async file => {
-        if (file.endsWith('.js')) {
-          require(`../commands/general/${file}`).load(client)
-        }
-      }))
-    } catch (err) {
-      client.log(`Error loading general commands : ${err}`)
-    }
-
-    try {
-      let files = await readdir('./commands/admin/')
-      await Promise.all(files.map(async (file) => {
-        if (file.endsWith('.js')) {
-          require(`../commands/admin/${file}`).load(client)
-        }
-      }))
-    } catch (err) {
-      client.log(`Error loading admin commands : ${err}`)
-    }
-
     let loadCommands = require('../commands.js')
     loadCommands(client)
-  }
 
-  client.successMessage = async (message, response) => {
-    let m = await message.channel.send({
-      embed: {
-        title: 'Success',
-        description: response,
-        color: client.settings.embed_color,
-        timestamp: new Date()
-      }
-    })
-
-    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
+    require('../eval.js').load(client)
   }
 
   client.errorMessage = async (message, response) => {
@@ -67,19 +32,19 @@ module.exports = client => {
       embed: {
         title: 'Error',
         description: response,
-        color: client.settings.embed_color,
+        color: settings.embed_color,
         timestamp: new Date()
       }
     })
 
-    setTimeout(() => m.delete(), client.settings.res_destruct_time * 1000)
+    setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
   }
 
   client.unlockPracticeRoom = async (guild, userId, channel) => {
     channel.locked_by = null
 
     // remove permissions overrides
-    let everyone = guild.roles.find('name', '@everyone')
+    let everyone = guild.roles.find(r => r.name === '@everyone')
     channel.overwritePermissions(everyone, { SPEAK: null })
 
     let personalOverride = channel.permissionOverwrites.get(userId)
@@ -94,7 +59,7 @@ module.exports = client => {
 
     try {
       await Promise.all(channel.members.map(async m => {
-        if (!m.deleted && !m.roles.exists(r => r.name === 'Temp Muted')) {
+        if (!m.deleted && !m.roles.some(r => r.name === 'Temp Muted')) {
           return m.setMute(false)
         }
       }))

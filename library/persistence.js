@@ -158,8 +158,16 @@ class MongoGuildRepository {
     return this.collection.findOne({ guild: groupId })
   }
 
+  async addToField (group, field, value) {
+    return this.collection.updateOne({ guild: group.guild }, { $addToSet: { [field]: value } })
+  }
+
+  async removeFromField (group, field, value) {
+    return this.collection.updateOne({ guild: group.guild }, { $pull: { [field]: value } })
+  }
+
   async save (group) {
-    return this.collection.update({ guild: group.guild }, group, { upsert: true })
+    return this.collection.updateOne({ guild: group.guild }, { $set: group }, { upsert: true })
   }
 }
 
