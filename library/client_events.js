@@ -29,10 +29,10 @@ async function findChannelToRemove (permittedChannels, guild) {
   if (emptyRooms.length >= 2) {
     if (emptyRooms.filter(chan => chan.bitrate !== 64).length <= 1) {
       // there's at most one high-bitrate room - remove the first temp channel that's low-bitrate, if it exists
-      tempChannelToRemove = emptyRooms.find(c => c.bitrate === 64 && c.name === 'Extra Practice Room')
+      tempChannelToRemove = emptyRooms.find(c => c.bitrate === 64 && (c.name === 'Extra Practice Room' || c.isTempRoom))
     } else {
       // just remove the first temp channel, regardless of bitrate
-      tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room')
+      tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room' || c.isTempRoom)
     }
   }
 
@@ -161,6 +161,8 @@ module.exports = client => {
           deny: ['VIEW_CHANNEL']
         }]
       })
+
+      newChan.isTempRoom = true
 
       // update the db
       await client.guildRepository.addToField(guildInfo, 'permitted_channels', newChan.id)

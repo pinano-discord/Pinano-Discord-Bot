@@ -225,7 +225,7 @@ class Commands {
           throw new Error(`Usage: \`${usageStr}\``)
       }
     } else {
-      let msg = `Currently registered practice rooms:\n\`\`\`\n`
+      let msg = 'Currently registered practice rooms:\n\`\`\`\n'
       guildInfo.permitted_channels
         .map(chanId => message.guild.channels.get(chanId))
         .filter(chan => chan != null)
@@ -236,6 +236,10 @@ class Commands {
             msg += ` (channel ID: ${chan.id})`
           }
 
+          if (chan.isTempRoom) {
+            msg += ' (TEMP)'
+          }
+
           if (chan.locked_by != null) {
             let occupant = chan.members.get(`${chan.locked_by}`)
             msg += ` LOCKED by ${occupant.user.username}#${occupant.user.discriminator}`
@@ -244,18 +248,18 @@ class Commands {
           chan.members.forEach(m => {
             msg += `\n  - ${m.user.username}#${m.user.discriminator}`
             if (m.deleted) {
-              msg += ` (GHOST)`
+              msg += ' (GHOST)'
             }
 
             if (m.s_time != null) {
-              msg += ` (LIVE)`
+              msg += ' (LIVE)'
             }
           })
 
           msg += '\n'
         })
 
-      msg += `\`\`\``
+      msg += '\`\`\`'
       message.channel.send(msg)
     }
   }
