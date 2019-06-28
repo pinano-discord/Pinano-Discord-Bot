@@ -131,16 +131,18 @@ module.exports = (client) => {
       if (currentId !== userId) {
         let otherUser = await client.userRepository.load(currentId)
         let otherTime = 0
+        let dbTime = 0
         if (otherUser == null || playtimeFn(otherUser) === 0) {
           // an active user who won't show up in getSessionCount() => increment the total number of users
           totalCount++
         } else {
-          otherTime += playtimeFn(otherUser)
+          dbTime = playtimeFn(otherUser)
+          otherTime += dbTime
         }
 
         otherTime += currentTime
-        if (otherTime > totalTime) {
-          // this active user has passed us
+        if (otherTime > totalTime && totalTime > dbTime) {
+          // this active user started out behind us but has passed us
           tentativeRank++
         }
       }

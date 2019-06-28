@@ -93,7 +93,7 @@ class Commands {
       'Displays this help message')
     msg.addField(`\`${settings.prefix}stats [ USERNAME#DISCRIMINATOR ]\``,
       'Displays practice statistics for the specified user (default: calling user)')
-    msg.addField(`\`${settings.prefix}lb, ${settings.prefix}leaderboard [ weekly | overall ]\``,
+    msg.addField(`\`${settings.prefix}lb, ${settings.prefix}leaderboard [ [w]eekly | [o]verall ]\``,
       'Displays the weekly or overall leaderboard (default: weekly)')
 
     if (isBotManager) {
@@ -139,15 +139,15 @@ class Commands {
 
   async leaderboard (message) {
     let args = message.content.split(' ').splice(1)
-    if (args.length === 0 || args[0] === 'weekly') {
+    if (args.length === 0 || args[0] === 'weekly' || args[0] === 'w') {
       let data = await this.client.getWeeklyLeaderboard(message.guild, message.author)
       this._sendLeaderboard(message.channel, data, 'Weekly', 'overall')
-    } else if (args[0] === 'overall') {
+    } else if (args[0] === 'overall' || args[0] === 'o') {
       let data = await this.client.getOverallLeaderboard(message.guild, message.author)
       this._sendLeaderboard(message.channel, data, 'Overall', 'weekly')
     } else {
       let command = message.content.split(' ')[0]
-      throw new Error(`Usage: \`${command} [ weekly | overall ]\``)
+      throw new Error(`Usage: \`${command} [ [w]eekly | [o]verall ]\``)
     }
   }
 
