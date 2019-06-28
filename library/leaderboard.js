@@ -154,6 +154,7 @@ module.exports = (client) => {
   client.submitWeek = async () => {
     let pinano = client.guilds.get('188345759408717825')
     let data = await client.getWeeklyLeaderboard(pinano, null)
+    await client.saveAllUsersTime(pinano)
     pinano.channels.find(chan => chan.name === 'practice-room-chat').send({
       embed: {
         title: 'Weekly Leaderboard - Results',

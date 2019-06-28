@@ -55,4 +55,50 @@ module.exports = client => {
       client.log(err)
     }
   }
+
+  client.saveUserTime = async (member) => {
+    // if the user doesn't exist then create a user for the person
+    let userInfo = await client.userRepository.load(member.user.id)
+    if (userInfo == null) {
+      userInfo = {
+        'id': member.user.id,
+        'current_session_playtime': 0,
+        'overall_session_playtime': 0
+      }
+      await client.userRepository.save(userInfo)
+      client.log(`User created for ${member.user.username}#${member.user.discriminator}`)
+    }
+
+    const now = moment().unix()
+    const playtime = now - member.s_time
+    userInfo.current_session_playtime += playtime
+    userInfo.overall_session_playtime += playtime
+
+    const hourRole = member.guild.roles.find(r => r.name === '40 Hour Pracker')
+    if (userInfo.overall_session_playtime >= 40 * 60 * 60 && !member.roles.has(hourRole.id)) {
+      try {
+        await member.addRole(hourRole)
+        await member.send('You have achieved the 40 hour pracker role!')
+      } catch (err) {
+        client.log(`Error awarding user ${member.user.username} the forty hour role`)
+      }
+    }
+
+    await client.userRepository.save(userInfo)
+    client.log(`User ${member.user.username}#${member.user.discriminator} practiced for ${playtime} seconds`)
+
+    member.s_time = now
+  }
+
+  client.saveAllUsersTime = async (guild) => {
+    let guildInfo = await client.guildRepository.load(guild.id)
+    guildInfo.permitted_channels
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null)
+      .forEach(chan => {
+        chan.members
+          .filter(member => !member.mute && member.s_time != null && !member.deleted)
+          .forEach(member => client.saveUserTime(member))
+      })
+  }
 }
