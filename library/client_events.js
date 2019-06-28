@@ -167,7 +167,7 @@ module.exports = client => {
       // update the db
       await client.guildRepository.addToField(guildInfo, 'permitted_channels', newChan.id)
     } else {
-      let tempChannelToRemove = findChannelToRemove(guildInfo.permitted_channels, newMember.guild)
+      let tempChannelToRemove = await findChannelToRemove(guildInfo.permitted_channels, newMember.guild)
       if (tempChannelToRemove != null) {
         // before removing the channel from the guild, remove it in the db.
         await client.guildRepository.removeFromField(guildInfo, 'permitted_channels', tempChannelToRemove.id)
