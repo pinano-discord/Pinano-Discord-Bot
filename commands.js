@@ -225,7 +225,7 @@ class Commands {
           throw new Error(`Usage: \`${usageStr}\``)
       }
     } else {
-      let msg = 'Currently registered practice rooms:\n\`\`\`\n'
+      let msg = 'Currently registered practice rooms:\n```\n'
       guildInfo.permitted_channels
         .map(chanId => message.guild.channels.get(chanId))
         .filter(chan => chan != null)
@@ -259,7 +259,7 @@ class Commands {
           msg += '\n'
         })
 
-      msg += '\`\`\`'
+      msg += '```'
       message.channel.send(msg)
     }
   }
