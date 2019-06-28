@@ -7,19 +7,6 @@ module.exports = client => {
     console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')} :: ${string}`)
   }
 
-  client.commandExist = (message) => {
-    let tokenized = message.content.split(' ')
-    if (tokenized[0].replace(settings.prefix, '').replace(/[<@!>]/g, '') === client.user.id) {
-      return client.commands[tokenized[1].replace(settings.prefix, '')]
-    } else {
-      return client.commands[tokenized[0].replace(settings.prefix, '')]
-    }
-  }
-
-  client.isValidCommand = (message) => {
-    return message.content.startsWith(settings.prefix) || message.content.replace(/[<@!>]/g, '').startsWith(`${client.user.id}`)
-  }
-
   client.loadCommands = async () => {
     let loadCommands = require('../commands.js')
     loadCommands(client)
@@ -65,7 +52,7 @@ module.exports = client => {
       }))
     } catch (err) {
       // this is likely an issue with trying to mute a user who has already left the channel
-      console.log(err)
+      client.log(err)
     }
   }
 }

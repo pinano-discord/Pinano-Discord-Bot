@@ -178,7 +178,7 @@ class Commands {
       }))
     } catch (err) {
       // this is likely an issue with trying to mute a user who has already left the channel
-      console.log(err)
+      this.client.log(err)
     }
 
     selfDestructMessage(() => message.reply(`locked channel <#${channel.id}>.`))
