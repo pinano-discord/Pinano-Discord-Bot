@@ -101,6 +101,8 @@ class Commands {
       'Displays practice statistics for the specified user (default: calling user)')
     msg.addField(`\`${settings.prefix}lb, ${settings.prefix}leaderboard [ [w]eekly | [o]verall ]\``,
       'Displays the weekly or overall leaderboard (default: weekly)')
+    msg.addField(`\`${settings.prefix}lock\``,
+      'Locks the currently occupied room for exclusive use')
 
     if (isBotManager) {
       msg.addField(`\`${settings.prefix}unlock [ <#CHANNEL_ID> ]\``,
@@ -109,11 +111,6 @@ class Commands {
       msg.addField(`\`${settings.prefix}unlock\``,
         'Unlocks the currently occupied room for shared use')
     }
-
-    msg.addField(`\`${settings.prefix}info\``,
-      'Displays information about the Discord server')
-    msg.addField(`\`${settings.prefix}lock\``,
-      'Locks the currently occupied room for exclusive use')
 
     if (isBotManager) {
       msg.addField(`\`${settings.prefix}rooms [ [ add | del | delete ] <#CHANNEL_ID> ]\``,
