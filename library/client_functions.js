@@ -92,13 +92,13 @@ module.exports = client => {
 
   client.saveAllUsersTime = async (guild) => {
     let guildInfo = await client.guildRepository.load(guild.id)
-    guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null)
-      .forEach(chan => {
-        chan.members
-          .filter(member => !member.mute && member.s_time != null && !member.deleted)
-          .forEach(member => client.saveUserTime(member))
-      })
+    await Promise.all(
+      guildInfo.permitted_channels
+        .map(chanId => guild.channels.get(chanId))
+        .filter(chan => chan != null)
+        .map(chan =>
+          Promise.all(chan.members
+            .filter(member => !member.mute && member.s_time != null && !member.deleted)
+            .map(member => client.saveUserTime(member)))))
   }
 }
