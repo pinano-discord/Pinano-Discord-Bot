@@ -98,8 +98,8 @@ module.exports = client => {
         throw new Error(`Unknown command: ${command}`)
       }
 
-      if (!settings.pinano_guilds.includes(message.guild.id)) {
-        throw new Error('This bot can only be used on official Pinano servers.')
+      if (command !== 'eval' && (message.guild == null || !settings.pinano_guilds.includes(message.guild.id))) {
+        throw new Error('Please use this bot on the [Pinano server](https://discordapp.com/invite/3q3gWuD).')
       }
 
       await client.commands[command](message)
@@ -107,7 +107,10 @@ module.exports = client => {
       client.errorMessage(message, err.message)
     }
 
-    setTimeout(() => message.delete(), settings.req_destruct_time * 1000)
+    if (message.guild != null) {
+      // don't delete commands in DMs, because we can't.
+      setTimeout(() => message.delete(), settings.req_destruct_time * 1000)
+    }
   })
 
   client.on('guildMemberUpdate', async (oldMember, newMember) => {
