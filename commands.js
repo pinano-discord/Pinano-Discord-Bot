@@ -172,8 +172,10 @@ class Commands {
     }
 
     channel.locked_by = message.author.id
-    channel.unlocked_name = channel.name
-    channel.setName(`${message.author.username}'s room`)
+    if (channel.isTempRoom) {
+      channel.unlocked_name = channel.name
+      channel.setName(`${message.author.username}'s room`)
+    }
     channel.overwritePermissions(message.author, { SPEAK: true })
     let everyone = message.guild.roles.find(r => r.name === '@everyone')
     channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
