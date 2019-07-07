@@ -240,7 +240,7 @@ class Commands {
         .filter(chan => chan != null)
         .sort((x, y) => x.position > y.position)
         .forEach(chan => {
-          let displayName = (chan.locked_by == null) ? `${chan.name}` : `${chan.unlocked_name}`
+          let displayName = (chan.locked_by == null && chan.isTempRoom) ? `${chan.name}` : `${chan.unlocked_name}`
           msg += displayName
 
           if (displayName === 'Extra Practice Room') {
