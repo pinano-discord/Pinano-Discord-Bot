@@ -172,6 +172,8 @@ class Commands {
     }
 
     channel.locked_by = message.author.id
+    channel.unlocked_name = channel.name
+    channel.setName(`${message.author.username}'s room`)
     channel.overwritePermissions(message.author, { SPEAK: true })
     let everyone = message.guild.roles.find(r => r.name === '@everyone')
     channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
@@ -236,8 +238,10 @@ class Commands {
         .filter(chan => chan != null)
         .sort((x, y) => x.position > y.position)
         .forEach(chan => {
-          msg += `${chan.name}`
-          if (chan.name === 'Extra Practice Room') {
+          let displayName = (chan.locked_by == null) ? `${chan.name}` : `${chan.unlocked_name}`
+          msg += displayName
+
+          if (displayName === 'Extra Practice Room') {
             msg += ` (channel ID: ${chan.id})`
           }
 

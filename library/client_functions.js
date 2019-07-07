@@ -29,6 +29,9 @@ module.exports = client => {
 
   client.unlockPracticeRoom = async (guild, userId, channel) => {
     channel.locked_by = null
+    if (channel.unlocked_name != null) {
+      channel.setName(channel.unlocked_name)
+    }
 
     // remove permissions overrides
     let everyone = guild.roles.find(r => r.name === '@everyone')
