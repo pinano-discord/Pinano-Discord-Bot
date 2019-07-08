@@ -174,11 +174,11 @@ class Commands {
     channel.locked_by = message.author.id
     if (channel.isTempRoom) {
       channel.unlocked_name = channel.name
-      channel.setName(`${message.author.username}'s room`)
+      await channel.setName(`${message.author.username}'s room`)
     }
-    channel.overwritePermissions(message.author, { SPEAK: true })
+    await channel.overwritePermissions(message.author, { SPEAK: true })
     let everyone = message.guild.roles.find(r => r.name === '@everyone')
-    channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
+    await channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
     try {
       await Promise.all(channel.members.map(async (m) => {
         if (m !== message.member && !m.deleted) {
@@ -240,7 +240,7 @@ class Commands {
         .filter(chan => chan != null)
         .sort((x, y) => x.position > y.position)
         .forEach(chan => {
-          let displayName = (chan.locked_by == null && chan.isTempRoom) ? `${chan.name}` : `${chan.unlocked_name}`
+          let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
           msg += displayName
 
           if (displayName === 'Extra Practice Room') {

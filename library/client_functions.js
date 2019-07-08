@@ -28,22 +28,21 @@ module.exports = client => {
   }
 
   client.unlockPracticeRoom = async (guild, userId, channel) => {
-    channel.locked_by = null
     if (channel.unlocked_name != null) {
-      channel.setName(channel.unlocked_name)
+      await channel.setName(channel.unlocked_name)
     }
 
     // remove permissions overrides
     let everyone = guild.roles.find(r => r.name === '@everyone')
-    channel.overwritePermissions(everyone, { SPEAK: null })
+    await channel.overwritePermissions(everyone, { SPEAK: null })
 
     let personalOverride = channel.permissionOverwrites.get(userId)
     // existingOverride shouldn't be null unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
     if (personalOverride != null) {
       if (personalOverride.allowed.bitfield === Discord.Permissions.FLAGS.SPEAK && personalOverride.denied.bitfield === 0) { // the only permission was allow SPEAK
-        personalOverride.delete()
+        await personalOverride.delete()
       } else {
-        channel.overwritePermissions(userId, { SPEAK: null })
+        await channel.overwritePermissions(userId, { SPEAK: null })
       }
     }
 
@@ -57,6 +56,8 @@ module.exports = client => {
       // this is likely an issue with trying to mute a user who has already left the channel
       client.log(err)
     }
+
+    channel.locked_by = null
   }
 
   client.saveUserTime = async (member) => {
