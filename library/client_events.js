@@ -155,7 +155,6 @@ module.exports = client => {
     if (areAllPracticeRoomsFull(guildInfo.permitted_channels, newMember.guild)) {
       let categoryChan = newMember.guild.channels.find(chan => chan.name === 'practice-room-chat').parent
       let tempMutedRole = newMember.guild.roles.find(r => r.name === 'Temp Muted')
-      let mutedRole = newMember.guild.roles.find(r => r.name === 'Muted')
       let verificationRequiredRole = newMember.guild.roles.find(r => r.name === 'Verification Required')
 
       let newChan = await newMember.guild.createChannel('Extra Practice Room', {
@@ -165,9 +164,6 @@ module.exports = client => {
         position: categoryChan.children.size,
         permissionOverwrites: [{
           id: tempMutedRole,
-          deny: ['SPEAK']
-        }, {
-          id: mutedRole,
           deny: ['SPEAK']
         }, {
           id: verificationRequiredRole,
