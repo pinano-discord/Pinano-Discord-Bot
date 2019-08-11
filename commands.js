@@ -157,31 +157,56 @@ class Commands {
   }
 
   async lock (message) {
-    var channel = message.member.voiceChannel
+    let channel, mem
+
+    let args = message.content.split(' ').splice(1)
+    if (args.length >= 1) {
+      requireRole(message.member, 'Bot Manager', 'You must be a Bot Manager to lock other rooms.')
+
+      channel = message.guild.channels.get(args[0].replace(/[<#>]/g, ''))
+
+      let userInfo = this._parseUserInfo(args.slice(1))
+      if (userInfo == null) {
+        throw new Error('Unable to parse as username#discriminator.')
+      }
+
+      mem = userInfo._finder(message.guild.members)
+      if (mem == null) {
+        throw new Error(`Unable to find user ${userInfo.username}#${userInfo.discriminator}.`)
+      }
+    } else {
+      channel = message.member.voiceChannel
+      mem = message.member
+    }
+
     if (channel == null) {
-      throw new Error('You are not currently in a channel.')
+      throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
+    }
+
+    if (!channel.members.has(mem.id)) { // this might happen if a bot manager locks a channel to an absent user
+      throw new Error(`The user is not in the specified channel.`)
     }
 
     let guildInfo = await this.client.guildRepository.load(message.guild.id)
     if (!guildInfo.permitted_channels.includes(message.member.voiceChannelID)) {
-      throw new Error('This channel is not a registered practice room.')
+      throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
 
     if (channel.locked_by != null) {
       throw new Error('This channel is already locked.')
     }
 
-    channel.locked_by = message.author.id
+    channel.locked_by = mem.id
     if (channel.isTempRoom) {
       channel.unlocked_name = channel.name
-      await channel.setName(`${message.author.username}'s room`)
+      await channel.setName(`${mem.user.username}'s room`)
     }
-    await channel.overwritePermissions(message.author, { SPEAK: true })
+    await channel.overwritePermissions(mem.user, { SPEAK: true })
     let everyone = message.guild.roles.find(r => r.name === '@everyone')
     await channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
     try {
       await Promise.all(channel.members.map(async (m) => {
-        if (m !== message.member && !m.deleted) {
+        if (m !== mem && !m.deleted) {
           return m.setMute(true)
         }
       }))
@@ -410,7 +435,7 @@ class Commands {
     }
 
     if (channel == null) {
-      throw new Error('You are not currently in a channel.')
+      throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
 
     if (channel.locked_by !== message.author.id && !message.member.roles.find(r => r.name === 'Bot Manager')) {
