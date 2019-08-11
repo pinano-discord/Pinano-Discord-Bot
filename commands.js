@@ -188,7 +188,7 @@ class Commands {
     }
 
     let guildInfo = await this.client.guildRepository.load(message.guild.id)
-    if (!guildInfo.permitted_channels.includes(message.member.voiceChannelID)) {
+    if (!guildInfo.permitted_channels.includes(channel.id)) {
       throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
 
