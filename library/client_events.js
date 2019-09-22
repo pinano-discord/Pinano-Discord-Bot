@@ -68,10 +68,10 @@ function updatePracticeRoomChatPermissions (permittedChannels, newMember) {
 // 2. unmuted
 // 3. in a permitted channel
 // 4. that is not locked by someone else
-function isLiveUser (bot, member, permitted_channels) {
-  return member.user != bot &&
+function isLiveUser (bot, member, permittedChannels) {
+  return member.user !== bot &&
     !member.mute &&
-    permitted_channels.includes(member.voiceChannelID) &&
+    permittedChannels.includes(member.voiceChannelID) &&
     member.voiceChannel != null &&
     (member.voiceChannel.locked_by == null || member.voiceChannel.locked_by === member.id)
 }
@@ -95,7 +95,7 @@ module.exports = client => {
     client.guilds.forEach(async guild => {
       let guildInfo = await client.guildRepository.load(guild.id)
       if (guildInfo == null) {
-        guildInfo = client.makeGuild(newMember.guild.id)
+        guildInfo = client.makeGuild(guild.id)
         await client.guildRepository.save(guildInfo)
         client.log('Created new guild.')
         return

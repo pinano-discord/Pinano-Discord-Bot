@@ -117,7 +117,7 @@ module.exports = client => {
       .map(chanId => guild.channels.get(chanId))
       .filter(chan => chan != null && chan.members.some(mem => mem.s_time != null))
     let existingConnection = client.voiceConnections.get(guild.id)
-    
+
     if (possibleChannels.length === 0) {
       // nobody to listen to
       if (existingConnection != null) {
@@ -128,7 +128,7 @@ module.exports = client => {
       if (existingConnection != null) {
         currentIndex = possibleChannels.indexOf(existingConnection.channel)
       }
-      
+
       let newChannel = possibleChannels[(currentIndex + 1) % possibleChannels.length]
       let connection = await newChannel.join()
       if (connection.listeners('speaking').length === 0) {
