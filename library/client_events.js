@@ -63,6 +63,19 @@ function updatePracticeRoomChatPermissions (permittedChannels, newMember) {
   }
 }
 
+// a user is live if they are:
+// 1. not the bot
+// 2. unmuted
+// 3. in a permitted channel
+// 4. that is not locked by someone else
+function isLiveUser (bot, member, permitted_channels) {
+  return member.user != bot &&
+    !member.mute &&
+    permitted_channels.includes(member.voiceChannelID) &&
+    member.voiceChannel != null &&
+    (member.voiceChannel.locked_by == null || member.voiceChannel.locked_by === member.id)
+}
+
 module.exports = client => {
   client.on('error', client.log)
 
@@ -197,21 +210,23 @@ module.exports = client => {
     // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
     // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
     // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
-    if (!newMember.selfMute &&
-      !newMember.serverMute &&
-      oldMember.s_time == null &&
-      guildInfo.permitted_channels.includes(newMember.voiceChannelID) &&
-      newMember.voiceChannel != null &&
-      (newMember.voiceChannel.locked_by == null || newMember.voiceChannel.locked_by === newMember.id)) {
-      // if they are unmuted and a start time dosnt exist and they are in a good channel and the room is not locked by someone else
+    if (isLiveUser(client.user, newMember, guildInfo.permitted_channels) && oldMember.s_time == null) {
       newMember.s_time = moment().unix()
     } else if (oldMember.s_time != null) {
-      // if a start time exist transfer it to new user object
+      // this might happen if a live session jumps across channels, or if a live session is ending.
+      // in either case we want newMember.s_time to be populated with the old one (either we need it
+      // for the time calculation before commit, or we transfer the start time to the new session).
       newMember.s_time = oldMember.s_time
     }
 
-    // if user gets muted or leaves or transfers to a bad channel
-    if (newMember.voiceChannelID === null || !guildInfo.permitted_channels.includes(newMember.voiceChannelID) || newMember.selfMute || newMember.serverMute) {
+    // establish connections with live users so we know whether they're actually doing anything.
+    if (isLiveUser(client.user, newMember, guildInfo.permitted_channels)) {
+      let connection = await newMember.voiceChannel.join()
+      if (connection.listeners('speaking').length === 0) {
+        connection.on('speaking', (user, speaking) => client.log(`${user.username} is ${speaking ? 'speaking' : 'not speaking'}`))
+      }
+    } else {
+      // if they aren't live, commit the session to the DB if they were live before.
       if (newMember.s_time == null) {
         return
       }
