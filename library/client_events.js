@@ -91,6 +91,19 @@ module.exports = client => {
 
     await client.loadCommands()
     client.log('Successfully loaded commands!')
+
+    client.guilds.forEach(async guild => {
+      let guildInfo = await client.guildRepository.load(guild.id)
+      if (guildInfo == null) {
+        guildInfo = client.makeGuild(newMember.guild.id)
+        await client.guildRepository.save(guildInfo)
+        client.log('Created new guild.')
+        return
+      }
+
+      await client.patrolThread(guildInfo, guild)
+      client.log(`Successfully began the patrol thread for guild ${guild.id}`)
+    })
   })
 
   client.on('message', async message => {
@@ -219,34 +232,7 @@ module.exports = client => {
       newMember.s_time = oldMember.s_time
     }
 
-    // establish connections with live users so we know whether they're actually doing anything.
-    if (isLiveUser(client.user, newMember, guildInfo.permitted_channels)) {
-      let connection = await newMember.voiceChannel.join()
-      if (connection.listeners('speaking').length === 0) {
-        connection.on('speaking', (user, speaking) => client.log(`${user.username} is ${speaking ? 'speaking' : 'not speaking'}`))
-      }
-    } else {
-      // no point staying in this channel, join another channel with a live user at random.
-      // However, ignore our own activity.
-      if (newMember.user != client.user) {
-        let possibleChannels = guildInfo.permitted_channels
-          .map(chanId => newMember.guild.channels.get(chanId))
-          .filter(chan => chan != null && chan.members.some(mem => mem.s_time != null && mem != newMember))
-
-        if (possibleChannels.length > 0) {
-          let newChannel = possibleChannels[0]
-          let connection = await newChannel.join()
-          if (connection.listeners('speaking').length === 0) {
-            connection.on('speaking', (user, speaking) => client.log(`${user.username} is ${speaking ? 'speaking' : 'not speaking'}`))
-          }
-        } else {
-          let existingConnection = client.voiceConnections.get(newMember.guild.id)
-          if (existingConnection != null) {
-            existingConnection.disconnect()
-          }
-        }
-      }
-
+    if (!isLiveUser(client.user, newMember, guildInfo.permitted_channels)) {
       // if they aren't live, commit the session to the DB if they were live before.
       if (newMember.s_time == null) {
         return
@@ -258,6 +244,15 @@ module.exports = client => {
       // Our user has actually stopped practicing, so set s_time to be null instead.
       newMember.s_time = null
       oldMember.s_time = null
+    }
+
+    // check if we're listening to nobody - if so, move a step on the patrol path.
+    // Alternatively, if we're not listening to anybody, check to see if we should be.
+    let existingConnection = client.voiceConnections.get(newMember.guild)
+    if (existingConnection == null ||
+      existingConnection.channel == null ||
+      !existingConnection.channel.members.some(mem => mem.s_time != null)) {
+      client.patrolThread(guildInfo, newMember.guild)
     }
   })
 }
