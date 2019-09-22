@@ -226,6 +226,27 @@ module.exports = client => {
         connection.on('speaking', (user, speaking) => client.log(`${user.username} is ${speaking ? 'speaking' : 'not speaking'}`))
       }
     } else {
+      // no point staying in this channel, join another channel with a live user at random.
+      // However, ignore our own activity.
+      if (newMember.user != client.user) {
+        let possibleChannels = guildInfo.permitted_channels
+          .map(chanId => newMember.guild.channels.get(chanId))
+          .filter(chan => chan != null && chan.members.some(mem => mem.s_time != null && mem != newMember))
+
+        if (possibleChannels.length > 0) {
+          let newChannel = possibleChannels[0]
+          let connection = await newChannel.join()
+          if (connection.listeners('speaking').length === 0) {
+            connection.on('speaking', (user, speaking) => client.log(`${user.username} is ${speaking ? 'speaking' : 'not speaking'}`))
+          }
+        } else {
+          let existingConnection = client.voiceConnections.get(newMember.guild.id)
+          if (existingConnection != null) {
+            existingConnection.disconnect()
+          }
+        }
+      }
+
       // if they aren't live, commit the session to the DB if they were live before.
       if (newMember.s_time == null) {
         return
