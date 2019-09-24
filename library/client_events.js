@@ -91,19 +91,6 @@ module.exports = client => {
 
     await client.loadCommands()
     client.log('Successfully loaded commands!')
-
-    client.guilds.forEach(async guild => {
-      let guildInfo = await client.guildRepository.load(guild.id)
-      if (guildInfo == null) {
-        guildInfo = client.makeGuild(guild.id)
-        await client.guildRepository.save(guildInfo)
-        client.log('Created new guild.')
-        return
-      }
-
-      await client.patrolThread(guildInfo, guild)
-      client.log(`Successfully began the patrol thread for guild ${guild.id}`)
-    })
   })
 
   client.on('message', async message => {
@@ -244,15 +231,6 @@ module.exports = client => {
       // Our user has actually stopped practicing, so set s_time to be null instead.
       newMember.s_time = null
       oldMember.s_time = null
-    }
-
-    // check if we're listening to nobody - if so, move a step on the patrol path.
-    // Alternatively, if we're not listening to anybody, check to see if we should be.
-    let existingConnection = client.voiceConnections.get(newMember.guild)
-    if (existingConnection == null ||
-      existingConnection.channel == null ||
-      !existingConnection.channel.members.some(mem => mem.s_time != null)) {
-      client.patrolThread(guildInfo, newMember.guild)
     }
   })
 }

@@ -2,8 +2,6 @@ const Discord = require('discord.js')
 const moment = require('moment')
 const settings = require('../settings/settings.json')
 
-let timeoutIds = new Map()
-
 module.exports = client => {
   client.log = (string) => {
     console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')} :: ${string}`)
@@ -106,37 +104,5 @@ module.exports = client => {
           Promise.all(chan.members
             .filter(member => !member.mute && member.s_time != null && !member.deleted)
             .map(member => client.saveUserTime(member)))))
-  }
-
-  client.patrolThread = async (guildInfo, guild) => {
-    if (timeoutIds.has(guild.id)) {
-      clearTimeout(timeoutIds.get(guild.id))
-    }
-
-    let possibleChannels = guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null && chan.members.some(mem => mem.s_time != null))
-    let existingConnection = client.voiceConnections.get(guild.id)
-
-    if (possibleChannels.length === 0) {
-      // nobody to listen to
-      if (existingConnection != null) {
-        existingConnection.disconnect()
-      }
-    } else {
-      let currentIndex = -1
-      if (existingConnection != null) {
-        currentIndex = possibleChannels.indexOf(existingConnection.channel)
-      }
-
-      let newChannel = possibleChannels[(currentIndex + 1) % possibleChannels.length]
-      let connection = await newChannel.join()
-      if (connection.listeners('speaking').length === 0) {
-        connection.on('speaking', (user, speaking) => client.log(`${user.username} is ${speaking ? 'speaking' : 'not speaking'}`))
-      }
-    }
-
-    let timeoutId = setTimeout(() => client.patrolThread(guildInfo, guild), 60 * 1000)
-    timeoutIds.set(guild.id, timeoutId)
   }
 }
