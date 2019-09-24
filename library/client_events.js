@@ -93,6 +93,14 @@ module.exports = client => {
     client.log('Successfully loaded commands!')
   })
 
+  client.on('guildCreate', async guild => {
+    if (!settings.pinano_guilds.includes(guild.id)) {
+      // immediately leave any guilds that aren't in settings.json
+      client.log(`Leaving unauthorized guild ${guild.id}`)
+      guild.leave()
+    }
+  })
+
   client.on('message', async message => {
     if (message.content.startsWith(`<@${client.user.id}> `)) {
       // convert "@Pinano Bot help" syntax to p!help syntax

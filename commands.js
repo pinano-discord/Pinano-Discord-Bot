@@ -5,7 +5,7 @@ const moment = require('moment')
 const settings = require('./settings/settings.json')
 
 function requireRole (member, roleName = 'Bot Manager', errorMessage = 'You require the bot manager role to use this command.') {
-  if (!member.roles.find(r => r.name === roleName)) {
+  if (!member.roles.find(r => r.name === roleName) || !settings.pinano_guilds.includes(member.guild.id)) {
     throw new Error(errorMessage)
   }
 }
