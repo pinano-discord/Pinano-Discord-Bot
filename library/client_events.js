@@ -64,12 +64,12 @@ function updatePracticeRoomChatPermissions (permittedChannels, newMember) {
 }
 
 // a user is live if they are:
-// 1. not the bot
+// 1. not a bot (so we exclude ourselves and Craig)
 // 2. unmuted
 // 3. in a permitted channel
 // 4. that is not locked by someone else
-function isLiveUser (bot, member, permittedChannels) {
-  return member.user !== bot &&
+function isLiveUser (member, permittedChannels) {
+  return !member.user.bot &&
     !member.mute &&
     permittedChannels.includes(member.voiceChannelID) &&
     member.voiceChannel != null &&
@@ -210,7 +210,7 @@ module.exports = client => {
     // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
     // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
     // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
-    if (isLiveUser(client.user, newMember, guildInfo.permitted_channels) && oldMember.s_time == null) {
+    if (isLiveUser(newMember, guildInfo.permitted_channels) && oldMember.s_time == null) {
       newMember.s_time = moment().unix()
     } else if (oldMember.s_time != null) {
       // this might happen if a live session jumps across channels, or if a live session is ending.
@@ -219,7 +219,7 @@ module.exports = client => {
       newMember.s_time = oldMember.s_time
     }
 
-    if (!isLiveUser(client.user, newMember, guildInfo.permitted_channels)) {
+    if (!isLiveUser(newMember, guildInfo.permitted_channels)) {
       // if they aren't live, commit the session to the DB if they were live before.
       if (newMember.s_time == null) {
         return
