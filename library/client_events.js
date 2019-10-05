@@ -91,6 +91,9 @@ module.exports = client => {
 
     await client.loadCommands()
     client.log('Successfully loaded commands!')
+
+    // start the guild update thread
+    settings.pinano_guilds.forEach(guildId => client.updateInformation(client.guilds.get(guildId)))
   })
 
   client.on('guildCreate', async guild => {
@@ -116,7 +119,7 @@ module.exports = client => {
       let command = tokenized[0].replace(settings.prefix, '')
 
       if (!client.commands[command]) {
-        throw new Error(`Unknown command: ${command}`)
+        throw new Error(`Unknown command: \`${command}\``)
       }
 
       if (command !== 'eval' && (message.guild == null || !settings.pinano_guilds.includes(message.guild.id))) {

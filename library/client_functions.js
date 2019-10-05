@@ -1,4 +1,5 @@
 const Discord = require('discord.js')
+const hd = require('humanize-duration')
 const moment = require('moment')
 const settings = require('../settings/settings.json')
 
@@ -93,5 +94,62 @@ module.exports = client => {
           Promise.all(chan.members
             .filter(member => !member.mute && member.s_time != null && !member.deleted)
             .map(member => client.saveUserTime(member)))))
+  }
+
+  client.updateInformation = async (guild) => {
+    let infoChan = guild.channels.find(c => c.name === 'information')
+    let messages = await infoChan.fetchMessages()
+    let guildInfo = await client.guildRepository.load(guild.id)
+    let weeklyData = await client.getWeeklyLeaderboard(guild)
+    let overallData = await client.getOverallLeaderboard(guild)
+    let currentTime = moment().unix()
+    let endOfWeek = moment().endOf('isoWeek').unix()
+    let timeUntilReset = hd((endOfWeek - currentTime) * 1000, { units: [ 'd', 'h', 'm' ], maxDecimalPoints: 0 })
+
+    let rooms = ''
+    guildInfo.permitted_channels
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null && chan.members.some(m => !m.deleted))
+      .sort((x, y) => x.position > y.position)
+      .forEach(chan => {
+        let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
+        rooms += `\n${displayName.replace(' (64kbps)', '')}`
+        if (!chan.name.endsWith('(64kbps)')) { // don't bother with video links for low-bitrate rooms
+          rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
+        }
+
+        if (chan.locked_by != null) {
+          rooms += ` | LOCKED by <@${chan.locked_by}>`
+        }
+
+        chan.members.forEach(m => {
+          rooms += `\n<@${m.id}>`
+          if (m.deleted) {
+            rooms += ' :ghost:'
+          }
+
+          if (m.s_time != null) {
+            rooms += ' :microphone2:'
+          }
+        })
+      })
+
+    let embed = new Discord.RichEmbed()
+      .setTitle('Practice Rooms')
+      .setColor(settings.embed_color)
+      .setDescription(`${rooms}\n\u200B`) // stupid formatting hack
+      .addField('Weekly Leaderboard', weeklyData, true)
+      .addField('Overall Leaderboard', overallData, true)
+      .addField(`Weekly leaderboard resets in ${timeUntilReset}`, '\u200B')
+      .setTimestamp(Date.now())
+
+    let toEdit = messages.find(m => m.embeds != null && m.embeds.some(e => e.title === 'Practice Rooms'))
+    if (toEdit == null) {
+      infoChan.send(embed)
+    } else {
+      toEdit.edit({ embed: embed })
+    }
+
+    setTimeout(() => client.updateInformation(guild), 15 * 1000)
   }
 }

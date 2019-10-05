@@ -99,8 +99,6 @@ class Commands {
       'Displays this help message')
     msg.addField(`\`${settings.prefix}stats [ USERNAME#DISCRIMINATOR ]\``,
       'Displays practice statistics for the specified user (default: calling user)')
-    msg.addField(`\`${settings.prefix}lb, ${settings.prefix}leaderboard [ [w]eekly | [o]verall ]\``,
-      'Displays the weekly or overall leaderboard (default: weekly)')
     msg.addField(`\`${settings.prefix}lock\``,
       'Locks the currently occupied room for exclusive use')
 
@@ -135,30 +133,8 @@ class Commands {
     selfDestructMessage(() => message.reply('sent you the command list.'))
   }
 
-  _sendLeaderboard (channel, data, type, other) {
-    selfDestructMessage(() => channel.send({
-      embed: {
-        title: `${type} Leaderboard`,
-        description: data,
-        footer: `To view the ${other} leaderboard use ${settings.prefix}leaderboard ${other}`,
-        color: settings.embed_color,
-        timestamp: Date.now()
-      }
-    }))
-  }
-
   async leaderboard (message) {
-    let args = message.content.split(' ').splice(1)
-    if (args.length === 0 || args[0] === 'weekly' || args[0] === 'w') {
-      let data = await this.client.getWeeklyLeaderboard(message.guild, message.author)
-      this._sendLeaderboard(message.channel, data, 'Weekly', 'overall')
-    } else if (args[0] === 'overall' || args[0] === 'o') {
-      let data = await this.client.getOverallLeaderboard(message.guild, message.author)
-      this._sendLeaderboard(message.channel, data, 'Overall', 'weekly')
-    } else {
-      let command = message.content.split(' ')[0]
-      throw new Error(`Usage: \`${command} [ [w]eekly | [o]verall ]\``)
-    }
+    throw new Error(`This command has been retired; please use [#information](http://discordapp.com/channels/188345759408717825/629841121551581204) instead.`)
   }
 
   async lock (message) {
@@ -273,78 +249,41 @@ class Commands {
     }
 
     let args = message.content.split(' ').splice(1)
-    if (args.length !== 0) {
-      let usageStr = `${settings.prefix}rooms [ [ add | del(ete) | rem(ove) ] <#CHANNEL_ID> ]`
-      requireParameterCount(args, 2, usageStr)
-      requireParameterFormat(args[1], arg => arg.startsWith('<#') && arg.endsWith('>'), usageStr)
+    if (args.length === 0) {
+      throw new Error('Parameterless `p!rooms` arguments is deprecated; please use [#information](http://discordapp.com/channels/188345759408717825/629841121551581204) instead.')
+    }
 
-      let chanId = args[1].replace(/[<#>]/g, '')
-      switch (args[0]) {
-        case 'add':
-        {
-          if (guildInfo['permitted_channels'].includes(chanId)) {
-            throw new Error(`${args[1]} is already registered.`)
-          }
+    let usageStr = `${settings.prefix}rooms [ [ add | del(ete) | rem(ove) ] <#CHANNEL_ID> ]`
+    requireParameterCount(args, 2, usageStr)
+    requireParameterFormat(args[1], arg => arg.startsWith('<#') && arg.endsWith('>'), usageStr)
 
-          await this.client.guildRepository.addToField(guildInfo, 'permitted_channels', chanId)
-          selfDestructMessage(() => message.reply(`added ${args[1]} to practice channels.`))
-          return
+    let chanId = args[1].replace(/[<#>]/g, '')
+    switch (args[0]) {
+      case 'add':
+      {
+        if (guildInfo['permitted_channels'].includes(chanId)) {
+          throw new Error(`${args[1]} is already registered.`)
         }
-        case 'del':
-        case 'delete':
-        case 'rem':
-        case 'remove':
-        {
-          if (!guildInfo['permitted_channels'].includes(chanId)) {
-            throw new Error(`${args[1]} is not currently registered.`)
-          }
 
-          await this.client.guildRepository.removeFromField(guildInfo, 'permitted_channels', chanId)
-          selfDestructMessage(() => message.reply(`removed ${args[1]} from practice channels.`))
-          return
-        }
-        default:
-          throw new Error(`Usage: \`${usageStr}\``)
+        await this.client.guildRepository.addToField(guildInfo, 'permitted_channels', chanId)
+        selfDestructMessage(() => message.reply(`added ${args[1]} to practice channels.`))
+        return
       }
-    } else {
-      let msg = 'Currently registered practice rooms:\n```\n'
-      guildInfo.permitted_channels
-        .map(chanId => message.guild.channels.get(chanId))
-        .filter(chan => chan != null)
-        .sort((x, y) => x.position > y.position)
-        .forEach(chan => {
-          let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
-          msg += displayName
+      case 'del':
+      case 'delete':
+      case 'rem':
+      case 'remove':
+      {
+        if (!guildInfo['permitted_channels'].includes(chanId)) {
+          throw new Error(`${args[1]} is not currently registered.`)
+        }
 
-          if (displayName === 'Extra Practice Room') {
-            msg += ` (channel ID: ${chan.id})`
-          }
-
-          if (chan.isTempRoom) {
-            msg += ' (TEMP)'
-          }
-
-          if (chan.locked_by != null) {
-            let occupant = chan.members.get(`${chan.locked_by}`)
-            msg += ` LOCKED by ${occupant.user.username}#${occupant.user.discriminator}`
-          }
-
-          chan.members.forEach(m => {
-            msg += `\n  - ${m.user.username}#${m.user.discriminator}`
-            if (m.deleted) {
-              msg += ' (GHOST)'
-            }
-
-            if (m.s_time != null) {
-              msg += ' (LIVE)'
-            }
-          })
-
-          msg += '\n'
-        })
-
-      msg += '```'
-      message.channel.send(msg)
+        await this.client.guildRepository.removeFromField(guildInfo, 'permitted_channels', chanId)
+        selfDestructMessage(() => message.reply(`removed ${args[1]} from practice channels.`))
+        return
+      }
+      default:
+        throw new Error(`Usage: \`${usageStr}\``)
     }
   }
 
