@@ -63,12 +63,7 @@ module.exports = (client) => {
       }
 
       let timeStr = hd(leaderboard[j].time * 1000, { units: ['h', 'm', 's'] })
-      let user = client.users.get(leaderboard[j].userId)
-      if (user != null) {
-        msgStr += `**${j + 1}. ${user.username}#${user.discriminator}**\n \`${timeStr}\`\n`
-      } else {
-        msgStr += `**${j + 1}.** *${leaderboard[j].userId}* \n \`${timeStr}\`\n`
-      }
+      msgStr += `**${j + 1}. <@${leaderboard[j].userId}>**\n \`${timeStr}\`\n`
     }
 
     return msgStr
