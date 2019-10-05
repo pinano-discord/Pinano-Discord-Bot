@@ -153,7 +153,19 @@ module.exports = client => {
       return
     }
 
-    if (newMember.serverMute && newMember.voiceChannel != null && newMember.voiceChannel.locked_by == null && !newMember.roles.some(r => r.name === 'Temp Muted')) {
+    let guildInfo = await client.guildRepository.load(newMember.guild.id)
+    if (guildInfo == null) {
+      guildInfo = client.makeGuild(newMember.guild.id)
+      await client.guildRepository.save(guildInfo)
+      client.log('Created new guild.')
+      return
+    }
+
+    if (newMember.serverMute &&
+      newMember.voiceChannel != null &&
+      newMember.voiceChannel.locked_by == null &&
+      !newMember.roles.some(r => r.name === 'Temp Muted') &&
+      guildInfo.permitted_channels.includes(newMember.voiceChannelID)) {
       // they're server muted, but they're in an unlocked channel - means they probably left a locked room.
       try {
         newMember.setMute(false)
@@ -161,14 +173,6 @@ module.exports = client => {
         // did they leave already?
         client.log(err)
       }
-    }
-
-    let guildInfo = await client.guildRepository.load(newMember.guild.id)
-    if (guildInfo == null) {
-      guildInfo = client.makeGuild(newMember.guild.id)
-      await client.guildRepository.save(guildInfo)
-      client.log('Created new guild.')
-      return
     }
 
     // run auto-VC creation logic

@@ -64,6 +64,14 @@ class MongoUserRepository {
     ]).toArray()
   }
 
+  async addToField (user, field, value) {
+    return this.collection.updateOne({ id: user.id }, { $addToSet: { [field]: value } })
+  }
+
+  async removeFromField (user, field, value) {
+    return this.collection.updateOne({ id: user.id }, { $pull: { [field]: value } })
+  }
+
   async save (user) {
     return this.collection.updateOne({ id: user.id }, { $set: user }, { upsert: true })
   }
