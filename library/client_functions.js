@@ -113,7 +113,7 @@ module.exports = client => {
       .sort((x, y) => x.position > y.position)
       .forEach(chan => {
         let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
-        rooms += `\n${displayName.replace(' (64kbps)', '')}`
+        rooms += `\n\n${displayName.replace(' (64kbps)', '')}`
         if (!chan.name.endsWith('(64kbps)')) { // don't bother with video links for low-bitrate rooms
           rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
         }
