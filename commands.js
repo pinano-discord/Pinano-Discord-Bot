@@ -1,6 +1,5 @@
 const Discord = require('discord.js')
 const hd = require('humanize-duration')
-const jimp = require('jimp')
 const moment = require('moment')
 const settings = require('./settings/settings.json')
 
@@ -92,6 +91,7 @@ class Commands {
 
   async help (message) {
     let isBotManager = message.member.roles.find(r => r.name === 'Bot Manager')
+    let isRecitalManager = message.member.roles.find(r => r.name === 'Recital Manager')
 
     let msg = new Discord.RichEmbed()
     msg.setTitle('Help')
@@ -112,8 +112,13 @@ class Commands {
         'Unlocks the currently occupied room for shared use')
     }
 
+    if (isRecitalManager) {
+      msg.addField(`\`${settings.prefix}recital[s] [ add | del(ete) | rem(ove) ] @user RECITAL_ID\``,
+        'Add or remove a recital from a user\'s record')
+    }
+
     if (isBotManager) {
-      msg.addField(`\`${settings.prefix}rooms [ [ add | del | delete ] <#CHANNEL_ID> ]\``,
+      msg.addField(`\`${settings.prefix}rooms [ [ add | del(ete) | rem(ove) ] <#CHANNEL_ID> ]\``,
         'Lists, registers or unregisters practice rooms')
       msg.addField(`\`${settings.prefix}addtime @user TIME_IN_SECONDS\``,
         'Adds practice time to a user\'s record')
@@ -218,6 +223,47 @@ class Commands {
     selfDestructMessage(() => message.reply(`locked channel <#${channel.id}>.`))
   }
 
+  async recital (message) {
+    requireRole(message.member, 'Recital Manager', 'You require the Recital Manager role to use this command.')
+
+    let args = message.content.split(' ').splice(1)
+    let usageStr = `${settings.prefix}recital(s) [ add | del(ete) | rem(ove) ] @user RECITAL_ID`
+    requireParameterCount(args, 3, usageStr)
+    requireParameterFormat(args[1], arg => arg.startsWith('<@') && arg.endsWith('>'), usageStr)
+
+    let userId = args[1].replace(/[<@!>]/g, '')
+    let userInfo = await this.client.userRepository.load(userId)
+    if (userInfo == null) {
+      userInfo = {
+        'id': userId,
+        'current_session_playtime': 0,
+        'overall_session_playtime': 0
+      }
+
+      await this.client.userRepository.save(userInfo)
+    }
+
+    switch (args[0]) {
+      case 'add':
+      {
+        await this.client.userRepository.addToField(userInfo, 'recitals', args[2])
+        selfDestructMessage(() => message.reply(`added recital to user.`))
+        return
+      }
+      case 'del':
+      case 'delete':
+      case 'rem':
+      case 'remove':
+      {
+        await this.client.userRepository.removeFromField(userInfo, 'recitals', args[2])
+        selfDestructMessage(() => message.reply(`removed recital from user.`))
+        return
+      }
+      default:
+        throw new Error(`Usage: \`${usageStr}\``)
+    }
+  }
+
   async rooms (message) {
     requireRole(message.member)
 
@@ -228,7 +274,7 @@ class Commands {
 
     let args = message.content.split(' ').splice(1)
     if (args.length !== 0) {
-      let usageStr = `${settings.prefix}rooms [ [ add | del | delete ] <#CHANNEL_ID> ]`
+      let usageStr = `${settings.prefix}rooms [ [ add | del(ete) | rem(ove) ] <#CHANNEL_ID> ]`
       requireParameterCount(args, 2, usageStr)
       requireParameterFormat(args[1], arg => arg.startsWith('<#') && arg.endsWith('>'), usageStr)
 
@@ -246,6 +292,8 @@ class Commands {
         }
         case 'del':
         case 'delete':
+        case 'rem':
+        case 'remove':
         {
           if (!guildInfo['permitted_channels'].includes(chanId)) {
             throw new Error(`${args[1]} is not currently registered.`)
@@ -361,34 +409,7 @@ class Commands {
     }
 
     userInfo.mem = mem
-    // checks if user has pfp because discord dosnt return default pfp url >:C
-    if (userInfo.mem.user.avatarURL != null) {
-      userInfo.av = userInfo.mem.user.avatarURL
-    } else {
-      userInfo.av = './assets/default_avatar.jpg'
-    }
-
     return true
-  }
-
-  async _render ({ av, username, discriminator, currentSession, overallSession, rank }) {
-    // load template
-    let [source, avatar, font] = await Promise.all([
-      jimp.read('./assets/time_card.png'),
-      jimp.read(av),
-      jimp.loadFont(jimp.FONT_SANS_16_WHITE)
-    ])
-
-    await avatar.resize(98, 98)
-    await source.composite(avatar, 14, 14)
-
-    source.print(font, 245, 25, `${username}#${discriminator}`)
-    source.print(font, 135, 90, abbreviateTime(currentSession))
-    source.print(font, 280, 90, abbreviateTime(overallSession))
-    source.print(font, 435, 90, rank)
-
-    // send the pic as png
-    return source.getBufferAsync(jimp.MIME_PNG)
   }
 
   async stats (message) {
@@ -404,7 +425,7 @@ class Commands {
     }
 
     userInfo.rank = await this.client.getWeeklyLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
-    userInfo.rank = userInfo.rank.replace(/[`]/g, '')
+    userInfo.overallRank = await this.client.getOverallLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
 
     const guild = await this.client.guildRepository.load(message.guild.id)
     const mem = userInfo.mem
@@ -414,13 +435,63 @@ class Commands {
       userInfo.overallSession += activeTime
     }
 
-    let buffer = await this._render(userInfo)
-    selfDestructMessage(() => message.channel.send({
-      files: [{
-        attachment: buffer,
-        name: 'level.jpg'
-      }]
-    }))
+    let embed = new Discord.RichEmbed()
+      .setTitle(`${userInfo.username}#${userInfo.discriminator}`)
+      .setColor(settings.embed_color)
+      .addField('Weekly Time', `\`${abbreviateTime(userInfo.currentSession)}\``, true)
+      .addField('Rank', `${userInfo.rank}`, true)
+      .addField('Overall Time', `\`${abbreviateTime(userInfo.overallSession)}\``, true)
+      .addField('Rank', `${userInfo.overallRank}`, true)
+
+    let badges = ''
+    if (moment().unix() * 1000 - mem.joinedTimestamp >= 88 * 86400 * 1000) {
+      // join date is more than 88 days ago
+      badges += ':musical_keyboard: It has been at least 88 days since this user joined Pinano\n'
+    }
+
+    if (mem.roles.some(r => r.name === 'Hand Revealed')) {
+      badges += ':hand_splayed: This user has revealed their hand on [#hand-reveals](https://discordapp.com/channels/188345759408717825/440705391454584834)\n'
+    }
+
+    if (user.recitals != null && user.recitals.length >= 3) {
+      // one for each note in the emoji
+      badges += ':notes: This user has played in three recitals\n'
+    }
+
+    if (settings.contributors.includes(mem.id)) {
+      badges += ':robot: This user contributed code to Pinano Bot on [GitHub](https://github.com/pinano-discord/Pinano-Discord-Bot)\n'
+    }
+
+    if (userInfo.overallSession >= 500 * 60 * 60) {
+      badges += '<:FiveHundredHours:627099475701268480> This user has practiced for 500 hours\n'
+    } else if (userInfo.overallSession >= 250 * 60 * 60) {
+      badges += '<:TwoFiftyHours:627099476120829982> This user has practiced for 250 hours\n'
+    } else if (userInfo.overallSession >= 100 * 60 * 60) {
+      badges += '<:HundredHours:627099476078755850> This user has practiced for 100 hours\n'
+    } else if (userInfo.overallSession >= 40 * 60 * 60) {
+      badges += '<:FortyHours:627099475869171712> This user has practiced for 40 hours\n'
+    }
+
+    let effectiveName = ((mem.nickname == null) ? mem.user.username : mem.nickname).toLowerCase()
+    if (effectiveName.endsWith('juice') || effectiveName.endsWith('juwuice')) {
+      badges += ':tropical_drink: This user\'s username ends in \'juice\'\n'
+    }
+
+    if (badges === '') {
+      badges = '<:wtf:593197993264414751> no badges yet!'
+    }
+
+    embed.addField('Badges', badges)
+
+    // checks if user has pfp because discord dosnt return default pfp url >:C
+    if (userInfo.mem.user.avatarURL != null) {
+      embed.setThumbnail(userInfo.mem.user.avatarURL)
+    } else {
+      embed.attachFiles(['./assets/default_avatar.jpg'])
+        .setThumbnail('attachment://default_avatar.jpg')
+    }
+
+    selfDestructMessage(() => message.channel.send(embed))
   }
 
   async unlock (message) {
@@ -448,7 +519,7 @@ class Commands {
 
   async settings (message) {
     requireRole(message.member)
-    throw new Error(`This command has been retired; use \`${settings.prefix}rooms [ add | del | delete ] <#CHANNEL_ID>\` to register and unregister practice channels.`)
+    throw new Error(`This command has been retired; use \`${settings.prefix}rooms [ add | del(ete) | rem(ove) ] <#CHANNEL_ID>\` to register and unregister practice channels.`)
   }
 }
 
@@ -462,6 +533,7 @@ function loadCommands (client) {
   client.commands['help'] = (message) => { return c.help(message) }
   client.commands['leaderboard'] = client.commands['lb'] = (message) => { return c.leaderboard(message) }
   client.commands['lock'] = (message) => { return c.lock(message) }
+  client.commands['recital'] = client.commands['recitals'] = (message) => { return c.recital(message) }
   client.commands['rooms'] = (message) => { return c.rooms(message) }
   client.commands['settings'] = (message) => { return c.settings(message) }
   client.commands['stats'] = (message) => { return c.stats(message) }
