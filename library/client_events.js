@@ -182,8 +182,10 @@ module.exports = client => {
     let tempChannelToRemove = null
     if (areAllPracticeRoomsFull(guildInfo.permitted_channels, newMember.guild)) {
       let categoryChan = newMember.guild.channels.find(chan => chan.name === 'practice-room-chat').parent
+      let pinanoBot = newMember.guild.roles.find(r => r.name === 'Pinano Bot')
       let tempMutedRole = newMember.guild.roles.find(r => r.name === 'Temp Muted')
       let verificationRequiredRole = newMember.guild.roles.find(r => r.name === 'Verification Required')
+      let everyone = newMember.guild.roles.find(r => r.name === '@everyone')
 
       let newChan = await newMember.guild.createChannel('Extra Practice Room', {
         type: 'voice',
@@ -191,11 +193,17 @@ module.exports = client => {
         bitrate: settings.dev_mode ? 96000 : 256000,
         position: categoryChan.children.size,
         permissionOverwrites: [{
+          id: pinanoBot,
+          allow: ['MANAGE_CHANNEL', 'MANAGE_ROLES']
+        }, {
           id: tempMutedRole,
           deny: ['SPEAK']
         }, {
           id: verificationRequiredRole,
           deny: ['VIEW_CHANNEL']
+        }, {
+          id: everyone,
+          deny: ['MANAGE_CHANNEL', 'MANAGE_ROLES']
         }]
       })
 
@@ -217,7 +225,7 @@ module.exports = client => {
       oldMember.voiceChannel.locked_by === oldMember.id &&
       newMember.voiceChannelID !== oldMember.voiceChannelID) {
       // user left a room they had locked; unlock it.
-      await client.unlockPracticeRoom(oldMember.guild, oldMember.id, oldMember.voiceChannel)
+      await client.unlockPracticeRoom(oldMember.guild, oldMember.voiceChannel)
     }
 
     updatePracticeRoomChatPermissions(guildInfo.permitted_channels, newMember)

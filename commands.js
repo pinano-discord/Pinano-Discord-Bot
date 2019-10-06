@@ -452,7 +452,7 @@ class Commands {
       throw new Error('You do not have this channel locked.')
     }
 
-    await this.client.unlockPracticeRoom(message.guild, channel.locked_by, channel)
+    await this.client.unlockPracticeRoom(message.guild, channel)
     selfDestructMessage(() => message.reply(`unlocked channel <#${channel.id}>.`))
   }
 
