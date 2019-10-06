@@ -33,19 +33,26 @@ module.exports = client => {
       await channel.setName(channel.unlocked_name)
     }
 
-    // remove permissions overrides
+    // reset permissions overrides
+    let pinanoBot = guild.roles.find(r => r.name === 'Pinano Bot')
+    let tempMutedRole = guild.roles.find(r => r.name === 'Temp Muted')
+    let verificationRequiredRole = guild.roles.find(r => r.name === 'Verification Required')
     let everyone = guild.roles.find(r => r.name === '@everyone')
-    await channel.overwritePermissions(everyone, { SPEAK: null })
-
-    let personalOverride = channel.permissionOverwrites.get(userId)
-    // existingOverride shouldn't be null unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
-    if (personalOverride != null) {
-      if (personalOverride.allowed.bitfield === Discord.Permissions.FLAGS.SPEAK && personalOverride.denied.bitfield === 0) { // the only permission was allow SPEAK
-        await personalOverride.delete()
-      } else {
-        await channel.overwritePermissions(userId, { SPEAK: null })
-      }
-    }
+    await channel.replacePermissionOverwrites({
+      overwrites: [{
+        id: pinanoBot,
+        allow: ['MANAGE_CHANNEL', 'MANAGE_ROLES']
+      }, {
+        id: tempMutedRole,
+        deny: ['SPEAK']
+      }, {
+        id: verificationRequiredRole,
+        deny: ['VIEW_CHANNEL']
+      }, {
+        id: everyone,
+        deny: ['MANAGE_CHANNEL', 'MANAGE_ROLES']
+      }]
+    })
 
     try {
       await Promise.all(channel.members.map(async m => {
