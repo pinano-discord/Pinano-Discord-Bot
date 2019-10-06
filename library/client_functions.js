@@ -134,13 +134,16 @@ module.exports = client => {
         })
       })
 
+    let pinnedPostUrl = 'https://discordapp.com/channels/188345759408717825/411657964198428682/518693148877258776'
     let embed = new Discord.RichEmbed()
       .setTitle('Practice Rooms')
       .setColor(settings.embed_color)
       .setDescription(`${rooms}\n\u200B`) // stupid formatting hack
       .addField('Weekly Leaderboard', weeklyData, true)
       .addField('Overall Leaderboard', overallData, true)
-      .addField(`Weekly leaderboard resets in ${timeUntilReset}`, '\u200B')
+      .addField(`Weekly leaderboard resets in ${timeUntilReset}`,
+        `\u200B\nClick [here](${pinnedPostUrl}) for optimal Discord voice settings\n\
+Use \`p!stats\` for individual statistics\n\u200B`)
       .setTimestamp(Date.now())
 
     let toEdit = messages.find(m => m.embeds != null && m.embeds.some(e => e.title === 'Practice Rooms'))
