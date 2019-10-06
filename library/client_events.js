@@ -225,7 +225,7 @@ module.exports = client => {
       oldMember.voiceChannel.locked_by === oldMember.id &&
       newMember.voiceChannelID !== oldMember.voiceChannelID) {
       // user left a room they had locked; unlock it.
-      await client.unlockPracticeRoom(oldMember.guild, oldMember.id, oldMember.voiceChannel)
+      await client.unlockPracticeRoom(oldMember.guild, oldMember.voiceChannel)
     }
 
     updatePracticeRoomChatPermissions(guildInfo.permitted_channels, newMember)

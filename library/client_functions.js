@@ -28,7 +28,7 @@ module.exports = client => {
     setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
   }
 
-  client.unlockPracticeRoom = async (guild, userId, channel) => {
+  client.unlockPracticeRoom = async (guild, channel) => {
     if (channel.unlocked_name != null) {
       await channel.setName(channel.unlocked_name)
     }
