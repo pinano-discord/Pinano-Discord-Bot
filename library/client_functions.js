@@ -41,7 +41,7 @@ module.exports = client => {
     await channel.replacePermissionOverwrites({
       overwrites: [{
         id: pinanoBot,
-        allow: ['MANAGE_CHANNEL', 'MANAGE_ROLES']
+        allow: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
       }, {
         id: tempMutedRole,
         deny: ['SPEAK']
@@ -50,7 +50,7 @@ module.exports = client => {
         deny: ['VIEW_CHANNEL']
       }, {
         id: everyone,
-        deny: ['MANAGE_CHANNEL', 'MANAGE_ROLES']
+        deny: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
       }]
     })
 
@@ -101,6 +101,97 @@ module.exports = client => {
           Promise.all(chan.members
             .filter(member => !member.mute && member.s_time != null && !member.deleted)
             .map(member => client.saveUserTime(member)))))
+  }
+
+  client.restart = async (guild) => {
+    let notifChan = guild.channels.find(c => c.name === 'information')
+    let message = await notifChan.send('Beginning restart procedure...')
+    let edited = await message.edit(`${message.content}\nSaving all active sessions...`)
+    message = edited // for some reason the linter thinks message isn't being used if we assign it directly?
+    await client.saveAllUsersTime(guild)
+
+    // unlock extra rooms so that we can identify them as temp rooms when we come back up
+    message = await message.edit(`${message.content} saved.\nUnlocking extra rooms...`)
+    await Promise.all(
+      guild.channels
+        .filter(chan => chan.isTempRoom)
+        .map(chan => client.unlockPracticeRoom(guild, chan)))
+
+    message = await message.edit(`${message.content} unlocked.\nRestarting Pinano Bot...`)
+    process.exit(0)
+  }
+
+  // a user is live if they are:
+  // 1. not a bot (so we exclude ourselves and Craig)
+  // 2. unmuted
+  // 3. in a permitted channel
+  // 4. that is not locked by someone else
+  client.isLiveUser = (member, permittedChannels) => {
+    return !member.user.bot &&
+      !member.mute &&
+      permittedChannels.includes(member.voiceChannelID) &&
+      member.voiceChannel != null &&
+      (member.voiceChannel.locked_by == null || member.voiceChannel.locked_by === member.id)
+  }
+
+  client.resume = async (guild) => {
+    let infoChan = guild.channels.find(c => c.name === 'information')
+    let messages = await infoChan.fetchMessages()
+    let message = messages.find(m => m.content.startsWith('Beginning restart procedure...'))
+    if (message != null) {
+      message = await message.edit(`${message.content} ready.\nResuming active sessions...`)
+    }
+
+    let guildInfo = await client.guildRepository.load(guild.id)
+    guildInfo.permitted_channels
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null)
+      .forEach(chan => {
+        chan.members.forEach(m => {
+          if (client.isLiveUser(m, guildInfo.permitted_channels)) {
+            m.s_time = moment().unix()
+          }
+        })
+      })
+
+    if (message != null) {
+      message = await message.edit(`${message.content} resumed.\nDetecting room status...`)
+    }
+
+    let everyone = guild.roles.find(r => r.name === '@everyone')
+    await Promise.all(guildInfo.permitted_channels
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null)
+      .map(chan => {
+        if (chan.name === 'Extra Practice Room') {
+          chan.isTempRoom = true
+        } else {
+          let shouldUnlock = true
+
+          // a room should be considered locked if there is an individual override granting SPEAK
+          // and the everyone role is denied SPEAK, and that individual is in the channel.
+          if (chan.permissionOverwrites.get(everyone.id).denied.has(Discord.Permissions.FLAGS.SPEAK)) {
+            let overwrite = chan.permissionOverwrites.find(o => o.type === 'member')
+            if (overwrite != null) {
+              let member = guild.members.get(overwrite.id)
+              if (member != null && member.voiceChannelID === chan.id) {
+                shouldUnlock = false
+                chan.locked_by = member.id
+              }
+            }
+          }
+
+          if (shouldUnlock) {
+            // reset the permissions just in case they're borked
+            return client.unlockPracticeRoom(guild, chan)
+          }
+        }
+      }))
+
+    if (message != null) {
+      message = await message.edit(`${message.content} marked locked rooms.\nRestart procedure completed.`)
+      setTimeout(() => message.delete(), settings.res_destruct_time * 1000)
+    }
   }
 
   client.updateInformation = async (guild) => {

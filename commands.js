@@ -62,12 +62,6 @@ class Commands {
     selfDestructMessage(() => message.reply('added time to user.'))
   }
 
-  async commit (message) {
-    requireRole(message.member)
-    await this.client.saveAllUsersTime(message.guild)
-    selfDestructMessage(() => message.reply('committed all active sessions to storage.'))
-  }
-
   async deltime (message) {
     requireRole(message.member)
 
@@ -122,8 +116,8 @@ class Commands {
         'Adds practice time to a user\'s record')
       msg.addField(`\`${settings.prefix}deltime @user TIME_IN_SECONDS\``,
         'Removes practice time from a user\'s record')
-      msg.addField(`\`${settings.prefix}commit\``,
-        'Commits all active practice sessions to storage')
+      msg.addField(`\`${settings.prefix}restart, ${settings.prefix}reboot\``,
+        'Saves all active sessions and restarts Pinano Bot')
     }
 
     msg.setColor(settings.embed_color)
@@ -238,6 +232,14 @@ class Commands {
       default:
         throw new Error(`Usage: \`${usageStr}\``)
     }
+  }
+
+  async restart (message) {
+    requireRole(message.member)
+    await message.delete() // we're not going to get a chance anywhere else
+    await this.client.restart(message.guild)
+
+    throw new Error('Something that should never happen has happened.')
   }
 
   async rooms (message) {
@@ -467,12 +469,12 @@ function loadCommands (client) {
   client.commands = {}
 
   client.commands['addtime'] = (message) => { return c.addtime(message) }
-  client.commands['commit'] = (message) => { return c.commit(message) }
   client.commands['deltime'] = (message) => { return c.deltime(message) }
   client.commands['help'] = (message) => { return c.help(message) }
   client.commands['leaderboard'] = client.commands['lb'] = (message) => { return c.leaderboard(message) }
   client.commands['lock'] = (message) => { return c.lock(message) }
   client.commands['recital'] = client.commands['recitals'] = (message) => { return c.recital(message) }
+  client.commands['restart'] = client.commands['reboot'] = (message) => { return c.restart(message) }
   client.commands['rooms'] = (message) => { return c.rooms(message) }
   client.commands['settings'] = (message) => { return c.settings(message) }
   client.commands['stats'] = (message) => { return c.stats(message) }
