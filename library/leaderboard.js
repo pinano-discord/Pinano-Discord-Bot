@@ -21,23 +21,14 @@ module.exports = (client) => {
     return currentPrackers
   }
 
-  client.getOverallLeaderboard = async (guild, user) => {
-    let msgStr = await client.getLeaderboard(guild, p => p.overall_session_playtime,
+  client.getOverallLeaderboard = async (guild) => {
+    return client.getLeaderboard(guild, p => p.overall_session_playtime,
       size => client.userRepository.loadTopOverall(size))
-    let posStr = await client.getOverallLeaderboardPos(guild, user.id)
-    return `**${user.username}**, you are rank ${posStr}\n${msgStr}`
   }
 
-  client.getWeeklyLeaderboard = async (guild, user) => {
-    let msgStr = await client.getLeaderboard(guild, p => p.current_session_playtime,
+  client.getWeeklyLeaderboard = async (guild) => {
+    return client.getLeaderboard(guild, p => p.current_session_playtime,
       size => client.userRepository.loadTopSession(size))
-
-    if (user != null) {
-      let posStr = await client.getWeeklyLeaderboardPos(guild, user.id)
-      return `**${user.username}**, you are rank ${posStr}\n${msgStr}`
-    } else {
-      return msgStr
-    }
   }
 
   client.getLeaderboard = async (guild, playtimeFn, loadTopFn) => {
@@ -72,12 +63,7 @@ module.exports = (client) => {
       }
 
       let timeStr = hd(leaderboard[j].time * 1000, { units: ['h', 'm', 's'] })
-      let user = client.users.get(leaderboard[j].userId)
-      if (user != null) {
-        msgStr += `**${j + 1}. ${user.username}#${user.discriminator}**\n \`${timeStr}\`\n`
-      } else {
-        msgStr += `**${j + 1}.** *${leaderboard[j].userId}* \n \`${timeStr}\`\n`
-      }
+      msgStr += `**${j + 1}. <@${leaderboard[j].userId}>**\n \`${timeStr}\`\n`
     }
 
     return msgStr
@@ -153,7 +139,7 @@ module.exports = (client) => {
 
   client.submitWeek = async () => {
     let pinano = client.guilds.get('188345759408717825')
-    let data = await client.getWeeklyLeaderboard(pinano, null)
+    let data = await client.getWeeklyLeaderboard(pinano)
     await client.saveAllUsersTime(pinano)
     pinano.channels.find(chan => chan.name === 'practice-room-chat').send({
       embed: {
