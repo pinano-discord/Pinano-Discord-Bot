@@ -252,7 +252,7 @@ module.exports = client => {
       }))
 
     if (message != null) {
-      message = await message.edit(`${message.content} marked locked rooms. Resuming active sessions...\n`)
+      message = await message.edit(`${message.content} marked locked rooms.\nResuming active sessions...`)
     }
 
     guildInfo.permitted_channels
