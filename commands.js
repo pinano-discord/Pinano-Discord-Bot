@@ -60,7 +60,7 @@ class Commands {
     userInfo.overall_session_playtime += delta
     await this.client.userRepository.save(userInfo)
 
-    client.log(`Add ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
+    this.client.log(`Add ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
     selfDestructMessage(() => message.reply('added time to user.'))
   }
 
@@ -83,7 +83,7 @@ class Commands {
     userInfo.overall_session_playtime = Math.max(0, userInfo.overall_session_playtime - delta)
     await this.client.userRepository.save(userInfo)
 
-    client.log(`Delete ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
+    this.client.log(`Delete ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
     selfDestructMessage(() => message.reply('removed time from user.'))
   }
 
