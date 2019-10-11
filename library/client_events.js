@@ -225,13 +225,10 @@ module.exports = client => {
       oldMember.voiceChannel.suppressAutolock = false
     }
 
-    let channelList = guildInfo.permitted_channels
-      .map(chanId => newMember.guild.channels.get(chanId))
-      .filter(chan => chan != null)
-
     // enforce autolock on unlocked channels only
-    channelList
-      .filter(chan => chan.locked_by == null)
+    guildInfo.permitted_channels
+      .map(chanId => newMember.guild.channels.get(chanId))
+      .filter(chan => chan != null && chan.locked_by == null)
       .forEach(chan => client.enforceAutolock(chan))
 
     updatePracticeRoomChatPermissions(guildInfo.permitted_channels, newMember)
