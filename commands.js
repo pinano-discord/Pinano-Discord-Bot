@@ -171,25 +171,7 @@ class Commands {
       throw new Error('This channel is already locked.')
     }
 
-    channel.locked_by = mem.id
-    if (channel.isTempRoom) {
-      channel.unlocked_name = channel.name
-      await channel.setName(`${mem.user.username}'s room`)
-    }
-    await channel.overwritePermissions(mem.user, { SPEAK: true })
-    let everyone = message.guild.roles.find(r => r.name === '@everyone')
-    await channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
-    try {
-      await Promise.all(channel.members.map(async (m) => {
-        if (m !== mem && !m.deleted) {
-          return m.setMute(true)
-        }
-      }))
-    } catch (err) {
-      // this is likely an issue with trying to mute a user who has already left the channel
-      this.client.log(err)
-    }
-
+    this.client.lockPracticeRoom(message.guild, channel, mem)
     selfDestructMessage(() => message.reply(`locked channel <#${channel.id}>.`))
   }
 

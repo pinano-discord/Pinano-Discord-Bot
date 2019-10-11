@@ -28,6 +28,71 @@ module.exports = client => {
     setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
   }
 
+  // rough overview of the heuristic: we autolock a room for a user X if X was the most recent
+  // user who was the sole occupant of the room, and the room has had exactly one user unmuted
+  // for the last five minutes, and that user was X. Unlocking a room is a hint that autolock
+  // is not desired - if so, suppressAutolock is set on the channel and we will never attempt
+  // autolock until that flag is cleared (which occurs when a channel becomes empty). If X
+  // leaves the room leaving multiple people, autolock will not try to find a new occupant
+  // until there is a sole occupant again. Any time there is more than one unmuted user, or
+  // the unmuted user is not the occupant, or there are no unmuted users, the timer resets.
+  client.enforceAutolock = (chan) => {
+    let members = chan.members.filter(m => !m.deleted)
+    if (members.get(chan.occupant) == null) {
+      // occupant has left this room, clear out the value. Basically, start over again.
+      // We will destroy the task if it exists below.
+      chan.occupant = null
+      chan.suppressAutolock = false
+    }
+
+    if (!chan.suppressAutolock) {
+      if (members.size === 1) {
+        chan.occupant = members.first().id
+      }
+
+      let unmutedMembers = members.filter(m => !m.mute)
+      if (unmutedMembers.size === 1 && unmutedMembers.first().id === chan.occupant) {
+        if (chan.autolockTask == null) {
+          let member = unmutedMembers.first()
+          chan.autolockTask = setTimeout(async () => {
+            if (!chan.suppressAutolock && chan.locked_by == null) {
+              await client.lockPracticeRoom(chan.guild, chan, member)
+            }
+          }, 2 * 60 * 1000)
+        }
+      } else {
+        // wrong number of unmuted members: destroy the task.
+        // wrong user is unmuted: destroy the task.
+        // occupant has left: chan.occupant is null, task gets destroyed again.
+        if (chan.autolockTask != null) {
+          clearTimeout(chan.autolockTask)
+          chan.autolockTask = null
+        }
+      }
+    }
+  }
+
+  client.lockPracticeRoom = async (guild, channel, mem) => {
+    channel.locked_by = mem.id
+    if (channel.isTempRoom) {
+      channel.unlocked_name = channel.name
+      await channel.setName(`${mem.user.username}'s room`)
+    }
+    await channel.overwritePermissions(mem.user, { SPEAK: true })
+    let everyone = guild.roles.find(r => r.name === '@everyone')
+    await channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
+    try {
+      await Promise.all(channel.members.map(async (m) => {
+        if (m !== mem && !m.deleted) {
+          return m.setMute(true)
+        }
+      }))
+    } catch (err) {
+      // this is likely an issue with trying to mute a user who has already left the channel
+      client.log(err)
+    }
+  }
+
   client.unlockPracticeRoom = async (guild, channel) => {
     if (channel.unlocked_name != null) {
       await channel.setName(channel.unlocked_name)
@@ -63,6 +128,13 @@ module.exports = client => {
     } catch (err) {
       // this is likely an issue with trying to mute a user who has already left the channel
       client.log(err)
+    }
+
+    // manual unlock is treated as a signal that we don't want autolock enabled.
+    // unlocking an *empty* room can happen in some automatic circumstances and
+    // should not suppress autolock.
+    if (channel.members.size !== 0) {
+      channel.suppressAutolock = true
     }
 
     channel.locked_by = null
@@ -165,6 +237,12 @@ module.exports = client => {
       .map(chan => {
         if (chan.name === 'Extra Practice Room') {
           chan.isTempRoom = true
+
+          // assume that if there's only one person playing in a temp room, it should be locked to them.
+          let unmuted = chan.members.filter(m => !m.deleted && !m.mute)
+          if (unmuted.size === 1) {
+            return client.lockPracticeRoom(guild, chan, unmuted.first())
+          }
         } else {
           let shouldUnlock = true
 
