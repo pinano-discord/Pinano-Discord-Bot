@@ -256,15 +256,15 @@ module.exports = client => {
     }
 
     guildInfo.permitted_channels
-    .map(chanId => guild.channels.get(chanId))
-    .filter(chan => chan != null)
-    .forEach(chan => {
-      chan.members.forEach(m => {
-        if (client.isLiveUser(m, guildInfo.permitted_channels)) {
-          m.s_time = moment().unix()
-        }
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null)
+      .forEach(chan => {
+        chan.members.forEach(m => {
+          if (client.isLiveUser(m, guildInfo.permitted_channels)) {
+            m.s_time = moment().unix()
+          }
+        })
       })
-    })
 
     if (message != null) {
       message = await message.edit(`${message.content} resumed.\nRestart procedure completed.`)
