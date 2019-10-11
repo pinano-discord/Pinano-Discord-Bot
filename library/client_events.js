@@ -237,6 +237,7 @@ module.exports = client => {
     // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
     // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
     if (client.isLiveUser(newMember, guildInfo.permitted_channels) && oldMember.s_time == null) {
+      client.log(`Beginning session for user <@${newMember.user.id}> ${newMember.user.username}#${newMember.user.discriminator}`)
       newMember.s_time = moment().unix()
     } else if (oldMember.s_time != null) {
       // this might happen if a live session jumps across channels, or if a live session is ending.
