@@ -211,25 +211,10 @@ module.exports = client => {
     let messages = await infoChan.fetchMessages()
     let message = messages.find(m => m.content.startsWith('Beginning restart procedure...'))
     if (message != null) {
-      message = await message.edit(`${message.content} ready.\nResuming active sessions...`)
+      message = await message.edit(`${message.content} ready.\nDetecting room status...`)
     }
 
     let guildInfo = await client.guildRepository.load(guild.id)
-    guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null)
-      .forEach(chan => {
-        chan.members.forEach(m => {
-          if (client.isLiveUser(m, guildInfo.permitted_channels)) {
-            m.s_time = moment().unix()
-          }
-        })
-      })
-
-    if (message != null) {
-      message = await message.edit(`${message.content} resumed.\nDetecting room status...`)
-    }
-
     let everyone = guild.roles.find(r => r.name === '@everyone')
     await Promise.all(guildInfo.permitted_channels
       .map(chanId => guild.channels.get(chanId))
@@ -267,7 +252,22 @@ module.exports = client => {
       }))
 
     if (message != null) {
-      message = await message.edit(`${message.content} marked locked rooms.\nRestart procedure completed.`)
+      message = await message.edit(`${message.content} marked locked rooms. Resuming active sessions...\n`)
+    }
+
+    guildInfo.permitted_channels
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null)
+      .forEach(chan => {
+        chan.members.forEach(m => {
+          if (client.isLiveUser(m, guildInfo.permitted_channels)) {
+            m.s_time = moment().unix()
+          }
+        })
+      })
+
+    if (message != null) {
+      message = await message.edit(`${message.content} resumed.\nRestart procedure completed.`)
       setTimeout(() => message.delete(), settings.res_destruct_time * 1000)
     }
   }
