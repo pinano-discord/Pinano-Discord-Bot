@@ -229,11 +229,6 @@ module.exports = client => {
       .map(chanId => newMember.guild.channels.get(chanId))
       .filter(chan => chan != null)
 
-    // reset autolock suppression on empty channels
-    channelList
-      .filter(chan => !chan.members.some(m => !m.deleted))
-      .forEach(chan => { chan.suppressAutolock = false })
-
     // enforce autolock on unlocked channels only
     channelList
       .filter(chan => chan.locked_by == null)
