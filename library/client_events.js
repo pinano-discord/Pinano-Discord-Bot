@@ -220,7 +220,19 @@ module.exports = client => {
       newMember.voiceChannelID !== oldMember.voiceChannelID) {
       // user left a room they had locked; unlock it.
       await client.unlockPracticeRoom(oldMember.guild, oldMember.voiceChannel)
+
+      // no need to suppress autolock if locking user left
+      oldMember.voiceChannel.suppressAutolock = false
     }
+
+    let channelList = guildInfo.permitted_channels
+      .map(chanId => newMember.guild.channels.get(chanId))
+      .filter(chan => chan != null)
+
+    // enforce autolock on unlocked channels only
+    channelList
+      .filter(chan => chan.locked_by == null)
+      .forEach(chan => client.enforceAutolock(chan))
 
     updatePracticeRoomChatPermissions(guildInfo.permitted_channels, newMember)
 
