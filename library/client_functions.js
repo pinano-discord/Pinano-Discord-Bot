@@ -158,7 +158,7 @@ module.exports = client => {
     userInfo.current_session_playtime += playtime
     userInfo.overall_session_playtime += playtime
     await client.userRepository.save(userInfo)
-    client.log(`User ${member.user.username}#${member.user.discriminator} practiced for ${playtime} seconds`)
+    client.log(`User <@${member.user.id}> ${member.user.username}#${member.user.discriminator} practiced for ${playtime} seconds`)
 
     member.s_time = now
   }
@@ -261,6 +261,7 @@ module.exports = client => {
       .forEach(chan => {
         chan.members.forEach(m => {
           if (client.isLiveUser(m, guildInfo.permitted_channels)) {
+            client.log(`Beginning session for user <@${m.user.id}> ${m.user.username}#${m.user.discriminator}`)
             m.s_time = moment().unix()
           }
         })
