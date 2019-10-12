@@ -56,6 +56,12 @@ class MongoUserRepository {
     return this._loadTopBy(n, 'overall_session_playtime')
   }
 
+  async loadRowsWithNonZeroKeyValue (key) {
+    return this.collection.aggregate([
+      { $match: { [key]: { $gt: 0 } } }
+    ]).toArray()
+  }
+
   async _loadTopBy (n, key) {
     return this.collection.aggregate([
       { $match: { [key]: { $gt: 0 } } },
