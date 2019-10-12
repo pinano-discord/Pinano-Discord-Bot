@@ -24,7 +24,7 @@ class Leaderboard {
       this.cache.push({ id: row.id, time: totalTime })
     })
 
-    liveData.forEach((key, value) => {
+    liveData.forEach((value, key) => {
       if (!pushed.has(key)) {
         this.cache.push({ id: key, time: value })
       }

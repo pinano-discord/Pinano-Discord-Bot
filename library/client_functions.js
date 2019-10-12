@@ -283,54 +283,64 @@ module.exports = client => {
     }
   }
 
-  client.updateInformation = async (guild) => {
-    let infoChan = guild.channels.find(c => c.name === 'information')
-    let messages = await infoChan.fetchMessages()
-    let guildInfo = await client.guildRepository.load(guild.id)
+  client.refreshRoomInfo = async (guild) => {
+    const reducer = (rooms, chan) => {
+      let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
+      rooms += `\n\n${displayName.replace(' (64kbps)', '')}`
+      if (!chan.name.endsWith('(64kbps)')) { // don't bother with video links for low-bitrate rooms
+        rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
+      }
 
+      if (chan.locked_by != null) {
+        rooms += ` | LOCKED by <@${chan.locked_by}>`
+      }
+
+      chan.members.forEach(m => {
+        rooms += `\n<@${m.id}>`
+        if (m.deleted) {
+          rooms += ' :ghost:'
+        }
+
+        if (m.s_time != null) {
+          rooms += ' :microphone2:'
+        }
+      })
+
+      return rooms
+    }
+
+    let guildInfo = await client.guildRepository.load(guild.id)
+    client.roomInfo =
+      guildInfo.permitted_channels
+        .map(chanId => guild.channels.get(chanId))
+        .filter(chan => chan != null && chan.members.some(m => !m.deleted))
+        .sort((x, y) => x.position > y.position)
+        .reduce(reducer, '')
+  }
+
+  client.updateInformation = async (guild) => {
     let liveData = await client.findCurrentPrackers(guild)
+    await client.refreshRoomInfo(guild)
     await client.weeklyLeaderboard.refresh(liveData)
     await client.overallLeaderboard.refresh(liveData)
+
+    await client.redrawInformation(guild)
+
+    setTimeout(() => client.updateInformation(guild), 15 * 1000)
+  }
+
+  client.redrawInformation = async (guild) => {
     let weeklyData = client.weeklyLeaderboard.getPageData()
     let overallData = client.overallLeaderboard.getPageData()
-
     let currentTime = moment().unix()
     let endOfWeek = moment().endOf('isoWeek').unix()
     let timeUntilReset = hd((endOfWeek - currentTime) * 1000, { units: [ 'd', 'h', 'm' ], maxDecimalPoints: 0 })
-
-    let rooms = ''
-    guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null && chan.members.some(m => !m.deleted))
-      .sort((x, y) => x.position > y.position)
-      .forEach(chan => {
-        let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
-        rooms += `\n\n${displayName.replace(' (64kbps)', '')}`
-        if (!chan.name.endsWith('(64kbps)')) { // don't bother with video links for low-bitrate rooms
-          rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
-        }
-
-        if (chan.locked_by != null) {
-          rooms += ` | LOCKED by <@${chan.locked_by}>`
-        }
-
-        chan.members.forEach(m => {
-          rooms += `\n<@${m.id}>`
-          if (m.deleted) {
-            rooms += ' :ghost:'
-          }
-
-          if (m.s_time != null) {
-            rooms += ' :microphone2:'
-          }
-        })
-      })
 
     let pinnedPostUrl = 'https://discordapp.com/channels/188345759408717825/411657964198428682/518693148877258776'
     let embed = new Discord.RichEmbed()
       .setTitle('Practice Rooms')
       .setColor(settings.embed_color)
-      .setDescription(`${rooms}\n\u200B`) // stupid formatting hack
+      .setDescription(`${client.roomInfo}\n\u200B`) // stupid formatting hack
       .addField('Weekly Leaderboard', translateLeaderboard(weeklyData), true)
       .addField('Overall Leaderboard', translateLeaderboard(overallData), true)
       .addField(`Weekly leaderboard resets in ${timeUntilReset}`,
@@ -338,14 +348,51 @@ module.exports = client => {
 Use \`p!stats\` for individual statistics\n\u200B`)
       .setTimestamp(Date.now())
 
-    let toEdit = messages.find(m => m.embeds != null && m.embeds.some(e => e.title === 'Practice Rooms'))
-    if (toEdit == null) {
-      infoChan.send(embed)
+    let infoChan = guild.channels.find(c => c.name === 'information')
+    let messages = await infoChan.fetchMessages()
+    let message = messages.find(m => m.embeds != null && m.embeds.some(e => e.title === 'Practice Rooms'))
+    if (message == null) {
+      message = await infoChan.send(embed)
     } else {
-      toEdit.edit({ embed: embed })
+      message = await message.edit({ embed: embed })
     }
 
-    setTimeout(() => client.updateInformation(guild), 15 * 1000)
+    if (client.reactionsHandler == null) {
+      const filter = (r, u) => u !== client.user
+      client.reactionsHandler = message.createReactionCollector(filter)
+      client.reactionsHandler.on('collect', async reaction => {
+        switch (reaction.emoji.name) {
+          case '◀':
+            client.weeklyLeaderboard.decrementPage()
+            await client.redrawInformation(guild)
+            break
+          case '▶':
+            client.weeklyLeaderboard.incrementPage()
+            await client.redrawInformation(guild)
+            break
+          case '⬅':
+            client.overallLeaderboard.decrementPage()
+            await client.redrawInformation(guild)
+            break
+          case '➡':
+            client.overallLeaderboard.incrementPage()
+            await client.redrawInformation(guild)
+            break
+        }
+
+        reaction.users
+          .filter(u => u !== client.user)
+          .forEach(u => reaction.remove(u))
+      })
+
+      await message.clearReactions()
+      await message.react('◀')
+      await message.react('🇼')
+      await message.react('▶')
+      await message.react('⬅')
+      await message.react('🇴')
+      await message.react('➡')
+    }
   }
 
   client.findCurrentPrackers = async (guild) => {
