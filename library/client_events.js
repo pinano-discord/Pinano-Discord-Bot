@@ -18,6 +18,19 @@ function areAllPracticeRoomsFull (permittedChannels, guild) {
   return isFull
 }
 
+function areAllPracticeRoomsFull64 (permittedChannels, guild) {
+  let isFull = true
+  permittedChannels.forEach(chanId => {
+    let chan = guild.channels.get(chanId)
+    // channel being null might happen if we have a stale channel in the db - just ignore if this happens.
+    if (chan != null && chan.bitrate === 64 && !chan.members.some(m => !m.deleted)) {
+      isFull = false
+    }
+  })
+
+  return isFull
+}
+
 // remove an extra room if 1) there are at least two empty rooms and 2) one of those
 // rooms is a temp room. (We don't want to destroy the primary rooms.)
 async function findChannelToRemove (permittedChannels, guild) {
@@ -29,10 +42,10 @@ async function findChannelToRemove (permittedChannels, guild) {
   if (emptyRooms.length >= 2) {
     if (emptyRooms.filter(chan => chan.bitrate !== 64).length <= 1) {
       // there's at most one high-bitrate room - remove the first temp channel that's low-bitrate, if it exists
-      tempChannelToRemove = emptyRooms.find(c => c.bitrate === 64 && (c.name === 'Extra Practice Room' || c.isTempRoom))
+      tempChannelToRemove = emptyRooms.find(c => c.bitrate === 64 && (c.name === 'Extra Practice Room' || c.name === 'Extra Practice Room (64kbps)' || c.isTempRoom))
     } else {
       // just remove the first temp channel, regardless of bitrate
-      tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room' || c.isTempRoom)
+      tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room' || c.name === 'Extra Practice Room (64kbps)' || c.isTempRoom)
     }
   }
 
@@ -185,6 +198,37 @@ module.exports = client => {
         type: 'voice',
         parent: categoryChan,
         bitrate: settings.dev_mode ? 96000 : 256000,
+        position: categoryChan.children.size,
+        permissionOverwrites: [{
+          id: pinanoBot,
+          allow: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
+        }, {
+          id: tempMutedRole,
+          deny: ['SPEAK']
+        }, {
+          id: verificationRequiredRole,
+          deny: ['VIEW_CHANNEL']
+        }, {
+          id: everyone,
+          deny: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
+        }]
+      })
+
+      newChan.isTempRoom = true
+
+      // update the db
+      await client.guildRepository.addToField(guildInfo, 'permitted_channels', newChan.id)
+    } else if (areAllPracticeRoomsFull64(guildInfo.permitted_channels, newMember.guild)) {
+      let categoryChan = newMember.guild.channels.find(chan => chan.name === 'practice-room-chat').parent
+      let pinanoBot = newMember.guild.roles.find(r => r.name === 'Pinano Bot')
+      let tempMutedRole = newMember.guild.roles.find(r => r.name === 'Temp Muted')
+      let verificationRequiredRole = newMember.guild.roles.find(r => r.name === 'Verification Required')
+      let everyone = newMember.guild.roles.find(r => r.name === '@everyone')
+
+      let newChan = await newMember.guild.createChannel('Extra Practice Room (64kbps)', {
+        type: 'voice',
+        parent: categoryChan,
+        bitrate: 64000,
         position: categoryChan.children.size,
         permissionOverwrites: [{
           id: pinanoBot,
