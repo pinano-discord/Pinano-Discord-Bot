@@ -64,6 +64,28 @@ class Commands {
     selfDestructMessage(() => message.reply('added time to user.'))
   }
 
+  async bitrate (message) {
+    let args = message.split(' ').splice(1).filter(str => str !== '')
+    let mem = message.member
+    let channel = message.member.voiceChannel
+    if (channel == null) {
+      throw new Error(`<@${message.author.id}>! You aren't in a voice channel`)
+    }
+    if (args.length === 0) {
+      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate: ` + channel.bitrate))
+    } else {
+      if (isNaN(args[0])) {
+        throw new Error(`<@${message.author.id}>! Input is not a valid bitrate(i.e. 64000)`)
+      }
+      if (channel.locked_by === mem) {
+        throw new Error(`<@${message.author.id}>! Not a valid voice channel`)
+      }
+      let newrate = parseInt(args[0])
+      channel.bitrate = newrate
+      channel.name += channel.name.replace(/\([0-9]+kbps\)$/, '(' + newrate / 1000 + 'kbps)')
+    }
+  }
+
   async deltime (message) {
     requireRole(message.member)
 
