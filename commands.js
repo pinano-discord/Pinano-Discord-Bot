@@ -66,23 +66,23 @@ class Commands {
 
   async bitrate (message) {
     let args = message.split(' ').splice(1).filter(str => str !== '')
-    let mem = message.member
     let channel = message.member.voiceChannel
     if (channel == null) {
-      throw new Error(`<@${message.author.id}>! You aren't in a voice channel`)
+      throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
     if (args.length === 0) {
-      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate: ` + channel.bitrate))
+      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate: ${channel.bitrate}kbps`))
     } else {
-      if (isNaN(args[0])) {
-        throw new Error(`<@${message.author.id}>! Input is not a valid bitrate(i.e. 64000)`)
-      }
-      if (channel.locked_by === mem) {
-        throw new Error(`<@${message.author.id}>! Not a valid voice channel`)
-      }
       let newrate = parseInt(args[0])
-      channel.bitrate = newrate
-      channel.name += channel.name.replace(/\([0-9]+kbps\)$/, '(' + newrate / 1000 + 'kbps)')
+      if (isNaN(args[0]) || newrate < 8 || newrate > 384) {
+        throw new Error(`<@${message.author.id}>! Input is not a valid bitrate(from 8 to 384)`)
+      }
+      if (channel.locked_by !== message.author.id) {
+        throw new Error(`<@${message.author.id}>! You do not have this channel locked.`)
+      }
+      await channel.setBitrate(newrate)
+      // await channel.setName(channel.name.replace(/\([0-9]+kbps\)$/, `(${newrate}kbps)`))
+      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate set to ${channel.bitrate}kbps`))
     }
   }
 
@@ -479,6 +479,7 @@ function loadCommands (client) {
   client.commands = {}
 
   client.commands['addtime'] = (message) => { return c.addtime(message) }
+  client.commands['bitrate'] = (message) => { return c.bitrate(message) }
   client.commands['deltime'] = (message) => { return c.deltime(message) }
   client.commands['help'] = (message) => { return c.help(message) }
   client.commands['leaderboard'] = client.commands['lb'] = (message) => { return c.leaderboard(message) }
