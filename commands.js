@@ -64,6 +64,28 @@ class Commands {
     selfDestructMessage(() => message.reply('added time to user.'))
   }
 
+  async bitrate (message) {
+    let args = message.split(' ').splice(1).filter(str => str !== '')
+    let channel = message.member.voiceChannel
+    if (channel == null) {
+      throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
+    }
+    if (args.length === 0) {
+      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate: ${channel.bitrate}kbps`))
+    } else {
+      let newrate = parseInt(args[0])
+      if (isNaN(args[0]) || newrate < 8 || newrate > 384) {
+        throw new Error(`<@${message.author.id}>! Input is not a valid bitrate(from 8 to 384)`)
+      }
+      if (channel.locked_by !== message.author.id) {
+        throw new Error(`<@${message.author.id}>! You do not have this channel locked.`)
+      }
+      await channel.setBitrate(newrate)
+      // await channel.setName(channel.name.replace(/\([0-9]+kbps\)$/, `(${newrate}kbps)`))
+      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate set to ${channel.bitrate}kbps`))
+    }
+  }
+
   async deltime (message) {
     requireRole(message.member)
 
@@ -457,6 +479,7 @@ function loadCommands (client) {
   client.commands = {}
 
   client.commands['addtime'] = (message) => { return c.addtime(message) }
+  client.commands['bitrate'] = (message) => { return c.bitrate(message) }
   client.commands['deltime'] = (message) => { return c.deltime(message) }
   client.commands['help'] = (message) => { return c.help(message) }
   client.commands['leaderboard'] = client.commands['lb'] = (message) => { return c.leaderboard(message) }
