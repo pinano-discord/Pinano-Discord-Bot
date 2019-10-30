@@ -82,9 +82,9 @@ module.exports = client => {
 
     // create leaderboard objects
     client.weeklyLeaderboard =
-      new Leaderboard(client.userRepository, 'current_session_playtime')
+      new Leaderboard(client.userRepository, 'current_session_playtime', settings.leaderboard_size)
     client.overallLeaderboard =
-      new Leaderboard(client.userRepository, 'overall_session_playtime')
+      new Leaderboard(client.userRepository, 'overall_session_playtime', settings.leaderboard_size)
 
     settings.pinano_guilds.forEach(guildId => {
       let guild = client.guilds.get(guildId)
