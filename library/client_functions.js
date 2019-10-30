@@ -345,7 +345,8 @@ module.exports = client => {
       .addField('Overall Leaderboard', translateLeaderboard(overallData), true)
       .addField(`Weekly leaderboard resets in ${timeUntilReset}`,
         `\u200B\nClick [here](${pinnedPostUrl}) for optimal Discord voice settings\n\
-Use \`p!stats\` for individual statistics\n\u200B`)
+Use \`p!stats\` for individual statistics\n\
+Use \`p!bitrate [BITRATE_IN_KBPS]\` to adjust a channel's bitrate\n\u200B`)
       .setTimestamp(Date.now())
 
     let infoChan = guild.channels.find(c => c.name === 'information')

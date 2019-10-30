@@ -28,13 +28,8 @@ async function findChannelToRemove (permittedChannels, guild) {
 
   let tempChannelToRemove = null
   if (emptyRooms.length >= 2) {
-    if (emptyRooms.filter(chan => chan.bitrate !== 64).length <= 1) {
-      // there's at most one high-bitrate room - remove the first temp channel that's low-bitrate, if it exists
-      tempChannelToRemove = emptyRooms.find(c => c.bitrate === 64 && (c.name === 'Extra Practice Room' || c.isTempRoom))
-    } else {
-      // just remove the first temp channel, regardless of bitrate
-      tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room' || c.isTempRoom)
-    }
+    // we can remove at least one temp room
+    tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room' || c.isTempRoom)
   }
 
   return tempChannelToRemove
