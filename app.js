@@ -17,9 +17,6 @@ client.log('Loaded client functions')
 require('./library/client_events.js')(client)
 client.log('Loaded client events')
 
-require('./library/leaderboard.js')(client)
-client.log('Loaded leaderboard library')
-
 // weekly wipe at midnight on Monday (local time zone)
 cron.schedule('0 0 * * mon', async () => {
   await client.submitWeek()

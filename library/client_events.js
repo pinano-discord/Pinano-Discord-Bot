@@ -1,5 +1,6 @@
 const Discord = require('discord.js')
 const moment = require('moment')
+const Leaderboard = require('../library/leaderboard.js')
 const settings = require('../settings/settings.json')
 
 // auto-VC creation: create a room if all high-bitrate rooms are occupied. Muted or unmuted doesn't matter, because
@@ -78,6 +79,12 @@ module.exports = client => {
 
     await client.loadCommands()
     client.log('Successfully loaded commands!')
+
+    // create leaderboard objects
+    client.weeklyLeaderboard =
+      new Leaderboard(client.userRepository, 'current_session_playtime', settings.leaderboard_size)
+    client.overallLeaderboard =
+      new Leaderboard(client.userRepository, 'overall_session_playtime', settings.leaderboard_size)
 
     settings.pinano_guilds.forEach(guildId => {
       let guild = client.guilds.get(guildId)

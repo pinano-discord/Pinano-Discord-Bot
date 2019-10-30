@@ -3,6 +3,16 @@ const hd = require('humanize-duration')
 const moment = require('moment')
 const settings = require('../settings/settings.json')
 
+function translateLeaderboard (page) {
+  const reducer = (msgStr, row, index) => {
+    let timeStr = hd(row.time * 1000, { units: ['h', 'm', 's'] })
+    return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\n \`${timeStr}\`\n`
+  }
+
+  let data = page.data.reduce(reducer, '')
+  return (data === '') ? '\u200B' : data
+}
+
 module.exports = client => {
   client.log = (string) => {
     console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')} :: ${string}`)
@@ -273,63 +283,220 @@ module.exports = client => {
     }
   }
 
-  client.updateInformation = async (guild) => {
-    let infoChan = guild.channels.find(c => c.name === 'information')
-    let messages = await infoChan.fetchMessages()
+  client.refreshRoomInfo = async (guild) => {
+    const reducer = (rooms, chan) => {
+      let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
+      rooms += `\n\n${displayName.replace(' (64kbps)', '')}`
+      if (!chan.name.endsWith('(64kbps)')) { // don't bother with video links for low-bitrate rooms
+        rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
+      }
+
+      if (chan.locked_by != null) {
+        rooms += ` | LOCKED by <@${chan.locked_by}>`
+      }
+
+      chan.members.forEach(m => {
+        rooms += `\n<@${m.id}>`
+        if (m.deleted) {
+          rooms += ' :ghost:'
+        }
+
+        if (m.s_time != null) {
+          rooms += ' :microphone2:'
+        }
+      })
+
+      return rooms
+    }
+
     let guildInfo = await client.guildRepository.load(guild.id)
-    let weeklyData = await client.getWeeklyLeaderboard(guild)
-    let overallData = await client.getOverallLeaderboard(guild)
+    client.roomInfo =
+      guildInfo.permitted_channels
+        .map(chanId => guild.channels.get(chanId))
+        .filter(chan => chan != null && chan.members.some(m => !m.deleted))
+        .sort((x, y) => x.position > y.position)
+        .reduce(reducer, '')
+  }
+
+  client.updateInformation = async (guild) => {
+    let liveData = await client.findCurrentPrackers(guild)
+    await client.refreshRoomInfo(guild)
+    await client.weeklyLeaderboard.refresh(liveData)
+    await client.overallLeaderboard.refresh(liveData)
+
+    await client.redrawInformation(guild)
+
+    setTimeout(() => client.updateInformation(guild), 15 * 1000)
+  }
+
+  client.redrawInformation = async (guild) => {
+    let weeklyData = client.weeklyLeaderboard.getPageData()
+    let overallData = client.overallLeaderboard.getPageData()
     let currentTime = moment().unix()
     let endOfWeek = moment().endOf('isoWeek').unix()
     let timeUntilReset = hd((endOfWeek - currentTime) * 1000, { units: [ 'd', 'h', 'm' ], maxDecimalPoints: 0 })
-
-    let rooms = ''
-    guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null && chan.members.some(m => !m.deleted))
-      .sort((x, y) => x.position > y.position)
-      .forEach(chan => {
-        let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
-        rooms += `\n\n${displayName.replace(' (64kbps)', '')}`
-        if (!chan.name.endsWith('(64kbps)')) { // don't bother with video links for low-bitrate rooms
-          rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
-        }
-
-        if (chan.locked_by != null) {
-          rooms += ` | LOCKED by <@${chan.locked_by}>`
-        }
-
-        chan.members.forEach(m => {
-          rooms += `\n<@${m.id}>`
-          if (m.deleted) {
-            rooms += ' :ghost:'
-          }
-
-          if (m.s_time != null) {
-            rooms += ' :microphone2:'
-          }
-        })
-      })
 
     let pinnedPostUrl = 'https://discordapp.com/channels/188345759408717825/411657964198428682/518693148877258776'
     let embed = new Discord.RichEmbed()
       .setTitle('Practice Rooms')
       .setColor(settings.embed_color)
-      .setDescription(`${rooms}\n\u200B`) // stupid formatting hack
-      .addField('Weekly Leaderboard', weeklyData, true)
-      .addField('Overall Leaderboard', overallData, true)
+      .setDescription(`${client.roomInfo}\n\u200B`) // stupid formatting hack
+      .addField('Weekly Leaderboard', translateLeaderboard(weeklyData), true)
+      .addField('Overall Leaderboard', translateLeaderboard(overallData), true)
       .addField(`Weekly leaderboard resets in ${timeUntilReset}`,
         `\u200B\nClick [here](${pinnedPostUrl}) for optimal Discord voice settings\n\
 Use \`p!stats\` for individual statistics\n\u200B`)
       .setTimestamp(Date.now())
 
-    let toEdit = messages.find(m => m.embeds != null && m.embeds.some(e => e.title === 'Practice Rooms'))
-    if (toEdit == null) {
-      infoChan.send(embed)
+    let infoChan = guild.channels.find(c => c.name === 'information')
+    let messages = await infoChan.fetchMessages()
+    let message = messages.find(m => m.embeds != null && m.embeds.some(e => e.title === 'Practice Rooms'))
+    if (message == null) {
+      message = await infoChan.send(embed)
     } else {
-      toEdit.edit({ embed: embed })
+      message = await message.edit({ embed: embed })
     }
 
-    setTimeout(() => client.updateInformation(guild), 15 * 1000)
+    if (client.reactionsHandler == null) {
+      const filter = (r, u) => u !== client.user
+      client.reactionsHandler = message.createReactionCollector(filter)
+      client.reactionsHandler.on('collect', async reaction => {
+        switch (reaction.emoji.name) {
+          case '◀':
+            client.weeklyLeaderboard.decrementPage()
+            await client.redrawInformation(guild)
+            break
+          case '▶':
+            client.weeklyLeaderboard.incrementPage()
+            await client.redrawInformation(guild)
+            break
+          case '⬅':
+            client.overallLeaderboard.decrementPage()
+            await client.redrawInformation(guild)
+            break
+          case '➡':
+            client.overallLeaderboard.incrementPage()
+            await client.redrawInformation(guild)
+            break
+        }
+
+        reaction.users
+          .filter(u => u !== client.user)
+          .forEach(u => reaction.remove(u))
+      })
+
+      await message.clearReactions()
+      await message.react('◀')
+      await message.react('🇼')
+      await message.react('▶')
+      await message.react('⬅')
+      await message.react('🇴')
+      await message.react('➡')
+    }
+  }
+
+  client.findCurrentPrackers = async (guild) => {
+    // playtimes only get updated when a user leaves/mutes a channel. Therefore, in order to keep up-to-date statistics,
+    // find out what users are currently in permitted voice channels, then add their times as if current.
+    let guildInfo = await client.guildRepository.load(guild.id)
+    let currentPrackers = new Map()
+
+    guildInfo.permitted_channels
+      .map(chanId => guild.channels.get(chanId))
+      .filter(chan => chan != null)
+      .forEach(chan => {
+        chan.members
+          .filter(member => !member.mute && member.s_time != null && !member.deleted)
+          .forEach(member => currentPrackers.set(member.user.id, moment().unix() - member.s_time))
+      })
+
+    return currentPrackers
+  }
+  client.getOverallLeaderboardPos = async (guild, userId) => {
+    return client.getLeaderboardPos(guild, userId,
+      p => p.overall_session_playtime,
+      () => client.userRepository.getOverallCount(),
+      userId => client.userRepository.getOverallRank(userId),
+      totalTime => client.userRepository.getOverallRankByTime(totalTime))
+  }
+
+  client.getWeeklyLeaderboardPos = async (guild, userId) => {
+    return client.getLeaderboardPos(guild, userId,
+      p => p.current_session_playtime,
+      () => client.userRepository.getSessionCount(),
+      userId => client.userRepository.getSessionRank(userId),
+      totalTime => client.userRepository.getSessionRankByTime(totalTime))
+  }
+
+  client.getLeaderboardPos = async (guild, userId, playtimeFn, userCountFn, getRankFn, getRankByTimeFn) => {
+    let currentPrackers = await client.findCurrentPrackers(guild)
+
+    let tentativeRank, totalTime
+    let totalCount = await userCountFn()
+    if (currentPrackers.has(userId)) {
+      // the calling user is live. Need to figure out where their rank is after accounting for active time.
+      let user = await client.userRepository.load(userId)
+      if (user == null) {
+        // we've never seen them before... consider their DB time to be zero.
+        totalTime = currentPrackers.get(userId)
+      } else {
+        totalTime = currentPrackers.get(userId) + playtimeFn(user)
+      }
+
+      tentativeRank = await getRankByTimeFn(totalTime)
+    } else {
+      let user = await client.userRepository.load(userId)
+      if (user == null || playtimeFn(user) === 0) {
+        // calling user has zero time, active or stored
+        return 'N / A'
+      }
+
+      totalTime = playtimeFn(user)
+      tentativeRank = await getRankFn(userId)
+    }
+
+    // now figure out how many active prackers (if any) they've been passed by.
+    for (const [currentId, currentTime] of currentPrackers.entries()) {
+      if (currentId !== userId) {
+        let otherUser = await client.userRepository.load(currentId)
+        let otherTime = 0
+        let dbTime = 0
+        if (otherUser == null || playtimeFn(otherUser) === 0) {
+          // an active user who won't show up in getSessionCount() => increment the total number of users
+          totalCount++
+        } else {
+          dbTime = playtimeFn(otherUser)
+          otherTime += dbTime
+        }
+
+        otherTime += currentTime
+        if (otherTime > totalTime && totalTime > dbTime) {
+          // this active user started out behind us but has passed us
+          tentativeRank++
+        }
+      }
+    }
+
+    return `\`${tentativeRank}\` / \`${totalCount}\``
+  }
+
+  client.submitWeek = async () => {
+    let pinano = client.guilds.get('188345759408717825')
+    let liveData = await client.findCurrentPrackers(pinano)
+    await client.weeklyLeaderboard.refresh(liveData)
+
+    client.weeklyLeaderboard.resetPage()
+    let pageData = client.weeklyLeaderboard.getPageData()
+    let data = translateLeaderboard(pageData)
+    await client.saveAllUsersTime(pinano)
+
+    pinano.channels.find(chan => chan.name === 'practice-room-chat').send({
+      embed: {
+        title: 'Weekly Leaderboard - Results',
+        description: data,
+        color: settings.embed_color,
+        timestamp: Date.now()
+      }
+    })
   }
 }
