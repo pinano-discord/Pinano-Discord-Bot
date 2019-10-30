@@ -70,20 +70,24 @@ class Commands {
     if (channel == null) {
       throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
+
     if (args.length === 0) {
-      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate: ${channel.bitrate}kbps`))
-    } else {
-      let newrate = parseInt(args[0])
-      if (isNaN(args[0]) || newrate < 8 || newrate > 384) {
-        throw new Error(`<@${message.author.id}>! Input is not a valid bitrate(from 8 to 384)`)
-      }
-      if (channel.locked_by !== message.author.id) {
-        throw new Error(`<@${message.author.id}>! You do not have this channel locked.`)
-      }
-      await channel.setBitrate(newrate)
-      // await channel.setName(channel.name.replace(/\([0-9]+kbps\)$/, `(${newrate}kbps)`))
-      selfDestructMessage(() => message.reply(`<#${channel.id}> bitrate set to ${channel.bitrate}kbps`))
+      selfDestructMessage(() => message.reply(`the current bitrate for <#${channel.id}> is ${channel.bitrate}kbps.`))
+      return
     }
+
+    let newrate = parseInt(args[0])
+    if (isNaN(args[0]) || newrate < 8 || newrate > 384) {
+      throw new Error('Bitrate must be a number between 8 and 384.')
+    }
+
+    if (channel.locked_by !== message.author.id) {
+      throw new Error('You do not have this channel locked.')
+    }
+
+    await channel.setBitrate(newrate)
+    await channel.setName(channel.name.replace(/\([0-9]+kbps\)$/, `(${newrate}kbps)`))
+    selfDestructMessage(() => message.reply(`set bitrate for <#${channel.id}> to ${channel.bitrate} kbps.`))
   }
 
   async deltime (message) {
@@ -121,6 +125,8 @@ class Commands {
       'Displays practice statistics for the specified user (default: calling user)')
     msg.addField(`\`${settings.prefix}lock\``,
       'Locks the currently occupied room for exclusive use')
+    msg.addField(`\`${settings.prefix}bitrate [ BITRATE_IN_KBPS ]\``,
+      'Adjusts the bitrate of the currently occupied room')
 
     if (isBotManager) {
       msg.addField(`\`${settings.prefix}unlock [ <#CHANNEL_ID> ]\``,
