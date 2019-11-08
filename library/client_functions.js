@@ -38,118 +38,6 @@ module.exports = client => {
     setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
   }
 
-  // rough overview of the heuristic: we autolock a room for a user X if X was the most recent
-  // user who was the sole occupant of the room, and the room has had exactly one user unmuted
-  // for the last five minutes, and that user was X. Unlocking a room is a hint that autolock
-  // is not desired - if so, suppressAutolock is set on the channel and we will never attempt
-  // autolock until that flag is cleared (which occurs when a channel becomes empty). If X
-  // leaves the room leaving multiple people, autolock will not try to find a new occupant
-  // until there is a sole occupant again. Any time there is more than one unmuted user, or
-  // the unmuted user is not the occupant, or there are no unmuted users, the timer resets.
-  client.enforceAutolock = (chan) => {
-    let members = chan.members.filter(m => !m.deleted)
-    if (members.get(chan.occupant) == null) {
-      // occupant has left this room, clear out the value. Basically, start over again.
-      // We will destroy the task if it exists below.
-      chan.occupant = null
-      chan.suppressAutolock = false
-    }
-
-    if (!chan.suppressAutolock) {
-      if (members.size === 1) {
-        chan.occupant = members.first().id
-      }
-
-      let unmutedMembers = members.filter(m => !m.mute)
-      if (unmutedMembers.size === 1 && unmutedMembers.first().id === chan.occupant) {
-        if (chan.autolockTask == null) {
-          let member = unmutedMembers.first()
-          chan.autolockTask = setTimeout(async () => {
-            if (!chan.suppressAutolock && chan.locked_by == null) {
-              await client.lockPracticeRoom(chan.guild, chan, member)
-            }
-          }, 2 * 60 * 1000)
-        }
-      } else {
-        // wrong number of unmuted members: destroy the task.
-        // wrong user is unmuted: destroy the task.
-        // occupant has left: chan.occupant is null, task gets destroyed again.
-        if (chan.autolockTask != null) {
-          clearTimeout(chan.autolockTask)
-          chan.autolockTask = null
-        }
-      }
-    }
-  }
-
-  client.lockPracticeRoom = async (guild, channel, mem) => {
-    channel.locked_by = mem.id
-    if (channel.isTempRoom) {
-      channel.unlocked_name = channel.name
-      await channel.setName(`${mem.user.username}'s room`)
-    }
-    await channel.overwritePermissions(mem.user, { SPEAK: true })
-    let everyone = guild.roles.find(r => r.name === '@everyone')
-    await channel.overwritePermissions(everyone, { SPEAK: false }) // deny everyone speaking permissions
-    try {
-      await Promise.all(channel.members.map(async (m) => {
-        if (m !== mem && !m.deleted) {
-          return m.setMute(true)
-        }
-      }))
-    } catch (err) {
-      // this is likely an issue with trying to mute a user who has already left the channel
-      client.log(err)
-    }
-  }
-
-  client.unlockPracticeRoom = async (guild, channel) => {
-    if (channel.unlocked_name != null) {
-      await channel.setName(channel.unlocked_name)
-    }
-
-    // reset permissions overrides
-    let pinanoBot = guild.roles.find(r => r.name === 'Pinano Bot')
-    let tempMutedRole = guild.roles.find(r => r.name === 'Temp Muted')
-    let verificationRequiredRole = guild.roles.find(r => r.name === 'Verification Required')
-    let everyone = guild.roles.find(r => r.name === '@everyone')
-    await channel.replacePermissionOverwrites({
-      overwrites: [{
-        id: pinanoBot,
-        allow: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
-      }, {
-        id: tempMutedRole,
-        deny: ['SPEAK']
-      }, {
-        id: verificationRequiredRole,
-        deny: ['VIEW_CHANNEL']
-      }, {
-        id: everyone,
-        deny: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
-      }]
-    })
-
-    try {
-      await Promise.all(channel.members.map(async m => {
-        if (!m.deleted && !m.roles.some(r => r.name === 'Temp Muted')) {
-          return m.setMute(false)
-        }
-      }))
-    } catch (err) {
-      // this is likely an issue with trying to mute a user who has already left the channel
-      client.log(err)
-    }
-
-    // manual unlock is treated as a signal that we don't want autolock enabled.
-    // unlocking an *empty* room can happen in some automatic circumstances and
-    // should not suppress autolock.
-    if (channel.members.size !== 0) {
-      channel.suppressAutolock = true
-    }
-
-    channel.locked_by = null
-  }
-
   client.saveUserTime = async (member) => {
     // if the user doesn't exist then create a user for the person
     let userInfo = await client.userRepository.load(member.user.id)
@@ -174,11 +62,9 @@ module.exports = client => {
   }
 
   client.saveAllUsersTime = async (guild) => {
-    let guildInfo = await client.guildRepository.load(guild.id)
     await Promise.all(
-      guildInfo.permitted_channels
-        .map(chanId => guild.channels.get(chanId))
-        .filter(chan => chan != null)
+      guild.channels
+        .filter(chan => chan.isPermittedChannel)
         .map(chan =>
           Promise.all(chan.members
             .filter(member => !member.mute && member.s_time != null && !member.deleted)
@@ -197,7 +83,7 @@ module.exports = client => {
     await Promise.all(
       guild.channels
         .filter(chan => chan.isTempRoom)
-        .map(chan => client.unlockPracticeRoom(guild, chan)))
+        .map(chan => client.policyEnforcer.unlockPracticeRoom(guild, chan)))
 
     message = await message.edit(`${message.content} unlocked.\nRestarting Pinano Bot...`)
     process.exit(0)
@@ -208,11 +94,11 @@ module.exports = client => {
   // 2. unmuted
   // 3. in a permitted channel
   // 4. that is not locked by someone else
-  client.isLiveUser = (member, permittedChannels) => {
+  client.isLiveUser = (member) => {
     return !member.user.bot &&
       !member.mute &&
-      permittedChannels.includes(member.voiceChannelID) &&
       member.voiceChannel != null &&
+      member.voiceChannel.isPermittedChannel &&
       (member.voiceChannel.locked_by == null || member.voiceChannel.locked_by === member.id)
   }
 
@@ -224,58 +110,52 @@ module.exports = client => {
       message = await message.edit(`${message.content} ready.\nDetecting room status...`)
     }
 
-    let guildInfo = await client.guildRepository.load(guild.id)
     let everyone = guild.roles.find(r => r.name === '@everyone')
-    await Promise.all(guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null)
-      .map(chan => {
-        if (chan.name === 'Extra Practice Room') {
-          chan.isTempRoom = true
+    let permittedChannels = guild.channels.filter(chan => chan.isPermittedChannel)
+    await Promise.all(permittedChannels.map(chan => {
+      if (chan.name === 'Practice Room') {
+        chan.isTempRoom = true
 
-          // assume that if there's only one person playing in a temp room, it should be locked to them.
-          let unmuted = chan.members.filter(m => !m.deleted && !m.mute)
-          if (unmuted.size === 1) {
-            return client.lockPracticeRoom(guild, chan, unmuted.first())
-          }
-        } else {
-          let shouldUnlock = true
+        // assume that if there's only one person playing in a temp room, it should be locked to them.
+        let unmuted = chan.members.filter(m => !m.deleted && !m.mute)
+        if (unmuted.size === 1) {
+          return client.policyEnforcer.lockPracticeRoom(guild, chan, unmuted.first())
+        }
+      } else {
+        let shouldUnlock = true
 
-          // a room should be considered locked if there is an individual override granting SPEAK
-          // and the everyone role is denied SPEAK, and that individual is in the channel.
-          if (chan.permissionOverwrites.get(everyone.id).denied.has(Discord.Permissions.FLAGS.SPEAK)) {
-            let overwrite = chan.permissionOverwrites.find(o => o.type === 'member')
-            if (overwrite != null) {
-              let member = guild.members.get(overwrite.id)
-              if (member != null && member.voiceChannelID === chan.id) {
-                shouldUnlock = false
-                chan.locked_by = member.id
-              }
+        // a room should be considered locked if there is an individual override granting SPEAK
+        // and the everyone role is denied SPEAK, and that individual is in the channel.
+        if (chan.permissionOverwrites.get(everyone.id).denied.has(Discord.Permissions.FLAGS.SPEAK)) {
+          let overwrite = chan.permissionOverwrites.find(o => o.type === 'member')
+          if (overwrite != null) {
+            let member = guild.members.get(overwrite.id)
+            if (member != null && member.voiceChannelID === chan.id) {
+              shouldUnlock = false
+              chan.locked_by = member.id
             }
           }
-
-          if (shouldUnlock) {
-            // reset the permissions just in case they're borked
-            return client.unlockPracticeRoom(guild, chan)
-          }
         }
-      }))
+
+        if (shouldUnlock) {
+          // reset the permissions just in case they're borked
+          return client.policyEnforcer.unlockPracticeRoom(guild, chan)
+        }
+      }
+    }))
 
     if (message != null) {
       message = await message.edit(`${message.content} marked locked rooms.\nResuming active sessions...`)
     }
 
-    guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null)
-      .forEach(chan => {
-        chan.members.forEach(m => {
-          if (client.isLiveUser(m, guildInfo.permitted_channels)) {
-            client.log(`Beginning session for user <@${m.user.id}> ${m.user.username}#${m.user.discriminator}`)
-            m.s_time = moment().unix()
-          }
-        })
+    permittedChannels.forEach(chan => {
+      chan.members.forEach(m => {
+        if (client.isLiveUser(m)) {
+          client.log(`Beginning session for user <@${m.user.id}> ${m.user.username}#${m.user.discriminator}`)
+          m.s_time = moment().unix()
+        }
       })
+    })
 
     if (message != null) {
       message = await message.edit(`${message.content} resumed.\nRestart procedure completed.`)
@@ -309,11 +189,9 @@ module.exports = client => {
       return rooms
     }
 
-    let guildInfo = await client.guildRepository.load(guild.id)
     client.roomInfo =
-      guildInfo.permitted_channels
-        .map(chanId => guild.channels.get(chanId))
-        .filter(chan => chan != null && chan.members.some(m => !m.deleted))
+      guild.channels
+        .filter(chan => chan.isPermittedChannel && chan.members.some(m => !m.deleted))
         .sort((x, y) => x.position > y.position)
         .reduce(reducer, '')
   }
@@ -399,12 +277,10 @@ Use \`p!bitrate [ BITRATE_IN_KBPS ]\` to adjust a channel's bitrate\n\u200B`)
   client.findCurrentPrackers = async (guild) => {
     // playtimes only get updated when a user leaves/mutes a channel. Therefore, in order to keep up-to-date statistics,
     // find out what users are currently in permitted voice channels, then add their times as if current.
-    let guildInfo = await client.guildRepository.load(guild.id)
     let currentPrackers = new Map()
 
-    guildInfo.permitted_channels
-      .map(chanId => guild.channels.get(chanId))
-      .filter(chan => chan != null)
+    guild.channels
+      .filter(chan => chan.isPermittedChannel)
       .forEach(chan => {
         chan.members
           .filter(member => !member.mute && member.s_time != null && !member.deleted)
