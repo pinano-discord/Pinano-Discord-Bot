@@ -65,7 +65,7 @@ class Commands {
   }
 
   async bitrate (message) {
-    let args = message.split(' ').splice(1).filter(str => str !== '')
+    let args = message.content.split(' ').splice(1).filter(str => str !== '')
     let channel = message.member.voiceChannel
     if (channel == null) {
       throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
@@ -86,7 +86,6 @@ class Commands {
     }
 
     await channel.setBitrate(newrate)
-    await channel.setName(channel.name.replace(/\([0-9]+kbps\)$/, `(${newrate}kbps)`))
     selfDestructMessage(() => message.reply(`set bitrate for <#${channel.id}> to ${channel.bitrate} kbps.`))
   }
 

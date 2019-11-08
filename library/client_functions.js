@@ -286,13 +286,13 @@ module.exports = client => {
   client.refreshRoomInfo = async (guild) => {
     const reducer = (rooms, chan) => {
       let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
-      rooms += `\n\n${displayName.replace(' (64kbps)', '')}`
-      if (!chan.name.endsWith('(64kbps)')) { // don't bother with video links for low-bitrate rooms
-        rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
+      rooms += `\n\n${displayName}`
+      if (chan.bitrate !== 384) {
+        rooms += ` | ${chan.bitrate}kbps`
       }
 
-      if (chan.locked_by != null) {
-        rooms += ` | LOCKED by <@${chan.locked_by}>`
+      if (chan.bitrate > 64) { // don't bother with video links for low-bitrate rooms
+        rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
       }
 
       chan.members.forEach(m => {
@@ -346,7 +346,7 @@ module.exports = client => {
       .addField(`Weekly leaderboard resets in ${timeUntilReset}`,
         `\u200B\nClick [here](${pinnedPostUrl}) for optimal Discord voice settings\n\
 Use \`p!stats\` for individual statistics\n\
-Use \`p!bitrate [BITRATE_IN_KBPS]\` to adjust a channel's bitrate\n\u200B`)
+Use \`p!bitrate [ BITRATE_IN_KBPS ]\` to adjust a channel's bitrate\n\u200B`)
       .setTimestamp(Date.now())
 
     let infoChan = guild.channels.find(c => c.name === 'information')

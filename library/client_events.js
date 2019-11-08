@@ -186,7 +186,7 @@ module.exports = client => {
       let newChan = await newMember.guild.createChannel('Extra Practice Room', {
         type: 'voice',
         parent: categoryChan,
-        bitrate: settings.dev_mode ? 96000 : 256000,
+        bitrate: settings.dev_mode ? 96000 : 384000,
         position: categoryChan.children.size,
         permissionOverwrites: [{
           id: pinanoBot,
@@ -232,6 +232,16 @@ module.exports = client => {
       .map(chanId => newMember.guild.channels.get(chanId))
       .filter(chan => chan != null && chan.locked_by == null)
       .forEach(chan => client.enforceAutolock(chan))
+
+    // reset empty rooms to 384kbps
+    await Promise.all(guildInfo.permitted_channels
+      .map(chanId => newMember.guild.channels.get(chanId))
+      .filter(chan => chan != null && !chan.members.some(m => !m.deleted))
+      .map(async (chan) => {
+        if (chan.bitrate !== 384) {
+          return chan.setBitrate(384)
+        }
+      }))
 
     updatePracticeRoomChatPermissions(guildInfo.permitted_channels, newMember)
 
