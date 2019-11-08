@@ -286,7 +286,11 @@ module.exports = client => {
   client.refreshRoomInfo = async (guild) => {
     const reducer = (rooms, chan) => {
       let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
-      rooms += `\n\n${displayName} | ${chan.bitrate}kbps`
+      rooms += `\n\n${displayName}`
+      if (chan.bitrate !== 384) {
+        rooms += ` | ${chan.bitrate}kbps`
+      }
+
       if (chan.bitrate > 64) { // don't bother with video links for low-bitrate rooms
         rooms += ` | [Video](http://www.discordapp.com/channels/${guild.id}/${chan.id})`
       }
