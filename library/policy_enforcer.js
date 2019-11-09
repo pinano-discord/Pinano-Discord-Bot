@@ -135,12 +135,14 @@ class PolicyEnforcer {
       const tempMuted = findRole(guild, 'Temp Muted')
       const verifRequired = findRole(guild, 'Verification Required')
       const everyone = findRole(guild, '@everyone')
+      const identifiers = ['☀️', '🌙', '️🐢', '🐌', '🌎', '🌍', '🌏', '🔥', '💧', '🍃', '🗿', '👻', '🐉', '👁️', '👊', '🐦', '🐛', '❄️']
 
-      await guild.createChannel('Practice Room', {
+      let identifier = identifiers[Math.floor(Math.random() * identifiers.length)]
+      await guild.createChannel(`Practice Room ${identifier}`, {
         type: 'voice',
         parent: categoryChan,
         bitrate: settings.dev_mode ? 96000 : 384000,
-        position: basePosition + rooms.size,
+        position: basePosition + rooms.size + 1,
         permissionOverwrites: [{
           id: pinanoBot,
           allow: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
