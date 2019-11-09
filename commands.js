@@ -158,10 +158,6 @@ class Commands {
     selfDestructMessage(() => message.reply('sent you the command list.'))
   }
 
-  async leaderboard (message) {
-    throw new Error(`This command has been retired; please use [#information](http://discordapp.com/channels/188345759408717825/629841121551581204) instead.`)
-  }
-
   async lock (message) {
     let channel, mem
 
@@ -468,11 +464,6 @@ class Commands {
     await this.client.policyEnforcer.unlockPracticeRoom(message.guild, channel)
     selfDestructMessage(() => message.reply(`unlocked channel <#${channel.id}>.`))
   }
-
-  async settings (message) {
-    requireRole(message.member)
-    throw new Error(`This command has been retired; use \`${settings.prefix}rooms [ add | del(ete) | rem(ove) ] <#CHANNEL_ID>\` to register and unregister practice channels.`)
-  }
 }
 
 function loadCommands (client) {
@@ -483,12 +474,10 @@ function loadCommands (client) {
   client.commands['bitrate'] = (message) => { return c.bitrate(message) }
   client.commands['deltime'] = (message) => { return c.deltime(message) }
   client.commands['help'] = (message) => { return c.help(message) }
-  client.commands['leaderboard'] = client.commands['lb'] = (message) => { return c.leaderboard(message) }
   client.commands['lock'] = (message) => { return c.lock(message) }
   client.commands['recital'] = client.commands['recitals'] = (message) => { return c.recital(message) }
   client.commands['restart'] = client.commands['reboot'] = (message) => { return c.restart(message) }
   client.commands['rooms'] = (message) => { return c.rooms(message) }
-  client.commands['settings'] = (message) => { return c.settings(message) }
   client.commands['stats'] = (message) => { return c.stats(message) }
   client.commands['unlock'] = (message) => { return c.unlock(message) }
 }
