@@ -404,8 +404,6 @@ class Commands {
       badges += ':notes: This user has played in three recitals\n'
     }
 
-    badges += ':question: Mystery badge [Reveal](http://euge.ca/pinano-mystery-badge)\n'
-
     if (settings.contributors.includes(mem.id)) {
       badges += ':robot: This user contributed code to Pinano Bot on [GitHub](https://github.com/pinano-discord/Pinano-Discord-Bot)\n'
     }
