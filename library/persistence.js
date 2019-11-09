@@ -22,10 +22,6 @@ class MongoManager {
     return new MongoUserRepository({ userCollection: this.db.collection('users') })
   }
 
-  newGuildRepository () {
-    return new MongoGuildRepository({ guildCollection: this.db.collection('guilds') })
-  }
-
   async shutdown () {
     await this.client.close()
   }
@@ -148,41 +144,4 @@ class MongoUserRepository {
   }
 }
 
-function makeGuild (guildId) {
-  return {
-    guild: guildId,
-    welcome_toggle: false,
-    leave_toggle: false,
-    dm_welcome_toggle: false,
-    welcome_channel: '',
-    leave_channel: '',
-    welcome_message: '',
-    dm_welcome_message: '',
-    leave_message: '',
-    permitted_channels: []
-  }
-}
-
-class MongoGuildRepository {
-  constructor ({ guildCollection }) {
-    this.collection = guildCollection
-  }
-
-  async load (groupId) {
-    return this.collection.findOne({ guild: groupId })
-  }
-
-  async addToField (guildId, field, value) {
-    return this.collection.updateOne({ guild: guildId }, { $addToSet: { [field]: value } })
-  }
-
-  async removeFromField (guildId, field, value) {
-    return this.collection.updateOne({ guild: guildId }, { $pull: { [field]: value } })
-  }
-
-  async save (group) {
-    return this.collection.updateOne({ guild: group.guild }, { $set: group }, { upsert: true })
-  }
-}
-
-module.exports = { connect, makeUser, makeGuild }
+module.exports = { connect, makeUser }

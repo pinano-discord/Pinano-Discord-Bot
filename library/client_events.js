@@ -24,17 +24,10 @@ module.exports = client => {
       new Leaderboard(client.userRepository, 'current_session_playtime', settings.leaderboard_size)
     client.overallLeaderboard =
       new Leaderboard(client.userRepository, 'overall_session_playtime', settings.leaderboard_size)
-    client.policyEnforcer = new PolicyEnforcer(client.guildRepository, client.log)
+    client.policyEnforcer = new PolicyEnforcer(client.log)
 
     await Promise.all(settings.pinano_guilds.map(async guildId => {
       let guild = client.guilds.get(guildId)
-      let guildInfo = await client.guildRepository.load(guildId)
-      guildInfo.permitted_channels
-        .map(id => guild.channels.get(id))
-        .filter(chan => chan != null)
-        .forEach(chan => {
-          chan.isPermittedChannel = true
-        })
 
       // begin any sessions that are already in progress
       client.resume(guild)

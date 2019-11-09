@@ -141,8 +141,6 @@ class Commands {
     }
 
     if (isBotManager) {
-      msg.addField(`\`${settings.prefix}rooms [ [ add | del(ete) | rem(ove) ] <#CHANNEL_ID> ]\``,
-        'Lists, registers or unregisters practice rooms')
       msg.addField(`\`${settings.prefix}addtime @user TIME_IN_SECONDS\``,
         'Adds practice time to a user\'s record')
       msg.addField(`\`${settings.prefix}deltime @user TIME_IN_SECONDS\``,
@@ -181,7 +179,7 @@ class Commands {
       mem = message.member
     }
 
-    if (channel == null || !channel.isPermittedChannel) {
+    if (channel == null || !this.client.policyEnforcer.isPracticeRoom(channel)) {
       throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
 
@@ -247,52 +245,7 @@ class Commands {
   }
 
   async rooms (message) {
-    requireRole(message.member)
-
-    let guildInfo = await this.client.guildRepository.load(message.guild.id)
-    if (guildInfo == null) {
-      throw new Error('No data for this guild.')
-    }
-
-    let args = message.content.split(' ').splice(1)
-    if (args.length === 0) {
-      throw new Error('Parameterless `p!rooms` arguments is deprecated; please use [#information](http://discordapp.com/channels/188345759408717825/629841121551581204) instead.')
-    }
-
-    let usageStr = `${settings.prefix}rooms [ [ add | del(ete) | rem(ove) ] <#CHANNEL_ID> ]`
-    requireParameterCount(args, 2, usageStr)
-    requireParameterFormat(args[1], arg => arg.startsWith('<#') && arg.endsWith('>'), usageStr)
-
-    let chanId = args[1].replace(/[<#>]/g, '')
-    switch (args[0]) {
-      case 'add':
-      {
-        if (guildInfo['permitted_channels'].includes(chanId)) {
-          throw new Error(`${args[1]} is already registered.`)
-        }
-
-        await this.client.guildRepository.addToField(message.guild.id, 'permitted_channels', chanId)
-        this.client.channels.get(chanId).isPermittedChannel = true
-        selfDestructMessage(() => message.reply(`added ${args[1]} to practice channels.`))
-        return
-      }
-      case 'del':
-      case 'delete':
-      case 'rem':
-      case 'remove':
-      {
-        if (!guildInfo['permitted_channels'].includes(chanId)) {
-          throw new Error(`${args[1]} is not currently registered.`)
-        }
-
-        await this.client.guildRepository.removeFromField(message.guild.id, 'permitted_channels', chanId)
-        this.client.channels.get(chanId).isPermittedChannel = false
-        selfDestructMessage(() => message.reply(`removed ${args[1]} from practice channels.`))
-        return
-      }
-      default:
-        throw new Error(`Usage: \`${usageStr}\``)
-    }
+    throw new Error('This command is deprecated; please use [#information](http://discordapp.com/channels/188345759408717825/629841121551581204) instead.')
   }
 
   /*
@@ -375,7 +328,7 @@ class Commands {
     userInfo.overallRank = await this.client.getOverallLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
 
     const mem = userInfo.mem
-    if (mem.voiceChannel != null && mem.voiceChannel.isPermittedChannel && !mem.mute && mem.s_time != null) {
+    if (mem.voiceChannel != null && this.client.policyEnforcer.isPracticeRoom(mem.voiceChannel) && !mem.mute && mem.s_time != null) {
       let activeTime = moment().unix() - mem.s_time
       userInfo.currentSession += activeTime
       userInfo.overallSession += activeTime
