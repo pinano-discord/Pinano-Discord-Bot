@@ -1,63 +1,7 @@
-const Discord = require('discord.js')
 const moment = require('moment')
 const Leaderboard = require('../library/leaderboard.js')
+const PolicyEnforcer = require('../library/policy_enforcer.js')
 const settings = require('../settings/settings.json')
-
-// auto-VC creation: create a room if all high-bitrate rooms are occupied. Muted or unmuted doesn't matter, because
-// in general we want to discourage people from using rooms that are occupied even if all the participants
-// are currently muted (one person could have been practicing there but just muted temporarily).
-function areAllPracticeRoomsFull (permittedChannels, guild) {
-  let isFull = true
-  permittedChannels.forEach(chanId => {
-    let chan = guild.channels.get(chanId)
-    // channel being null might happen if we have a stale channel in the db - just ignore if this happens.
-    if (chan != null && chan.bitrate !== 64 && !chan.members.some(m => !m.deleted)) {
-      isFull = false
-    }
-  })
-
-  return isFull
-}
-
-// remove an extra room if 1) there are at least two empty rooms and 2) one of those
-// rooms is a temp room. (We don't want to destroy the primary rooms.)
-async function findChannelToRemove (permittedChannels, guild) {
-  let emptyRooms = permittedChannels
-    .map(chanId => guild.channels.get(chanId))
-    .filter(chan => chan != null && !chan.members.some(m => !m.deleted))
-
-  let tempChannelToRemove = null
-  if (emptyRooms.length >= 2) {
-    // we can remove at least one temp room
-    tempChannelToRemove = emptyRooms.find(c => c.name === 'Extra Practice Room' || c.isTempRoom)
-  }
-
-  return tempChannelToRemove
-}
-
-function updatePracticeRoomChatPermissions (permittedChannels, newMember) {
-  // if in any practice channel, member has rights to speak in practice room chat (can be muted)
-  let prChan = newMember.guild.channels.find(chan => chan.name === 'practice-room-chat')
-  if (prChan == null) {
-    return
-  }
-
-  if (permittedChannels.includes(newMember.voiceChannelID) &&
-    !(newMember.mute && newMember.selfDeaf) &&
-    !newMember.roles.some(r => r.name === 'Temp Muted')) {
-    prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: true })
-  } else {
-    let existingOverride = prChan.permissionOverwrites.get(newMember.user.id)
-    // existingOverride shouldn't be null unless someone manually deletes the override, but if for some reason it's gone, no big deal, just move on.
-    if (existingOverride != null) {
-      if (existingOverride.allowed.bitfield === Discord.Permissions.FLAGS.SEND_MESSAGES && existingOverride.denied.bitfield === 0) { // the only permission was allow SEND_MESSAGES
-        existingOverride.delete()
-      } else {
-        prChan.overwritePermissions(newMember.user, { SEND_MESSAGES: null })
-      }
-    }
-  }
-}
 
 module.exports = client => {
   client.on('error', client.log)
@@ -80,16 +24,24 @@ module.exports = client => {
       new Leaderboard(client.userRepository, 'current_session_playtime', settings.leaderboard_size)
     client.overallLeaderboard =
       new Leaderboard(client.userRepository, 'overall_session_playtime', settings.leaderboard_size)
+    client.policyEnforcer = new PolicyEnforcer(client.guildRepository, client.log)
 
-    settings.pinano_guilds.forEach(guildId => {
+    await Promise.all(settings.pinano_guilds.map(async guildId => {
       let guild = client.guilds.get(guildId)
+      let guildInfo = await client.guildRepository.load(guildId)
+      guildInfo.permitted_channels
+        .map(id => guild.channels.get(id))
+        .filter(chan => chan != null)
+        .forEach(chan => {
+          chan.isPermittedChannel = true
+        })
 
       // begin any sessions that are already in progress
       client.resume(guild)
 
       // start the guild update thread
       client.updateInformation(guild)
-    })
+    }))
   })
 
   client.on('guildCreate', async guild => {
@@ -136,15 +88,7 @@ module.exports = client => {
   client.on('guildMemberUpdate', async (oldMember, newMember) => {
     // if user was assigned/unassigned the Temp Muted role this could have implications
     // for their ability to speak in #practice-room-chat, so recompute.
-    let guildInfo = await client.guildRepository.load(newMember.guild.id)
-    if (guildInfo == null) {
-      guildInfo = client.makeGuild(newMember.guild.id)
-      await client.guildRepository.save(guildInfo)
-      client.log('Created new guild.')
-      return
-    }
-
-    updatePracticeRoomChatPermissions(guildInfo.permitted_channels, newMember)
+    await client.policyEnforcer.applyPermissions(newMember.guild, newMember)
   })
 
   client.on('voiceStateUpdate', async (oldMember, newMember) => {
@@ -152,103 +96,12 @@ module.exports = client => {
       return
     }
 
-    let guildInfo = await client.guildRepository.load(newMember.guild.id)
-    if (guildInfo == null) {
-      guildInfo = client.makeGuild(newMember.guild.id)
-      await client.guildRepository.save(guildInfo)
-      client.log('Created new guild.')
-      return
-    }
-
-    if (newMember.serverMute &&
-      newMember.voiceChannel != null &&
-      newMember.voiceChannel.locked_by == null &&
-      !newMember.roles.some(r => r.name === 'Temp Muted') &&
-      guildInfo.permitted_channels.includes(newMember.voiceChannelID)) {
-      // they're server muted, but they're in an unlocked channel - means they probably left a locked room.
-      try {
-        newMember.setMute(false)
-      } catch (err) {
-        // did they leave already?
-        client.log(err)
-      }
-    }
-
-    // run auto-VC creation logic
-    let tempChannelToRemove = null
-    if (areAllPracticeRoomsFull(guildInfo.permitted_channels, newMember.guild)) {
-      let categoryChan = newMember.guild.channels.find(chan => chan.name === 'practice-room-chat').parent
-      let pinanoBot = newMember.guild.roles.find(r => r.name === 'Pinano Bot')
-      let tempMutedRole = newMember.guild.roles.find(r => r.name === 'Temp Muted')
-      let verificationRequiredRole = newMember.guild.roles.find(r => r.name === 'Verification Required')
-      let everyone = newMember.guild.roles.find(r => r.name === '@everyone')
-
-      let newChan = await newMember.guild.createChannel('Extra Practice Room', {
-        type: 'voice',
-        parent: categoryChan,
-        bitrate: settings.dev_mode ? 96000 : 384000,
-        position: categoryChan.children.size,
-        permissionOverwrites: [{
-          id: pinanoBot,
-          allow: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
-        }, {
-          id: tempMutedRole,
-          deny: ['SPEAK']
-        }, {
-          id: verificationRequiredRole,
-          deny: ['VIEW_CHANNEL']
-        }, {
-          id: everyone,
-          deny: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
-        }]
-      })
-
-      newChan.isTempRoom = true
-
-      // update the db
-      await client.guildRepository.addToField(guildInfo, 'permitted_channels', newChan.id)
-    } else {
-      tempChannelToRemove = await findChannelToRemove(guildInfo.permitted_channels, newMember.guild)
-      if (tempChannelToRemove != null) {
-        // before removing the channel from the guild, remove it in the db.
-        await client.guildRepository.removeFromField(guildInfo, 'permitted_channels', tempChannelToRemove.id)
-        tempChannelToRemove.delete()
-      }
-    }
-
-    if (oldMember.voiceChannel != null &&
-      oldMember.voiceChannel !== tempChannelToRemove &&
-      oldMember.voiceChannel.locked_by === oldMember.id &&
-      newMember.voiceChannelID !== oldMember.voiceChannelID) {
-      // user left a room they had locked; unlock it.
-      await client.unlockPracticeRoom(oldMember.guild, oldMember.voiceChannel)
-
-      // no need to suppress autolock if locking user left
-      oldMember.voiceChannel.suppressAutolock = false
-    }
-
-    // enforce autolock on unlocked channels only
-    guildInfo.permitted_channels
-      .map(chanId => newMember.guild.channels.get(chanId))
-      .filter(chan => chan != null && chan.locked_by == null)
-      .forEach(chan => client.enforceAutolock(chan))
-
-    // reset empty rooms to 384kbps
-    await Promise.all(guildInfo.permitted_channels
-      .map(chanId => newMember.guild.channels.get(chanId))
-      .filter(chan => chan != null && !chan.members.some(m => !m.deleted))
-      .map(async (chan) => {
-        if (chan.bitrate !== 384) {
-          return chan.setBitrate(384)
-        }
-      }))
-
-    updatePracticeRoomChatPermissions(guildInfo.permitted_channels, newMember)
+    await client.policyEnforcer.applyPolicy(newMember.guild, newMember, oldMember.voiceChannel, newMember.voiceChannel)
 
     // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
     // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
     // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
-    if (client.isLiveUser(newMember, guildInfo.permitted_channels) && oldMember.s_time == null) {
+    if (client.isLiveUser(newMember) && oldMember.s_time == null) {
       client.log(`Beginning session for user <@${newMember.user.id}> ${newMember.user.username}#${newMember.user.discriminator}`)
       newMember.s_time = moment().unix()
     } else if (oldMember.s_time != null) {
@@ -258,7 +111,7 @@ module.exports = client => {
       newMember.s_time = oldMember.s_time
     }
 
-    if (!client.isLiveUser(newMember, guildInfo.permitted_channels)) {
+    if (!client.isLiveUser(newMember)) {
       // if they aren't live, commit the session to the DB if they were live before.
       if (newMember.s_time == null) {
         return

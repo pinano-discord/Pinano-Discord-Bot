@@ -185,7 +185,7 @@ class Commands {
       mem = message.member
     }
 
-    if (channel == null) {
+    if (channel == null || !channel.isPermittedChannel) {
       throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
 
@@ -193,16 +193,11 @@ class Commands {
       throw new Error(`The user is not in the specified channel.`)
     }
 
-    let guildInfo = await this.client.guildRepository.load(message.guild.id)
-    if (!guildInfo.permitted_channels.includes(channel.id)) {
-      throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
-    }
-
     if (channel.locked_by != null) {
       throw new Error('This channel is already locked.')
     }
 
-    this.client.lockPracticeRoom(message.guild, channel, mem)
+    await this.client.policyEnforcer.lockPracticeRoom(message.guild, channel, mem)
     selfDestructMessage(() => message.reply(`locked channel <#${channel.id}>.`))
   }
 
@@ -280,7 +275,8 @@ class Commands {
           throw new Error(`${args[1]} is already registered.`)
         }
 
-        await this.client.guildRepository.addToField(guildInfo, 'permitted_channels', chanId)
+        await this.client.guildRepository.addToField(message.guild.id, 'permitted_channels', chanId)
+        this.client.channels.get(chanId).isPermittedChannel = true
         selfDestructMessage(() => message.reply(`added ${args[1]} to practice channels.`))
         return
       }
@@ -293,7 +289,8 @@ class Commands {
           throw new Error(`${args[1]} is not currently registered.`)
         }
 
-        await this.client.guildRepository.removeFromField(guildInfo, 'permitted_channels', chanId)
+        await this.client.guildRepository.removeFromField(message.guild.id, 'permitted_channels', chanId)
+        this.client.channels.get(chanId).isPermittedChannel = false
         selfDestructMessage(() => message.reply(`removed ${args[1]} from practice channels.`))
         return
       }
@@ -381,9 +378,8 @@ class Commands {
     userInfo.rank = await this.client.getWeeklyLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
     userInfo.overallRank = await this.client.getOverallLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
 
-    const guild = await this.client.guildRepository.load(message.guild.id)
     const mem = userInfo.mem
-    if (guild.permitted_channels.includes(mem.voiceChannelID) && !mem.mute && mem.s_time != null) {
+    if (mem.voiceChannel != null && mem.voiceChannel.isPermittedChannel && !mem.mute && mem.s_time != null) {
       let activeTime = moment().unix() - mem.s_time
       userInfo.currentSession += activeTime
       userInfo.overallSession += activeTime
@@ -469,7 +465,7 @@ class Commands {
       throw new Error('You do not have this channel locked.')
     }
 
-    await this.client.unlockPracticeRoom(message.guild, channel)
+    await this.client.policyEnforcer.unlockPracticeRoom(message.guild, channel)
     selfDestructMessage(() => message.reply(`unlocked channel <#${channel.id}>.`))
   }
 
