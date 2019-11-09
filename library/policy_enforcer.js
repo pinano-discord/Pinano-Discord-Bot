@@ -1,5 +1,6 @@
 // TODO: decouple settings from policy enforcer
 const settings = require('../settings/settings.json')
+const Discord = require('discord.js')
 
 function findChannel (guild, name) {
   return guild.channels.find(c => c.name === name)
@@ -165,23 +166,27 @@ class PolicyEnforcer {
   }
 
   // members in any practice channel who are not deaf-muted may speak in #practice-room-chat.
-  async applyPermissions (guild, member) {
+  async applyPermissions (guild, member, channel) {
     let prChat = findChannel(guild, 'practice-room-chat')
     if (prChat == null) {
       return
     }
 
-    if (member.voiceChannel != null &&
-      member.voiceChannel.isPermittedChannel &&
+    if (channel != null &&
+      channel.isPermittedChannel &&
       !(member.mute && member.selfDeaf) &&
       !isTempMuted(member)) {
       await prChat.overwritePermissions(member.id, { SEND_MESSAGES: true })
     } else {
-      prChat = await prChat.overwritePermissions(member.id, { SEND_MESSAGES: null })
-      let override = prChat.permissionOverwrites.get(member.id)
-      if (override.allowed.bitfield === 0 && override.denied.bitfield === 0) {
-        // there were no other permissions in this override. Delete it.
-        await override.delete()
+      // if removing the SEND_MESSAGES permission would result in no permissions allowed or denied,
+      // just delete the permissions overwrite completely.
+      let overwrite = prChat.permissionOverwrites.get(member.id)
+      if (overwrite != null) {
+        if (overwrite.allow === Discord.Permissions.FLAGS.SEND_MESSAGES && overwrite.deny === 0) {
+          await overwrite.delete()
+        } else {
+          await prChat.overwritePermissions(member.id, { SEND_MESSAGES: null })
+        }
       }
     }
   }
