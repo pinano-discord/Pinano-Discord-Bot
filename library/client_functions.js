@@ -63,8 +63,7 @@ module.exports = client => {
 
   client.saveAllUsersTime = async (guild) => {
     await Promise.all(
-      guild.channels
-        .filter(chan => chan.isPermittedChannel)
+      client.policyEnforcer.getPracticeRooms(guild)
         .map(chan =>
           Promise.all(chan.members
             .filter(member => !member.mute && member.s_time != null && !member.deleted)
@@ -78,11 +77,9 @@ module.exports = client => {
     message = edited // for some reason the linter thinks message isn't being used if we assign it directly?
     await client.saveAllUsersTime(guild)
 
-    // unlock extra rooms so that we can identify them as temp rooms when we come back up
-    message = await message.edit(`${message.content} saved.\nUnlocking extra rooms...`)
+    message = await message.edit(`${message.content} saved.\nUnlocking rooms...`)
     await Promise.all(
-      guild.channels
-        .filter(chan => chan.isTempRoom)
+      client.policyEnforcer.getPracticeRooms(guild)
         .map(chan => client.policyEnforcer.unlockPracticeRoom(guild, chan)))
 
     message = await message.edit(`${message.content} unlocked.\nRestarting Pinano Bot...`)
@@ -98,7 +95,7 @@ module.exports = client => {
     return !member.user.bot &&
       !member.mute &&
       member.voiceChannel != null &&
-      member.voiceChannel.isPermittedChannel &&
+      client.policyEnforcer.isPracticeRoom(member.voiceChannel) &&
       (member.voiceChannel.locked_by == null || member.voiceChannel.locked_by === member.id)
   }
 
@@ -110,37 +107,16 @@ module.exports = client => {
       message = await message.edit(`${message.content} ready.\nDetecting room status...`)
     }
 
-    let everyone = guild.roles.find(r => r.name === '@everyone')
-    let permittedChannels = guild.channels.filter(chan => chan.isPermittedChannel)
-    await Promise.all(permittedChannels.map(chan => {
-      if (chan.name === 'Practice Room') {
-        chan.isTempRoom = true
-
-        // assume that if there's only one person playing in a temp room, it should be locked to them.
-        let unmuted = chan.members.filter(m => !m.deleted && !m.mute)
-        if (unmuted.size === 1) {
-          return client.policyEnforcer.lockPracticeRoom(guild, chan, unmuted.first())
-        }
+    let practiceRooms = client.policyEnforcer.getPracticeRooms(guild)
+    await Promise.all(practiceRooms.map(async chan => {
+      // assume that if there's only one person playing in a room, it should be locked to them.
+      let unmuted = chan.members.filter(m => !m.deleted && !m.mute)
+      if (unmuted.size === 1) {
+        return client.policyEnforcer.lockPracticeRoom(guild, chan, unmuted.first())
       } else {
-        let shouldUnlock = true
-
-        // a room should be considered locked if there is an individual override granting SPEAK
-        // and the everyone role is denied SPEAK, and that individual is in the channel.
-        if (chan.permissionOverwrites.get(everyone.id).denied.has(Discord.Permissions.FLAGS.SPEAK)) {
-          let overwrite = chan.permissionOverwrites.find(o => o.type === 'member')
-          if (overwrite != null) {
-            let member = guild.members.get(overwrite.id)
-            if (member != null && member.voiceChannelID === chan.id) {
-              shouldUnlock = false
-              chan.locked_by = member.id
-            }
-          }
-        }
-
-        if (shouldUnlock) {
-          // reset the permissions just in case they're borked
-          return client.policyEnforcer.unlockPracticeRoom(guild, chan)
-        }
+        // keep the room unlocked; reset the permissions just in case they're borked
+        await client.policyEnforcer.unlockPracticeRoom(guild, chan)
+        chan.suppressAutolock = false
       }
     }))
 
@@ -148,9 +124,9 @@ module.exports = client => {
       message = await message.edit(`${message.content} marked locked rooms.\nResuming active sessions...`)
     }
 
-    permittedChannels.forEach(chan => {
+    practiceRooms.forEach(chan => {
       chan.members.forEach(m => {
-        if (client.isLiveUser(m)) {
+        if (client.isLiveUser(m) && m.s_time == null) {
           client.log(`Beginning session for user <@${m.user.id}> ${m.user.username}#${m.user.discriminator}`)
           m.s_time = moment().unix()
         }
@@ -165,7 +141,7 @@ module.exports = client => {
 
   client.refreshRoomInfo = async (guild) => {
     const reducer = (rooms, chan) => {
-      let displayName = (chan.locked_by != null && chan.isTempRoom) ? chan.unlocked_name : chan.name
+      let displayName = (chan.locked_by != null) ? chan.unlocked_name : chan.name
       rooms += `\n\n${displayName}`
       if (chan.bitrate !== 384) {
         rooms += ` | ${chan.bitrate}kbps`
@@ -190,8 +166,8 @@ module.exports = client => {
     }
 
     client.roomInfo =
-      guild.channels
-        .filter(chan => chan.isPermittedChannel && chan.members.some(m => !m.deleted))
+      client.policyEnforcer.getPracticeRooms(guild)
+        .filter(chan => chan.members.some(m => !m.deleted))
         .sort((x, y) => x.position > y.position)
         .reduce(reducer, '')
   }
@@ -279,8 +255,7 @@ Use \`p!bitrate [ BITRATE_IN_KBPS ]\` to adjust a channel's bitrate\n\u200B`)
     // find out what users are currently in permitted voice channels, then add their times as if current.
     let currentPrackers = new Map()
 
-    guild.channels
-      .filter(chan => chan.isPermittedChannel)
+    client.policyEnforcer.getPracticeRooms(guild)
       .forEach(chan => {
         chan.members
           .filter(member => !member.mute && member.s_time != null && !member.deleted)

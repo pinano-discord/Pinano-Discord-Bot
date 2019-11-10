@@ -1,7 +1,7 @@
 const Discord = require('discord.js')
 const cron = require('node-cron')
 const settings = require('./settings/settings.json')
-const { connect, makeUser, makeGuild } = require('./library/persistence')
+const { connect, makeUser } = require('./library/persistence')
 
 let client = new Discord.Client({ fetchAllMembers: true })
 
@@ -28,9 +28,7 @@ connect('mongodb://localhost:27017/', 'pinano').then(mongoManager => {
   client.log('Connected to database')
 
   client.userRepository = mongoManager.newUserRepository()
-  client.guildRepository = mongoManager.newGuildRepository()
   client.makeUser = makeUser
-  client.makeGuild = makeGuild
   client.login(settings.token)
     .catch((error) => {
       client.log(error)

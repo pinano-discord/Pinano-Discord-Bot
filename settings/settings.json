@@ -15,5 +15,6 @@
 
     "leaderboard_size" : 10,
     "res_destruct_time" : 30,
-    "req_destruct_time" : 3
+    "req_destruct_time" : 3,
+    "minimum_rooms" : 4
 }

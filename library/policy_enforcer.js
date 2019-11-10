@@ -15,17 +15,25 @@ function isTempMuted (member) {
 }
 
 class PolicyEnforcer {
-  constructor (guildRepository, logFn) {
-    this.guildRepository_ = guildRepository
+  constructor (logFn) {
     this.logFn_ = logFn
+  }
+
+  // TODO: is this the best place to put this?
+  isPracticeRoom (channel) {
+    const categoryChan = findChannel(channel.guild, 'practice-room-chat').parent
+    return channel.parent === categoryChan && channel.type === 'voice'
+  }
+
+  getPracticeRooms (guild) {
+    const categoryChan = findChannel(guild, 'practice-room-chat').parent
+    return categoryChan.children.filter(chan => chan.type === 'voice')
   }
 
   async lockPracticeRoom (guild, channel, member) {
     channel.locked_by = member.id
-    if (channel.isTempRoom) {
-      channel.unlocked_name = channel.name
-      await channel.setName(`${member.user.username}'s room`)
-    }
+    channel.unlocked_name = channel.name
+    await channel.setName(`${member.user.username}'s room`)
 
     await channel.overwritePermissions(member.id, { SPEAK: true })
     let everyone = findRole(guild, '@everyone')
@@ -95,12 +103,12 @@ class PolicyEnforcer {
     await this.resetBitrateIfEmpty(oldChannel)
   }
 
-  // if the member is in an unlocked channel that we track, but is server muted, they probably came
-  // in from a locked room. Unmute the user, unless someone muted them for a reason.
+  // if the member is in an unlocked practice room, but is server muted, they probably came in from
+  // a locked room. Unmute the user, unless someone muted them for a reason.
   async maybeLiftServerMute (member, channel) {
     if (member.serverMute &&
       channel != null &&
-      channel.isPermittedChannel &&
+      this.isPracticeRoom(channel) &&
       channel.locked_by == null &&
       !isTempMuted(member)) {
       try {
@@ -116,8 +124,9 @@ class PolicyEnforcer {
   // because in general we want to discourage people from using rooms that are occupied even if all
   // the participants are currently muted. Remove a temp room if there are at least two empty ones.
   async createRemoveRooms (guild) {
-    let emptyRooms =
-      guild.channels.filter(chan => chan.isPermittedChannel && !chan.members.some(m => !m.deleted))
+    let rooms = this.getPracticeRooms(guild).sort((a, b) => a.position - b.position)
+    let basePosition = rooms.first().position
+    let emptyRooms = rooms.filter(chan => !chan.members.some(m => !m.deleted))
 
     if (emptyRooms.size === 0) {
       // no empty rooms; create a new channel
@@ -126,12 +135,33 @@ class PolicyEnforcer {
       const tempMuted = findRole(guild, 'Temp Muted')
       const verifRequired = findRole(guild, 'Verification Required')
       const everyone = findRole(guild, '@everyone')
+      const identifiers = [
+        '☀️',
+        '🌙',
+        '️🐢',
+        '🐌',
+        '🌎',
+        '🌍',
+        '🌏',
+        '🔥',
+        '💧',
+        '🍃',
+        '🗿',
+        '👻',
+        '🐉',
+        '👁️',
+        '👊',
+        '🐦',
+        '🐛',
+        '❄️'
+      ]
 
-      let newChan = await guild.createChannel('Practice Room', {
+      let identifier = identifiers[Math.floor(Math.random() * identifiers.length)]
+      await guild.createChannel(`Practice Room ${identifier}`, {
         type: 'voice',
         parent: categoryChan,
         bitrate: settings.dev_mode ? 96000 : 384000,
-        position: categoryChan.children.size,
+        position: basePosition + rooms.size + 1,
         permissionOverwrites: [{
           id: pinanoBot,
           allow: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
@@ -146,21 +176,12 @@ class PolicyEnforcer {
           deny: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
         }]
       })
-
-      newChan.isPermittedChannel = true
-      newChan.isTempRoom = true
-
-      // update the db
-      await this.guildRepository_.addToField(guild.id, 'permitted_channels', newChan.id)
     } else if (emptyRooms.size >= 2) {
       // remove an extra room if 1) there are at least two empty rooms and 2) one of those rooms is
       // a temp room. (We don't want to destroy the primary rooms.)
-      let emptyRoom = emptyRooms.find(c => c.name === 'Practice Room' || c.isTempRoom)
+      let emptyRoom = emptyRooms.find(c => c.position >= basePosition + settings.minimum_rooms)
       if (emptyRoom != null) {
-        // before removing the channel from the guild, remove it in the db.
-        await this.guildRepository_.removeFromField(guild.id, 'permitted_channels', emptyRoom.id)
-        await emptyRoom.delete()
-        return emptyRoom
+        return emptyRoom.delete()
       }
     }
   }
@@ -173,7 +194,7 @@ class PolicyEnforcer {
     }
 
     if (channel != null &&
-      channel.isPermittedChannel &&
+      this.isPracticeRoom(channel) &&
       !(member.mute && member.selfDeaf) &&
       !isTempMuted(member)) {
       await prChat.overwritePermissions(member.id, { SEND_MESSAGES: true })
@@ -212,8 +233,8 @@ class PolicyEnforcer {
   // there is a sole occupant again. Any time there is more than one unmuted user, or the unmuted
   // user is not the occupant, or there are no unmuted users, the timer resets.
   enforceAutolock (guild) {
-    guild.channels
-      .filter(chan => chan.isPermittedChannel && chan.locked_by == null)
+    this.getPracticeRooms(guild)
+      .filter(chan => chan.locked_by == null)
       .forEach(chan => {
         let members = chan.members.filter(m => !m.deleted)
         if (members.get(chan.occupant) == null) {

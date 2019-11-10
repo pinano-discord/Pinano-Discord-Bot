@@ -2,12 +2,10 @@ const { connect, makeUser } = require('../library/persistence')
 
 let mongoManager
 let userRepository
-let guildRepository
 
 beforeAll(async () => {
   mongoManager = await connect('mongodb://localhost:27017', 'test_db', { socketTimeoutMS: 500 })
   userRepository = mongoManager.newUserRepository()
-  guildRepository = mongoManager.newGuildRepository()
 })
 beforeEach(async () => {
   await mongoManager.dropDatabase()
@@ -18,7 +16,6 @@ afterAll(async () => {
 
 test('connects to mongo', async () => {
   expect(userRepository).not.toBeNull()
-  expect(guildRepository).not.toBeNull()
 })
 
 test('can store user', async () => {
