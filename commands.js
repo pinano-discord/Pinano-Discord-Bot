@@ -352,7 +352,7 @@ class Commands {
       badges += ':hand_splayed: This user has revealed their hand on [#hand-reveals](https://discordapp.com/channels/188345759408717825/440705391454584834)\n'
     }
 
-    if (user.recitals != null && user.recitals.length >= 3) {
+    if (user != null && user.recitals != null && user.recitals.length >= 3) {
       // one for each note in the emoji
       badges += ':notes: This user has played in three recitals\n'
     }
