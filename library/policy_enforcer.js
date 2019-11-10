@@ -135,7 +135,26 @@ class PolicyEnforcer {
       const tempMuted = findRole(guild, 'Temp Muted')
       const verifRequired = findRole(guild, 'Verification Required')
       const everyone = findRole(guild, '@everyone')
-      const identifiers = ['☀️', '🌙', '️🐢', '🐌', '🌎', '🌍', '🌏', '🔥', '💧', '🍃', '🗿', '👻', '🐉', '👁️', '👊', '🐦', '🐛', '❄️']
+      const identifiers = [
+        '☀️',
+        '🌙',
+        '️🐢',
+        '🐌',
+        '🌎',
+        '🌍',
+        '🌏',
+        '🔥',
+        '💧',
+        '🍃',
+        '🗿',
+        '👻',
+        '🐉',
+        '👁️',
+        '👊',
+        '🐦',
+        '🐛',
+        '❄️'
+      ]
 
       let identifier = identifiers[Math.floor(Math.random() * identifiers.length)]
       await guild.createChannel(`Practice Room ${identifier}`, {
