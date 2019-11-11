@@ -81,7 +81,7 @@ module.exports = client => {
   client.on('guildMemberUpdate', async (oldMember, newMember) => {
     // if user was assigned/unassigned the Temp Muted role this could have implications
     // for their ability to speak in #practice-room-chat, so recompute.
-    await client.policyEnforcer.applyPermissions(newMember.guild, newMember)
+    await client.policyEnforcer.applyPermissions(newMember.guild, newMember, newMember.voiceChannel)
   })
 
   client.on('voiceStateUpdate', async (oldMember, newMember) => {
