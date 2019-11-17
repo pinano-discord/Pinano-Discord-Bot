@@ -9,9 +9,9 @@ class Leaderboard {
 
   // refresh the cache based on a pull from repository + provided liveness data
   async refresh (liveData) {
-    this.cache_ = []
     let storedData = await this.repository_.loadRowsWithNonZeroKeyValue(this.key_)
     let pushed = new Set()
+    this.cache_ = []
     storedData.forEach(row => {
       let totalTime = row[this.key_]
       let liveTime = liveData.get(row.id)

@@ -93,7 +93,6 @@ class PolicyEnforcer {
   }
 
   async applyPolicy (guild, member, oldChannel, newChannel) {
-    await this.maybeLiftServerMute(member, newChannel)
     let deletedRoom = await this.createRemoveRooms(guild)
     await this.applyPermissions(guild, member, newChannel)
     if (deletedRoom !== oldChannel) {
@@ -101,6 +100,7 @@ class PolicyEnforcer {
     }
     this.enforceAutolock(guild)
     await this.resetBitrateIfEmpty(oldChannel)
+    await this.maybeLiftServerMute(member, newChannel)
   }
 
   // if the member is in an unlocked practice room, but is server muted, they probably came in from
