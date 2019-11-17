@@ -74,6 +74,10 @@ class MongoUserRepository {
     return this.collection.updateOne({ id: user.id }, { $pull: { [field]: value } })
   }
 
+  async incrementField (userId, field, value = 1) {
+    return this.collection.updateOne({ id: userId }, { $inc: { [field]: value } })
+  }
+
   async save (user) {
     return this.collection.updateOne({ id: user.id }, { $set: user }, { upsert: true })
   }

@@ -1,6 +1,7 @@
 const moment = require('moment')
 const Leaderboard = require('../library/leaderboard.js')
 const PolicyEnforcer = require('../library/policy_enforcer.js')
+const QuizMaster = require('../library/quiz_master.js')
 const settings = require('../settings/settings.json')
 
 module.exports = client => {
@@ -25,6 +26,7 @@ module.exports = client => {
     client.overallLeaderboard =
       new Leaderboard(client.userRepository, 'overall_session_playtime', settings.leaderboard_size)
     client.policyEnforcer = new PolicyEnforcer(client.log)
+    client.quizMaster = new QuizMaster(client.userRepository)
 
     await Promise.all(settings.pinano_guilds.map(async guildId => {
       let guild = client.guilds.get(guildId)
@@ -49,6 +51,10 @@ module.exports = client => {
     if (message.content.startsWith(`<@${client.user.id}> `)) {
       // convert "@Pinano Bot help" syntax to p!help syntax
       message.content = `${settings.prefix}${message.content.replace(`<@${client.user.id}> `, '').trim()}`
+    }
+
+    if (message.channel.name === '🎶literature-quiz') {
+      client.quizMaster.handleIncomingMessage(message)
     }
 
     if (!message.content.startsWith(settings.prefix)) {
