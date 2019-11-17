@@ -67,12 +67,17 @@ class QuizMaster {
 
   async endRiddle () {
     this.activePost.reactionCollector.stop()
-    await this.activePost.clearReactions()
+    // the active post shouldn't ever be deleted, but just in case...
+    if (!this.activePost.deleted) {
+      await this.activePost.clearReactions()
+    }
     await this.activePost.unpin()
 
     await Promise.all(this.activeCollectors_.map(async collector => {
-      await collector.message.clearReactions()
       collector.stop()
+      if (collector.message != null && !collector.message.deleted) {
+        return collector.message.clearReactions()
+      }
     }))
     this.activeCollectors_ = []
 
