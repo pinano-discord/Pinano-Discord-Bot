@@ -334,13 +334,13 @@ class Commands {
       userInfo.overallSession += activeTime
     }
 
+    let quizScore = user.quiz_score || 0
     let embed = new Discord.RichEmbed()
       .setTitle(`${userInfo.username}#${userInfo.discriminator}`)
       .setColor(settings.embed_color)
       .addField('Weekly Time', `\`${abbreviateTime(userInfo.currentSession)}\``, true)
-      .addField('Rank', `${userInfo.rank}`, true)
       .addField('Overall Time', `\`${abbreviateTime(userInfo.overallSession)}\``, true)
-      .addField('Rank', `${userInfo.overallRank}`, true)
+      .addField('Correct Quiz Answers', `\`${quizScore}\``)
 
     let badges = ''
     if (moment().unix() * 1000 - mem.joinedTimestamp >= 88 * 86400 * 1000) {
