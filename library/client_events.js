@@ -1,6 +1,6 @@
-const moment = require('moment')
 const Leaderboard = require('../library/leaderboard.js')
 const PolicyEnforcer = require('../library/policy_enforcer.js')
+const SessionManager = require('../library/session_manager.js')
 const settings = require('../settings/settings.json')
 
 module.exports = client => {
@@ -24,6 +24,10 @@ module.exports = client => {
       new Leaderboard(client.userRepository, 'current_session_playtime', settings.leaderboard_size)
     client.overallLeaderboard =
       new Leaderboard(client.userRepository, 'overall_session_playtime', settings.leaderboard_size)
+    client.teamLeaderboard =
+      new Leaderboard(client.userRepository, 'team_playtime', settings.leaderboard_size)
+    client.sessionManager =
+      new SessionManager(client.userRepository, client.log)
     client.policyEnforcer = new PolicyEnforcer(client.log)
 
     await Promise.all(settings.pinano_guilds.map(async guildId => {
@@ -82,6 +86,13 @@ module.exports = client => {
     // if user was assigned/unassigned the Temp Muted role this could have implications
     // for their ability to speak in #practice-room-chat, so recompute.
     await client.policyEnforcer.applyPermissions(newMember.guild, newMember, newMember.voiceChannel)
+
+    let oldTeam = client.getTeamForUser(oldMember)
+    let newTeam = client.getTeamForUser(newMember)
+    if (oldTeam !== newTeam) {
+      // user changed roles; commit the old time (to the old team) and continue
+      await client.sessionManager.saveSession(newMember, oldTeam)
+    }
   })
 
   client.on('voiceStateUpdate', async (oldMember, newMember) => {
@@ -91,31 +102,11 @@ module.exports = client => {
 
     await client.policyEnforcer.applyPolicy(newMember.guild, newMember, oldMember.voiceChannel, newMember.voiceChannel)
 
-    // n.b. if this is the first time the bot sees a user, s_time may be undefined but *not* null. Therefore, == (and not ===)
-    // comparison is critical here. Otherwise, when they finished practicing, we'll try to subtract an undefined value, and we'll
-    // record that they practiced for NaN seconds. This is really bad because adding NaN to their existing time produces more NaNs.
-    if (client.isLiveUser(newMember) && oldMember.s_time == null) {
-      client.log(`Beginning session for user <@${newMember.user.id}> ${newMember.user.username}#${newMember.user.discriminator}`)
-      newMember.s_time = moment().unix()
-    } else if (oldMember.s_time != null) {
-      // this might happen if a live session jumps across channels, or if a live session is ending.
-      // in either case we want newMember.s_time to be populated with the old one (either we need it
-      // for the time calculation before commit, or we transfer the start time to the new session).
-      newMember.s_time = oldMember.s_time
-    }
-
-    if (!client.isLiveUser(newMember)) {
-      // if they aren't live, commit the session to the DB if they were live before.
-      if (newMember.s_time == null) {
-        return
-      }
-
-      await client.saveUserTime(newMember)
-
-      // client.saveUserTime() commits the time to the DB and sets s_time to current time.
-      // Our user has actually stopped practicing, so set s_time to be null instead.
-      newMember.s_time = null
-      oldMember.s_time = null
+    if (client.isLiveUser(newMember)) {
+      client.sessionManager.startSession(newMember)
+    } else {
+      let team = client.getTeamForUser(newMember)
+      await client.sessionManager.endSession(newMember, team)
     }
   })
 }

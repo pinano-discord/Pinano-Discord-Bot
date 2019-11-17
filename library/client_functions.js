@@ -3,10 +3,19 @@ const hd = require('humanize-duration')
 const moment = require('moment')
 const settings = require('../settings/settings.json')
 
-function translateLeaderboard (page) {
+function translateLeaderboard (page, tagSyntax = '@') {
+  // TODO: find a library or something
   const reducer = (msgStr, row, index) => {
-    let timeStr = hd(row.time * 1000, { units: ['h', 'm', 's'] })
-    return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\n \`${timeStr}\`\n`
+    let seconds = row.time
+    let minutes = Math.floor(seconds / 60)
+    let hours = Math.floor(minutes / 60)
+    seconds %= 60
+    minutes %= 60
+    seconds = ('00' + seconds).slice(-2)
+    minutes = ('00' + minutes).slice(-2)
+
+    let timeStr = `${hours}:${minutes}:${seconds}`
+    return msgStr + `**${page.startRank + index}. <${tagSyntax}${page.data[index].id}>**\n \`${timeStr}\`\n`
   }
 
   let data = page.data.reduce(reducer, '')
@@ -38,27 +47,20 @@ module.exports = client => {
     setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
   }
 
-  client.saveUserTime = async (member) => {
-    // if the user doesn't exist then create a user for the person
-    let userInfo = await client.userRepository.load(member.user.id)
-    if (userInfo == null) {
-      userInfo = {
-        'id': member.user.id,
-        'current_session_playtime': 0,
-        'overall_session_playtime': 0
-      }
-      await client.userRepository.save(userInfo)
-      client.log(`User created for ${member.user.username}#${member.user.discriminator}`)
-    }
+  client.getTeamForUser = (member) => {
+    const teams = [
+      'J.S. Bach Blue',
+      'Beethoven Maroon',
+      'Brahms Green',
+      'Chopin Pink',
+      'Fauré Purple',
+      'Mendelssohn Teal',
+      'Mozart Red',
+      'Rachmaninoff Green',
+      'Schubert Orange'
+    ]
 
-    const now = moment().unix()
-    const playtime = now - member.s_time
-    userInfo.current_session_playtime += playtime
-    userInfo.overall_session_playtime += playtime
-    await client.userRepository.save(userInfo)
-    client.log(`User <@${member.user.id}> ${member.user.username}#${member.user.discriminator} practiced for ${playtime} seconds`)
-
-    member.s_time = now
+    return member.roles.filter(role => teams.includes(role.name)).first()
   }
 
   client.saveAllUsersTime = async (guild) => {
@@ -67,7 +69,10 @@ module.exports = client => {
         .map(chan =>
           Promise.all(chan.members
             .filter(member => !member.mute && member.s_time != null && !member.deleted)
-            .map(member => client.saveUserTime(member)))))
+            .map(member => {
+              let team = client.getTeamForUser(member)
+              return client.sessionManager.saveSession(member, team)
+            }))))
   }
 
   client.restart = async (guild) => {
@@ -125,12 +130,9 @@ module.exports = client => {
     }
 
     practiceRooms.forEach(chan => {
-      chan.members.forEach(m => {
-        if (client.isLiveUser(m) && m.s_time == null) {
-          client.log(`Beginning session for user <@${m.user.id}> ${m.user.username}#${m.user.discriminator}`)
-          m.s_time = moment().unix()
-        }
-      })
+      chan.members
+        .filter(member => client.isLiveUser(member))
+        .forEach(member => client.sessionManager.startSession(member))
     })
 
     if (message != null) {
@@ -173,10 +175,12 @@ module.exports = client => {
   }
 
   client.updateInformation = async (guild) => {
-    let liveData = await client.findCurrentPrackers(guild)
+    let liveData = client.findCurrentPrackers(guild)
+    let teamLiveData = client.findCurrentTeams(guild)
     await client.refreshRoomInfo(guild)
     await client.weeklyLeaderboard.refresh(liveData)
     await client.overallLeaderboard.refresh(liveData)
+    await client.teamLeaderboard.refresh(teamLiveData)
 
     await client.redrawInformation(guild)
 
@@ -185,6 +189,7 @@ module.exports = client => {
 
   client.redrawInformation = async (guild) => {
     let weeklyData = client.weeklyLeaderboard.getPageData()
+    let teamData = client.teamLeaderboard.getPageData()
     let overallData = client.overallLeaderboard.getPageData()
     let currentTime = moment().unix()
     let endOfWeek = moment().endOf('isoWeek').unix()
@@ -196,6 +201,7 @@ module.exports = client => {
       .setColor(settings.embed_color)
       .setDescription(`${client.roomInfo}\n\u200B`) // stupid formatting hack
       .addField('Weekly Leaderboard', translateLeaderboard(weeklyData), true)
+      .addField('Team Standings', translateLeaderboard(teamData, '@&'), true)
       .addField('Overall Leaderboard', translateLeaderboard(overallData), true)
       .addField(`Weekly leaderboard resets in ${timeUntilReset}`,
         `\u200B\nClick [here](${pinnedPostUrl}) for optimal Discord voice settings\n\
@@ -250,20 +256,40 @@ Use \`p!bitrate [ BITRATE_IN_KBPS ]\` to adjust a channel's bitrate\n\u200B`)
     }
   }
 
-  client.findCurrentPrackers = async (guild) => {
-    // playtimes only get updated when a user leaves/mutes a channel. Therefore, in order to keep up-to-date statistics,
-    // find out what users are currently in permitted voice channels, then add their times as if current.
+  client.findCurrentPrackers = (guild) => {
+    // finds users with currently active session for liveness tracking
     let currentPrackers = new Map()
 
-    client.policyEnforcer.getPracticeRooms(guild)
-      .forEach(chan => {
-        chan.members
-          .filter(member => !member.mute && member.s_time != null && !member.deleted)
-          .forEach(member => currentPrackers.set(member.user.id, moment().unix() - member.s_time))
+    client.policyEnforcer.getPracticeRooms(guild).forEach(chan => {
+      chan.members.forEach(member => {
+        let liveTime = client.sessionManager.getLiveSessionTime(member)
+        if (!member.deleted && liveTime != null) {
+          currentPrackers.set(member.id, liveTime)
+        }
       })
+    })
 
     return currentPrackers
   }
+
+  client.findCurrentTeams = (guild) => {
+    let currentTeams = new Map()
+
+    client.policyEnforcer.getPracticeRooms(guild).forEach(chan => {
+      chan.members.forEach(member => {
+        let team = client.getTeamForUser(member)
+        let liveTime = client.sessionManager.getLiveSessionTime(member)
+        if (!member.deleted && liveTime != null && team != null) {
+          let time = currentTeams.get(team.id) || 0
+          time += liveTime
+          currentTeams.set(team.id, time)
+        }
+      })
+    })
+
+    return currentTeams
+  }
+
   client.getOverallLeaderboardPos = async (guild, userId) => {
     return client.getLeaderboardPos(guild, userId,
       p => p.overall_session_playtime,
@@ -281,7 +307,7 @@ Use \`p!bitrate [ BITRATE_IN_KBPS ]\` to adjust a channel's bitrate\n\u200B`)
   }
 
   client.getLeaderboardPos = async (guild, userId, playtimeFn, userCountFn, getRankFn, getRankByTimeFn) => {
-    let currentPrackers = await client.findCurrentPrackers(guild)
+    let currentPrackers = client.findCurrentPrackers(guild)
 
     let tentativeRank, totalTime
     let totalCount = await userCountFn()
@@ -334,7 +360,7 @@ Use \`p!bitrate [ BITRATE_IN_KBPS ]\` to adjust a channel's bitrate\n\u200B`)
 
   client.submitWeek = async () => {
     let pinano = client.guilds.get('188345759408717825')
-    let liveData = await client.findCurrentPrackers(pinano)
+    let liveData = client.findCurrentPrackers(pinano)
     await client.weeklyLeaderboard.refresh(liveData)
 
     client.weeklyLeaderboard.resetPage()
