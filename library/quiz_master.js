@@ -23,7 +23,7 @@ class QuizMaster {
       }
 
       let extension = url.slice(url.lastIndexOf('.'))
-      let filename = `../quiz_queue/${message.id}${extension}`
+      let filename = `../quiz_queue/${message.id}_${author.id}${extension}`
       let file = File.createWriteStream(filename)
       HTTPS.get(url, response => {
         response.pipe(file)
@@ -99,12 +99,16 @@ class QuizMaster {
     if (message.attachments.size !== 0) {
       let url = message.attachments.first().url
       await this.enqueueRiddle(message, url, message.author)
-    } else if (this.activePost != null && message.author !== this.activePost.quizzer) {
+    } else if (this.activePost != null && message.author !== this.activePost.quizzer &&
+      message.content.startsWith('||') && message.content.endsWith('||')) {
       let reactionCollector = message.createReactionCollector((r, u) => u !== clientUser)
       reactionCollector.on('collect', async reaction => {
         let reactor = reaction.users.filter(user => user !== clientUser).first()
         if (isQuizMaster(message.guild, reactor) || reactor === this.activePost.quizzer) {
           if (reaction.emoji.name === '✅') {
+            // stop the reaction collector just in case two reactions collide
+            reactionCollector.stop()
+
             let guess = reaction.message.content
             let guesserId = reaction.message.author.id
             let userInfo = await this.userRepository_.load(guesserId)
@@ -126,8 +130,8 @@ class QuizMaster {
               `<@${guesserId}> now has ${prevScore + 1} point${prevScore === 0 ? '.' : 's.'}`)
             await this.endRiddle()
           } else if (reaction.emoji.name === '❎') {
-            await message.clearReactions()
             reactionCollector.stop()
+            await message.clearReactions()
           }
         } else {
           await Promise.all(reaction.users
