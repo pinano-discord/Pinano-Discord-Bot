@@ -139,6 +139,11 @@ module.exports = client => {
       message = await message.edit(`${message.content} resumed.\nRestart procedure completed.`)
       setTimeout(() => message.delete(), settings.res_destruct_time * 1000)
     }
+
+    let quizChan = guild.channels.find(c => c.name === '🎶literature-quiz')
+    if (quizChan != null) {
+      await client.quizMaster.resume(quizChan)
+    }
   }
 
   client.refreshRoomInfo = async (guild) => {
