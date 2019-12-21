@@ -21,7 +21,7 @@ class SessionManager {
     }
   }
 
-  async saveSession (member, team) {
+  async saveSession (member, team, emoji) {
     let username = member.user.username
     let discriminator = member.user.discriminator
     if (member.s_time != null) {
@@ -40,6 +40,9 @@ class SessionManager {
       const delta = now - member.s_time
       userInfo.current_session_playtime += delta
       userInfo.overall_session_playtime += delta
+      if (delta >= 15 * 60) {
+        userInfo.last_practiced_time = now
+      }
       await this.userRepository_.save(userInfo)
 
       if (team != null) {
@@ -56,14 +59,18 @@ class SessionManager {
         await this.userRepository_.save(teamInfo)
       }
 
+      if (delta >= 15 * 60 && emoji != null) {
+        await this.userRepository_.addToField(userInfo, 'rooms_practiced', emoji)
+      }
+
       this.logFn_(`User <@${member.id}> ${username}#${discriminator} practiced for ${delta} seconds`)
       member.s_time = now
     }
   }
 
-  async endSession (member, team) {
+  async endSession (member, team, emoji) {
     if (member.s_time != null) {
-      await this.saveSession(member, team)
+      await this.saveSession(member, team, emoji)
       member.s_time = null
     }
   }

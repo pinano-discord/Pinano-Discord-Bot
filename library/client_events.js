@@ -101,18 +101,89 @@ module.exports = client => {
     }
   })
 
+  client.on('guildMemberRemove', async member => {
+    // they may have left while in a practice room - enforce policy as if they left a channel.
+    // TODO: do we want to bother counting their time?
+    await client.policyEnforcer.applyPolicy(member.guild, member, member.voiceChannel, null)
+  })
+
   client.on('voiceStateUpdate', async (oldMember, newMember) => {
     if (!settings.pinano_guilds.includes(newMember.guild.id)) {
       return
     }
 
+    // save this as we might delete the old channel and want to keep the emoji around for record keeping.
+    let emoji
+    if (oldMember.voiceChannel != null) {
+      emoji = oldMember.voiceChannel.emoji
+    }
+
     await client.policyEnforcer.applyPolicy(newMember.guild, newMember, oldMember.voiceChannel, newMember.voiceChannel)
 
+    // TODO: if changing the same user multiple times, do a single write
+    if (newMember.voiceChannel != null) {
+      let listeners = newMember.voiceChannel.members
+        .filter(member => !client.isLiveUser(member) && !member.deaf)
+      let players = newMember.voiceChannel.members
+        .filter(member => client.isLiveUser(member))
+      await Promise.all(players.map(async member => {
+        let userInfo = await client.userRepository.load(member.id)
+        if (userInfo == null) {
+          userInfo = {
+            'id': member.id,
+            'current_session_playtime': 0,
+            'overall_session_playtime': 0
+          }
+        }
+        let maxListeners = userInfo.max_listeners || 0
+        if (listeners.size >= maxListeners) {
+          userInfo.max_listeners = listeners.size
+          await client.userRepository.save(userInfo)
+        }
+      }))
+    }
+
     if (client.isLiveUser(newMember)) {
-      client.sessionManager.startSession(newMember)
+      if (oldMember.s_time != null && oldMember.voiceChannel !== newMember.voiceChannel) {
+        // user changed channels; save their time in the old channel for badging purposes
+        let team = client.getTeamForUser(newMember)
+        await client.sessionManager.saveSession(newMember, team, emoji)
+      } else {
+        client.sessionManager.startSession(newMember)
+      }
+
+      let activePracticeChannels = client.policyEnforcer.getPracticeRooms(newMember.guild)
+        .filter(channel => channel.members.some(m => m.s_time != null))
+      await Promise.all(activePracticeChannels.map(channel => Promise.all(channel.members
+        .filter(m => m.s_time != null)
+        .map(async member => {
+          let userInfo = await client.userRepository.load(member.id)
+          let maxConcurrent = userInfo.max_concurrent || 0
+          if (activePracticeChannels.size >= maxConcurrent) {
+            userInfo.max_concurrent = activePracticeChannels.size
+            await client.userRepository.save(userInfo)
+          }
+        }))
+      ))
+
+      let twinnedChannels = activePracticeChannels
+        .filter(channel => channel.emoji === newMember.voiceChannel.emoji && channel.emoji != null)
+      if (twinnedChannels.size >= 2) {
+        await Promise.all(twinnedChannels.map(channel => Promise.all(channel.members
+          .filter(m => m.s_time != null)
+          .map(async member => {
+            let userInfo = await client.userRepository.load(member.id)
+            let maxTwinning = userInfo.max_twinning || 0
+            if (twinnedChannels.size >= maxTwinning) {
+              userInfo.max_twinning = twinnedChannels.size
+              await client.userRepository.save(userInfo)
+            }
+          }))
+        ))
+      }
     } else {
       let team = client.getTeamForUser(newMember)
-      await client.sessionManager.endSession(newMember, team)
+      await client.sessionManager.endSession(newMember, team, emoji)
     }
   })
 }

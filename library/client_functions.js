@@ -71,7 +71,7 @@ module.exports = client => {
             .filter(member => !member.mute && member.s_time != null && !member.deleted)
             .map(member => {
               let team = client.getTeamForUser(member)
-              return client.sessionManager.saveSession(member, team)
+              return client.sessionManager.saveSession(member, team, chan.emoji)
             }))))
   }
 
@@ -110,6 +110,26 @@ module.exports = client => {
     let message = messages.find(m => m.content.startsWith('Beginning restart procedure...'))
     if (message != null) {
       message = await message.edit(`${message.content} ready.\nDetecting room status...`)
+    }
+
+    let channel = guild.channels.find(c => c.name === 'Practice Room ⚡')
+    if (channel != null) {
+      channel.emoji = '⚡'
+    }
+
+    channel = guild.channels.find(c => c.name === 'Practice Room 🐮')
+    if (channel != null) {
+      channel.emoji = '🐮'
+    }
+
+    channel = guild.channels.find(c => c.name === 'Practice Room 🐺')
+    if (channel != null) {
+      channel.emoji = '🐺'
+    }
+
+    channel = guild.channels.find(c => c.name === 'Practice Room 🤔')
+    if (channel != null) {
+      channel.emoji = '🤔'
     }
 
     let practiceRooms = client.policyEnforcer.getPracticeRooms(guild)

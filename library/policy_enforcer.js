@@ -1,6 +1,7 @@
 // TODO: decouple settings from policy enforcer
 const settings = require('../settings/settings.json')
 const Discord = require('discord.js')
+const moment = require('moment')
 
 function findChannel (guild, name) {
   return guild.channels.find(c => c.name === name)
@@ -89,6 +90,30 @@ class PolicyEnforcer {
       channel.suppressAutolock = true
     }
 
+    const rareIdentifiers = ['🌎', '🌍', '🌏']
+    if (rareIdentifiers.includes(channel.emoji)) {
+      const identifiers = [
+        '☀️',
+        '🌙',
+        '️🐢',
+        '🐌',
+        '🔥',
+        '💧',
+        '🍃',
+        '🗿',
+        '👻',
+        '🐉',
+        '👁️',
+        '👊',
+        '🐦',
+        '🐛',
+        '❄️'
+      ]
+
+      channel.emoji = identifiers[Math.floor(Math.random() * identifiers.length)]
+      await channel.setName(`Pracice Room ${channel.emoji}`)
+    }
+
     channel.locked_by = null
   }
 
@@ -128,6 +153,7 @@ class PolicyEnforcer {
     let basePosition = rooms.first().position
     let emptyRooms = rooms.filter(chan => !chan.members.some(m => !m.deleted))
 
+    const rareIdentifiers = ['🌎', '🌍', '🌏']
     if (emptyRooms.size === 0) {
       // no empty rooms; create a new channel
       const categoryChan = findChannel(guild, 'practice-room-chat').parent
@@ -140,9 +166,6 @@ class PolicyEnforcer {
         '🌙',
         '️🐢',
         '🐌',
-        '🌎',
-        '🌍',
-        '🌏',
         '🔥',
         '💧',
         '🍃',
@@ -156,8 +179,17 @@ class PolicyEnforcer {
         '❄️'
       ]
 
-      let identifier = identifiers[Math.floor(Math.random() * identifiers.length)]
-      await guild.createChannel(`Practice Room ${identifier}`, {
+      let identifier
+      if (this.deletedEmoji != null && moment().unix() - this.deletedAt < 5 * 60) {
+        identifier = this.deletedEmoji
+        this.deletedEmoji = null
+      } else if (Math.floor(Math.random() * 40) === 21) {
+        identifier = rareIdentifiers[Math.floor(Math.random() * rareIdentifiers.length)]
+      } else {
+        identifier = identifiers[Math.floor(Math.random() * identifiers.length)]
+      }
+
+      let channel = await guild.createChannel(`Practice Room ${identifier}`, {
         type: 'voice',
         parent: categoryChan,
         bitrate: settings.dev_mode ? 96000 : 384000,
@@ -176,11 +208,18 @@ class PolicyEnforcer {
           deny: ['MANAGE_CHANNELS', 'MANAGE_ROLES']
         }]
       })
+
+      // track the room emoji in its own field so that renaming doesn't trick us
+      channel.emoji = identifier
     } else if (emptyRooms.size >= 2) {
       // remove an extra room if 1) there are at least two empty rooms and 2) one of those rooms is
       // a temp room. (We don't want to destroy the primary rooms.)
       let emptyRoom = emptyRooms.find(c => c.position >= basePosition + settings.minimum_rooms)
       if (emptyRoom != null) {
+        if (!rareIdentifiers.includes(emptyRoom.emoji)) {
+          this.deletedEmoji = emptyRoom.emoji
+          this.deletedAt = moment().unix()
+        }
         return emptyRoom.delete()
       }
     }
@@ -214,7 +253,7 @@ class PolicyEnforcer {
 
   async maybeUnlockRoom (guild, member, channel) {
     if (channel != null &&
-      channel !== member.voiceChannel &&
+      (channel !== member.voiceChannel || member.deleted) &&
       channel.locked_by === member.id) {
       // user left a room they had locked; unlock it.
       await this.unlockPracticeRoom(guild, channel)

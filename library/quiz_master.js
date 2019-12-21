@@ -163,8 +163,21 @@ class QuizMaster {
               await this.userRepository_.save(userInfo)
             }
 
+            let authorInfo = await this.userRepository_.load(this.activePost.quizzer.id)
+            if (authorInfo == null) {
+              authorInfo = {
+                'id': this.activePost.quizzer.id,
+                'current_session_playtime': 0,
+                'overall_session_playtime': 0,
+                'riddles_solved': 0
+              }
+
+              await this.userRepository_.save(authorInfo)
+            }
+
             let prevScore = userInfo.quiz_score || 0
             await this.userRepository_.incrementField(guesserId, 'quiz_score')
+            await this.userRepository_.incrementField(this.activePost.quizzer.id, 'riddles_solved')
             await message.channel.send(
               `The guess ${guess} was marked as correct by <@${reactor.id}>!\n\n` +
               `<@${guesserId}> now has ${prevScore + 1} point${prevScore === 0 ? '.' : 's.'}`)
