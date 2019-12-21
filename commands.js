@@ -313,6 +313,7 @@ class Commands {
   }
 
   async stats (message) {
+    const now = moment().unix()
     let userInfo = this._selectTargetUser(message)
 
     const user = await this.client.userRepository.load(userInfo.mem.id)
@@ -328,52 +329,148 @@ class Commands {
     userInfo.overallRank = await this.client.getOverallLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
 
     const mem = userInfo.mem
+    let hasLongSession = false
     if (mem.voiceChannel != null && this.client.policyEnforcer.isPracticeRoom(mem.voiceChannel) && !mem.mute && mem.s_time != null) {
       let activeTime = moment().unix() - mem.s_time
       userInfo.currentSession += activeTime
       userInfo.overallSession += activeTime
+      if (activeTime >= 15 * 60) {
+        hasLongSession = true
+      }
     }
 
-    let quizScore = user.quiz_score || 0
+    let roomsSeen = ':shrug:'
+    if (user != null && user.rooms_practiced != null) {
+      if (hasLongSession && mem.voiceChannel.emoji != null && !user.rooms_practiced.includes(mem.voiceChannel.emoji)) {
+        user.rooms_practiced.push(mem.voiceChannel.emoji)
+      }
+
+      if (user.rooms_practiced.length > 0) {
+        roomsSeen = user.rooms_practiced.reduce((acc, curr) => `${acc}${curr}`)
+      }
+    }
+
     let embed = new Discord.RichEmbed()
       .setTitle(`${userInfo.username}#${userInfo.discriminator}`)
       .setColor(settings.embed_color)
       .addField('Weekly Time', `\`${abbreviateTime(userInfo.currentSession)}\``, true)
       .addField('Overall Time', `\`${abbreviateTime(userInfo.overallSession)}\``, true)
-      .addField('Correct Quiz Answers', `\`${quizScore}\``)
+      .addField('Rooms Seen', roomsSeen, true)
 
     let badges = ''
-    if (moment().unix() * 1000 - mem.joinedTimestamp >= 88 * 86400 * 1000) {
+    if (user != null) {
+      if (user.rooms_practiced != null) {
+        if (user.rooms_practiced.length === 22) {
+          badges += ':medal: I\'ve practiced in all the practice rooms\n'
+        }
+
+        if (user.rooms_practiced.includes('⚡') &&
+          user.rooms_practiced.includes('🐮') &&
+          user.rooms_practiced.includes('🐺') &&
+          user.rooms_practiced.includes('🤔')) {
+          const originalRooms = ['⚡', '🐮', '🐺', '🤔']
+          let badge = originalRooms[Math.floor(Math.random() * originalRooms.length)]
+          badges += `${badge} I've practiced in the original four practice rooms\n`
+        }
+
+        if (user.rooms_practiced.includes('🌎') &&
+          user.rooms_practiced.includes('🌍') &&
+          user.rooms_practiced.includes('🌏')) {
+          badges += ':airplane: I\'ve practiced all around the world\n'
+        }
+      }
+
+      if (user.max_listeners >= 5) {
+        badges += `:loudspeaker: I've had ${user.max_listeners} people listen to me in a practice room\n`
+      }
+
+      if (user.max_concurrent >= 10) {
+        badges += `:sparkles: I've practiced concurrently with ${user.max_concurrent - 1} other people\n`
+      }
+
+      if (user.max_twinning >= 2) {
+        switch (user.max_twinning) {
+          case 2:
+            badges += `:dancers: I've been a practice twin\n`
+            break
+          case 3:
+            badges += `:baby::baby::baby: I've been a practice triplet\n`
+            break
+          case 4:
+            badges += `:baby::baby::baby::baby: I've been a practice quadruplet\n`
+            break
+          case 5:
+            badges += `:baby::baby::baby::baby::baby: I've been a practice quintuplet\n`
+            break
+          case 6:
+            badges += `:baby::baby::baby::baby::baby::baby: I've been a practice sextuplet\n`
+            break
+          case 7:
+            badges += `:baby::baby::baby::baby::baby::baby::baby: I've been a practice septuplet\n`
+            break
+          case 8:
+            badges += `:baby::baby::baby::baby::baby::baby::baby::baby: I've been a practice octuplet\n`
+            break
+          default:
+            badges += `:baby::baby::baby::baby::baby::baby::baby::baby: I've been a practice octuplet\n`
+            badges += `:hammer: I like trying to break Pinano Bot\n`
+            break
+        }
+      }
+
+      if (user.quiz_score >= 10) {
+        badges += `:question: I've correctly answered ${user.quiz_score} riddles on [#🎶literature-quiz]` +
+          '(https://discordapp.com/channels/188345759408717825/505872476903964674)\n'
+      }
+
+      if (user.riddles_solved >= 10) {
+        badges += `:question: My riddles have been solved ${user.riddles_solved} times on [#🎶literature-quiz]` +
+          '(https://discordapp.com/channels/188345759408717825/505872476903964674)\n'
+      }
+
+      if (user.recitals != null && user.recitals.length >= 3) {
+        // one for each note in the emoji
+        badges += `:notes: I've played in ${user.recitals.length} recitals\n`
+      }
+
+      if (hasLongSession || now - user.last_practiced_time < 7 * 86400) {
+        badges += ':calendar: I\'ve practiced within the last week\n'
+      } else if (now - user.last_practiced_time < 30 * 86400) {
+        badges += ':calendar: I\'ve practiced within the last thirty days\n'
+      }
+    }
+
+    if (now * 1000 - mem.joinedTimestamp >= 88 * 86400 * 1000) {
       // join date is more than 88 days ago
-      badges += ':musical_keyboard: It has been at least 88 days since this user joined Pinano\n'
+      badges += ':musical_keyboard: I joined Pinano at least 88 days ago\n'
     }
 
     if (mem.roles.some(r => r.name === 'Hand Revealed')) {
-      badges += ':hand_splayed: This user has revealed their hand on [#hand-reveals](https://discordapp.com/channels/188345759408717825/440705391454584834)\n'
-    }
-
-    if (user != null && user.recitals != null && user.recitals.length >= 3) {
-      // one for each note in the emoji
-      badges += ':notes: This user has played in three recitals\n'
+      badges += ':hand_splayed: I\'ve revealed my hand on [#hand-reveals](https://discordapp.com/channels/188345759408717825/440705391454584834)\n'
     }
 
     if (settings.contributors.includes(mem.id)) {
-      badges += ':robot: This user contributed code to Pinano Bot on [GitHub](https://github.com/pinano-discord/Pinano-Discord-Bot)\n'
+      badges += ':robot: I\'ve contributed code to Pinano Bot on [GitHub](https://github.com/pinano-discord/Pinano-Discord-Bot)\n'
     }
 
     if (userInfo.overallSession >= 500 * 60 * 60) {
-      badges += '<:FiveHundredHours:627099475701268480> This user has practiced for 500 hours\n'
+      badges += '<:FiveHundredHours:627099475701268480> I\'ve practiced for at least 500 hours\n'
     } else if (userInfo.overallSession >= 250 * 60 * 60) {
-      badges += '<:TwoFiftyHours:627099476120829982> This user has practiced for 250 hours\n'
+      badges += '<:TwoFiftyHours:627099476120829982> I\'ve practiced for at least 250 hours\n'
     } else if (userInfo.overallSession >= 100 * 60 * 60) {
-      badges += '<:HundredHours:627099476078755850> This user has practiced for 100 hours\n'
+      badges += '<:HundredHours:627099476078755850> I\'ve practiced for at least 100 hours\n'
     } else if (userInfo.overallSession >= 40 * 60 * 60) {
-      badges += '<:FortyHours:627099475869171712> This user has practiced for 40 hours\n'
+      badges += '<:FortyHours:627099475869171712> I\'ve practiced for at least 40 hours\n'
     }
 
     let effectiveName = ((mem.nickname == null) ? mem.user.username : mem.nickname).toLowerCase()
     if (effectiveName.endsWith('juice') || effectiveName.endsWith('juwuice')) {
-      badges += ':tropical_drink: This user\'s username ends in \'juice\'\n'
+      badges += ':tropical_drink: I miss minijuice\n'
+    }
+
+    // thanks for being an awesome tester, Sayee
+    if (userInfo.mem.id === '151301657915817984') {
+      badges += `:hammer: I like trying to break Pinano Bot\n`
     }
 
     if (badges === '') {
