@@ -120,12 +120,14 @@ class QuizMaster {
       let files = File.readdirSync('../quiz_queue/')
       files.forEach(filename => {
         let authorId = filename.slice(filename.indexOf('_') + 1, filename.lastIndexOf('.'))
-        let author = channel.guild.members.get(authorId).user
-        this.quizQueue_.push({
-          channel: channel,
-          filename: `../quiz_queue/${filename}`,
-          author: author
-        })
+        let authorMem = channel.guild.members.get(authorId)
+        if (authorMem != null) {
+          this.quizQueue_.push({
+            channel: channel,
+            filename: `../quiz_queue/${filename}`,
+            author: authorMem.user
+          })
+        }
       })
     }
   }

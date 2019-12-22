@@ -4,10 +4,27 @@ const QuizMaster = require('../library/quiz_master.js')
 const SessionManager = require('../library/session_manager.js')
 const settings = require('../settings/settings.json')
 
+let alreadyInitialized = false
+
 module.exports = client => {
   client.on('error', client.log)
 
   client.on('ready', async () => {
+    if (alreadyInitialized) {
+      // uh-oh. Looks like we reconnected to Discord after an outage of some sort. This means we've
+      // missed some events and we cannot be sure about the state of the world. Forcibly restart
+      // the bot WITHOUT saving any sessions. Do unlock rooms, though.
+      client.log('WARNING: forcibly restarting Pinano Bot after reconnection to Discord')
+      await Promise.all(settings.pinano_guilds.map(guildId => {
+        let guild = client.guilds.get(guildId)
+        return Promise.all(client.policyEnforcer.getPracticeRooms(guild)
+          .map(chan => chan.policyEnforcer.unlockPracticeRoom(guild, chan)))
+      }))
+
+      client.restart(null, true)
+    }
+
+    alreadyInitialized = true
     client.log('Successfully connected to discord.')
 
     try {

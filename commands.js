@@ -239,7 +239,7 @@ class Commands {
   async restart (message) {
     requireRole(message.member)
     await message.delete() // we're not going to get a chance anywhere else
-    await this.client.restart(message.guild)
+    await this.client.restart(message.guild, false)
 
     throw new Error('Something that should never happen has happened.')
   }
@@ -312,6 +312,10 @@ class Commands {
     return true
   }
 
+  _includesAll (list, members) {
+    return members.every(m => list.includes(m))
+  }
+
   async stats (message) {
     const now = moment().unix()
     let userInfo = this._selectTargetUser(message)
@@ -340,7 +344,11 @@ class Commands {
     }
 
     let roomsSeen = ':shrug:'
-    if (user != null && user.rooms_practiced != null) {
+    if (user != null) {
+      if (user.rooms_practiced == null) {
+        user.rooms_practiced = []
+      }
+
       if (hasLongSession && mem.voiceChannel.emoji != null && !user.rooms_practiced.includes(mem.voiceChannel.emoji)) {
         user.rooms_practiced.push(mem.voiceChannel.emoji)
       }
@@ -360,23 +368,33 @@ class Commands {
     let badges = ''
     if (user != null) {
       if (user.rooms_practiced != null) {
-        if (user.rooms_practiced.length === 22) {
-          badges += ':medal: I\'ve practiced in all the practice rooms\n'
+        const identifiers = this.client.policyEnforcer.getIdentifiers()
+        const rareIdentifiers = this.client.policyEnforcer.getRareIdentifiers()
+        const christmasIdentifiers = this.client.policyEnforcer.getChristmasIdentifiers()
+        const rickrollIdentifiers = this.client.policyEnforcer.getRickrollIdentifiers()
+        const originalRooms = ['⚡', '🐮', '🐺', '🤔']
+        if (this._includesAll(user.rooms_practiced, originalRooms)) {
+          if (this._includesAll(user.rooms_practiced, identifiers)) {
+            badges += ':medal: I\'ve practiced in all the practice rooms\n'
+          } else {
+            let badge = this.client.policyEnforcer._pickRandomFromList(originalRooms)
+            badges += `${badge} I've practiced in the original four practice rooms\n`
+          }
         }
 
-        if (user.rooms_practiced.includes('⚡') &&
-          user.rooms_practiced.includes('🐮') &&
-          user.rooms_practiced.includes('🐺') &&
-          user.rooms_practiced.includes('🤔')) {
-          const originalRooms = ['⚡', '🐮', '🐺', '🤔']
-          let badge = originalRooms[Math.floor(Math.random() * originalRooms.length)]
-          badges += `${badge} I've practiced in the original four practice rooms\n`
-        }
-
-        if (user.rooms_practiced.includes('🌎') &&
-          user.rooms_practiced.includes('🌍') &&
-          user.rooms_practiced.includes('🌏')) {
+        if (this._includesAll(user.rooms_practiced, rareIdentifiers)) {
           badges += ':airplane: I\'ve practiced all around the world\n'
+        }
+
+        if (this._includesAll(user.rooms_practiced, christmasIdentifiers)) {
+          badges += ':christmas_tree: [Practising knows no holiday](http://euge.ca/61)\n'
+        }
+
+        if (this._includesAll(user.rooms_practiced, rickrollIdentifiers)) {
+          badges += ':arrow_up: Never gonna give you :arrow_up:\n'
+          badges += ':arrow_down: Never gonna let you :arrow_down:\n'
+          badges += ':person_running: Never gonna :person_running: around\n'
+          badges += ':desert: And :desert: you\n'
         }
       }
 
