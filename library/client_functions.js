@@ -48,6 +48,7 @@ module.exports = client => {
   }
 
   client.getTeamForUser = (member) => {
+    // TODO: just search the list of roles instead of hardcoding this.
     const teams = [
       'J.S. Bach Blue',
       'Beethoven Maroon',
@@ -57,7 +58,8 @@ module.exports = client => {
       'Mendelssohn Teal',
       'Mozart Red',
       'Rachmaninoff Green',
-      'Schubert Orange'
+      'Schubert Orange',
+      'Yiruma White'
     ]
 
     return member.roles.filter(role => teams.includes(role.name)).first()
@@ -75,20 +77,25 @@ module.exports = client => {
             }))))
   }
 
-  client.restart = async (guild) => {
-    let notifChan = guild.channels.find(c => c.name === 'information')
-    let message = await notifChan.send('Beginning restart procedure...')
-    let edited = await message.edit(`${message.content}\nSaving all active sessions...`)
-    message = edited // for some reason the linter thinks message isn't being used if we assign it directly?
-    await client.saveAllUsersTime(guild)
+  client.restart = async (guild, abort) => {
+    if (abort) {
+      // something's wrong, and we need to forcibly restart the bot without saving any sessions.
+      process.exit(0)
+    } else {
+      let notifChan = guild.channels.find(c => c.name === 'information')
+      let message = await notifChan.send('Beginning restart procedure...')
+      let edited = await message.edit(`${message.content}\nSaving all active sessions...`)
+      message = edited // for some reason the linter thinks message isn't being used if we assign it directly?
+      await client.saveAllUsersTime(guild)
 
-    message = await message.edit(`${message.content} saved.\nUnlocking rooms...`)
-    await Promise.all(
-      client.policyEnforcer.getPracticeRooms(guild)
-        .map(chan => client.policyEnforcer.unlockPracticeRoom(guild, chan)))
+      message = await message.edit(`${message.content} saved.\nUnlocking rooms...`)
+      await Promise.all(
+        client.policyEnforcer.getPracticeRooms(guild)
+          .map(chan => client.policyEnforcer.unlockPracticeRoom(guild, chan)))
 
-    message = await message.edit(`${message.content} unlocked.\nRestarting Pinano Bot...`)
-    process.exit(0)
+      message = await message.edit(`${message.content} unlocked.\nRestarting Pinano Bot...`)
+      process.exit(0)
+    }
   }
 
   // a user is live if they are:

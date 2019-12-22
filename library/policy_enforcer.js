@@ -15,9 +15,30 @@ function isTempMuted (member) {
   return member.roles.some(r => r.name === 'Temp Muted')
 }
 
+const rareIdentifiers = ['🌎', '🌍', '🌏']
+const identifiers = ['☀️', '🌙', '️🐢', '🐌', '🔥', '💧', '🍃', '🗿', '👻', '🐉', '👁️', '👊', '🐦', '🐛', '❄️']
+const christmasIdentifiers = ['🎅', '🎁', '🎄', '⛄️']
+const rickrollIdentifiers = ['⬆️', '⬇️', '🏃', '🏜️']
+
 class PolicyEnforcer {
   constructor (logFn) {
     this.logFn_ = logFn
+  }
+
+  getRareIdentifiers () {
+    return rareIdentifiers
+  }
+
+  getIdentifiers () {
+    return identifiers
+  }
+
+  getChristmasIdentifiers () {
+    return christmasIdentifiers
+  }
+
+  getRickrollIdentifiers () {
+    return rickrollIdentifiers
   }
 
   // TODO: is this the best place to put this?
@@ -90,27 +111,8 @@ class PolicyEnforcer {
       channel.suppressAutolock = true
     }
 
-    const rareIdentifiers = ['🌎', '🌍', '🌏']
     if (rareIdentifiers.includes(channel.emoji)) {
-      const identifiers = [
-        '☀️',
-        '🌙',
-        '️🐢',
-        '🐌',
-        '🔥',
-        '💧',
-        '🍃',
-        '🗿',
-        '👻',
-        '🐉',
-        '👁️',
-        '👊',
-        '🐦',
-        '🐛',
-        '❄️'
-      ]
-
-      channel.emoji = identifiers[Math.floor(Math.random() * identifiers.length)]
+      channel.emoji = this._pickRandomFromList(identifiers)
       await channel.setName(`Pracice Room ${channel.emoji}`)
     }
 
@@ -145,6 +147,10 @@ class PolicyEnforcer {
     }
   }
 
+  _pickRandomFromList (list) {
+    return list[Math.floor(Math.random() * list.length)]
+  }
+
   // auto-VC creation: create a room if all rooms are occupied. Muted or unmuted doesn't matter,
   // because in general we want to discourage people from using rooms that are occupied even if all
   // the participants are currently muted. Remove a temp room if there are at least two empty ones.
@@ -153,7 +159,6 @@ class PolicyEnforcer {
     let basePosition = rooms.first().position
     let emptyRooms = rooms.filter(chan => !chan.members.some(m => !m.deleted))
 
-    const rareIdentifiers = ['🌎', '🌍', '🌏']
     if (emptyRooms.size === 0) {
       // no empty rooms; create a new channel
       const categoryChan = findChannel(guild, 'practice-room-chat').parent
@@ -161,32 +166,20 @@ class PolicyEnforcer {
       const tempMuted = findRole(guild, 'Temp Muted')
       const verifRequired = findRole(guild, 'Verification Required')
       const everyone = findRole(guild, '@everyone')
-      const identifiers = [
-        '☀️',
-        '🌙',
-        '️🐢',
-        '🐌',
-        '🔥',
-        '💧',
-        '🍃',
-        '🗿',
-        '👻',
-        '🐉',
-        '👁️',
-        '👊',
-        '🐦',
-        '🐛',
-        '❄️'
-      ]
 
       let identifier
-      if (this.deletedEmoji != null && moment().unix() - this.deletedAt < 5 * 60) {
+      let current = moment()
+      if (this.deletedEmoji != null && current.unix() - this.deletedAt < 5 * 60) {
         identifier = this.deletedEmoji
         this.deletedEmoji = null
+      } else if (current.month() === 11 && current.date() >= 20) {
+        identifier = this._pickRandomFromList(christmasIdentifiers)
+      } else if (current.month() === 3 && current.date() === 1) {
+        identifier = this._pickRandomFromList(rickrollIdentifiers)
       } else if (Math.floor(Math.random() * 40) === 21) {
-        identifier = rareIdentifiers[Math.floor(Math.random() * rareIdentifiers.length)]
+        identifier = this._pickRandomFromList(rareIdentifiers)
       } else {
-        identifier = identifiers[Math.floor(Math.random() * identifiers.length)]
+        identifier = this._pickRandomFromList(identifiers)
       }
 
       let channel = await guild.createChannel(`Practice Room ${identifier}`, {
@@ -216,6 +209,7 @@ class PolicyEnforcer {
       // a temp room. (We don't want to destroy the primary rooms.)
       let emptyRoom = emptyRooms.find(c => c.position >= basePosition + settings.minimum_rooms)
       if (emptyRoom != null) {
+        // once globe rooms are gone, they're gone.
         if (!rareIdentifiers.includes(emptyRoom.emoji)) {
           this.deletedEmoji = emptyRoom.emoji
           this.deletedAt = moment().unix()
