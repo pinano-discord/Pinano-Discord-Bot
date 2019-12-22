@@ -2,6 +2,7 @@ const { MongoClient } = require('mongodb')
 
 function connect (url = 'mongodb://localhost:27017', dbName = 'pinano', options = {}) {
   options.useNewUrlParser = true
+  options.useUnifiedTopology = true
   return MongoClient.connect(url, options).then(client => {
     return new MongoManager(client, dbName)
   })
