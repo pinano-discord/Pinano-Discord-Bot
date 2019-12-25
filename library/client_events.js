@@ -1,7 +1,7 @@
 const { makeUser } = require('../library/persistence.js')
 
 const Leaderboard = require('../library/leaderboard.js')
-const PolicyEnforcer = require('../library/policy_enforcer.js')
+const { PolicyEnforcer } = require('../library/policy_enforcer')
 const QuizMaster = require('../library/quiz_master.js')
 const SessionManager = require('../library/session_manager.js')
 const settings = require('../settings/settings.json')

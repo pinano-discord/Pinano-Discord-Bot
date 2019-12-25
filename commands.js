@@ -2,6 +2,7 @@ const Discord = require('discord.js')
 const hd = require('humanize-duration')
 const moment = require('moment')
 const settings = require('./settings/settings.json')
+const { RoomIdentifiers } = require('./library/policy_enforcer')
 
 function requireRole (member, roleName = 'Bot Manager', errorMessage = 'You require the bot manager role to use this command.') {
   if (!member.roles.find(r => r.name === roleName) || !settings.pinano_guilds.includes(member.guild.id)) {
@@ -368,11 +369,11 @@ class Commands {
     let badges = ''
     if (user != null) {
       if (user.rooms_practiced != null) {
-        const identifiers = this.client.policyEnforcer.getIdentifiers()
-        const rareIdentifiers = this.client.policyEnforcer.getRareIdentifiers()
-        const christmasIdentifiers = this.client.policyEnforcer.getChristmasIdentifiers()
-        const rickrollIdentifiers = this.client.policyEnforcer.getRickrollIdentifiers()
-        const originalRooms = ['⚡', '🐮', '🐺', '🤔']
+        const identifiers = RoomIdentifiers.onDemand
+        const rareIdentifiers = RoomIdentifiers.rare
+        const christmasIdentifiers = RoomIdentifiers.christmas
+        const rickrollIdentifiers = RoomIdentifiers.rickroll
+        const originalRooms = RoomIdentifiers.original
         if (this._includesAll(user.rooms_practiced, originalRooms)) {
           if (this._includesAll(user.rooms_practiced, identifiers)) {
             badges += ':medal: I\'ve practiced in all the practice rooms\n'

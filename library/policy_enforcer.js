@@ -15,30 +15,23 @@ function isTempMuted (member) {
   return member.roles.some(r => r.name === 'Temp Muted')
 }
 
-const rareIdentifiers = ['🌎', '🌍', '🌏']
-const identifiers = ['☀️', '🌙', '️🐢', '🐌', '🔥', '💧', '🍃', '🗿', '👻', '🐉', '👁️', '👊', '🐦', '🐛', '❄️']
-const christmasIdentifiers = ['🎅', '🎁', '🎄', '⛄️']
-const rickrollIdentifiers = ['⬆️', '⬇️', '🏃', '🏜️']
+const RoomIdentifiers = {
+  original: ['⚡', '🐮', '🐺', '🤔'],
+  onDemand: ['☀️', '🌙', '️🐢', '🐌', '🔥', '💧', '🍃', '🗿', '👻', '🐉', '👁️', '👊', '🐦', '🐛', '❄️'],
+
+  rare: ['🌎', '🌍', '🌏'],
+  christmas: ['🎅', '🎁', '🎄', '⛄️'],
+  rickroll: ['⬆️', '⬇️', '🏃', '🏜️'],
+
+  get all () {
+    return this.original + this.onDemand + this.rare + this.christmas + this.rickroll
+  }
+}
+Object.freeze(RoomIdentifiers)
 
 class PolicyEnforcer {
   constructor (logFn) {
     this.logFn_ = logFn
-  }
-
-  getRareIdentifiers () {
-    return rareIdentifiers
-  }
-
-  getIdentifiers () {
-    return identifiers
-  }
-
-  getChristmasIdentifiers () {
-    return christmasIdentifiers
-  }
-
-  getRickrollIdentifiers () {
-    return rickrollIdentifiers
   }
 
   // TODO: is this the best place to put this?
@@ -111,8 +104,8 @@ class PolicyEnforcer {
       channel.suppressAutolock = true
     }
 
-    if (rareIdentifiers.includes(channel.emoji)) {
-      channel.emoji = this._pickRandomFromList(identifiers)
+    if (RoomIdentifiers.rare.includes(channel.emoji)) {
+      channel.emoji = this._pickRandomFromList(RoomIdentifiers.onDemand)
       await channel.setName(`Pracice Room ${channel.emoji}`)
     }
 
@@ -173,13 +166,13 @@ class PolicyEnforcer {
         identifier = this.deletedEmoji
         this.deletedEmoji = null
       } else if (current.month() === 11 && current.date() >= 20) {
-        identifier = this._pickRandomFromList(christmasIdentifiers)
+        identifier = this._pickRandomFromList(RoomIdentifiers.christmas)
       } else if (current.month() === 3 && current.date() === 1) {
-        identifier = this._pickRandomFromList(rickrollIdentifiers)
+        identifier = this._pickRandomFromList(RoomIdentifiers.rickroll)
       } else if (Math.floor(Math.random() * 40) === 21) {
-        identifier = this._pickRandomFromList(rareIdentifiers)
+        identifier = this._pickRandomFromList(RoomIdentifiers.rare)
       } else {
-        identifier = this._pickRandomFromList(identifiers)
+        identifier = this._pickRandomFromList(RoomIdentifiers.onDemand)
       }
 
       let channel = await guild.createChannel(`Practice Room ${identifier}`, {
@@ -210,7 +203,7 @@ class PolicyEnforcer {
       let emptyRoom = emptyRooms.find(c => c.position >= basePosition + settings.minimum_rooms)
       if (emptyRoom != null) {
         // once globe rooms are gone, they're gone.
-        if (!rareIdentifiers.includes(emptyRoom.emoji)) {
+        if (!RoomIdentifiers.rare.includes(emptyRoom.emoji)) {
           this.deletedEmoji = emptyRoom.emoji
           this.deletedAt = moment().unix()
         }
@@ -314,4 +307,4 @@ class PolicyEnforcer {
   }
 }
 
-module.exports = PolicyEnforcer
+module.exports = { PolicyEnforcer, RoomIdentifiers }
