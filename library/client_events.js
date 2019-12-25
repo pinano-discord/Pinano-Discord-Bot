@@ -1,3 +1,5 @@
+const { makeUser } = require('../library/persistence.js')
+
 const Leaderboard = require('../library/leaderboard.js')
 const PolicyEnforcer = require('../library/policy_enforcer.js')
 const QuizMaster = require('../library/quiz_master.js')
@@ -146,11 +148,7 @@ module.exports = client => {
       await Promise.all(players.map(async member => {
         let userInfo = await client.userRepository.load(member.id)
         if (userInfo == null) {
-          userInfo = {
-            'id': member.id,
-            'current_session_playtime': 0,
-            'overall_session_playtime': 0
-          }
+          userInfo = makeUser(member.id)
         }
         let maxListeners = userInfo.max_listeners || 0
         if (listeners.size >= maxListeners) {
