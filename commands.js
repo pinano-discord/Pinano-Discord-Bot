@@ -3,6 +3,7 @@ const hd = require('humanize-duration')
 const moment = require('moment')
 const settings = require('./settings/settings.json')
 const { RoomIdentifiers } = require('./library/policy_enforcer')
+const { badgesForUser } = require('./library/badges')
 
 function requireRole (member, roleName = 'Bot Manager', errorMessage = 'You require the bot manager role to use this command.') {
   if (!member.roles.find(r => r.name === roleName) || !settings.pinano_guilds.includes(member.guild.id)) {
@@ -494,6 +495,15 @@ class Commands {
 
     if (badges === '') {
       badges = '<:wtf:593197993264414751> no badges yet!'
+    }
+
+    let altBadges = badgesForUser(userInfo, user, hasLongSession)
+    if (badges === altBadges) {
+      this.client.log(`same stats for ${userInfo.mem.id}`)
+    } else {
+      this.client.log(`different stats for ${userInfo.mem.id}`)
+      this.client.log(`original => ${badges}`)
+      this.client.log(`alt => ${altBadges}`)
     }
 
     embed.addField('Badges', badges)
