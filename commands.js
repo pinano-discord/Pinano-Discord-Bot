@@ -260,7 +260,6 @@ class Commands {
    *   av,              // the avatar URL or path, via _selectTargetUser -> _enrichUserData
    *   currentSession,  // current session time (computed from db current session time + active time)
    *   overallSession,  // overall session time (computed from db overall session time + active time)
-   *   rank             // rank computed by leaderboard library (accounts for active time)
    * }
    */
   _selectTargetUser (message) {
@@ -329,9 +328,6 @@ class Commands {
       userInfo.currentSession = 0
       userInfo.overallSession = 0
     }
-
-    userInfo.rank = await this.client.getWeeklyLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
-    userInfo.overallRank = await this.client.getOverallLeaderboardPos(userInfo.mem.guild, userInfo.mem.id)
 
     const mem = userInfo.mem
     let hasLongSession = false
