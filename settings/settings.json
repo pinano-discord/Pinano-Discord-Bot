@@ -1,9 +1,7 @@
 {
-    "dev_mode" : true,
     "prefix" : "p!",
-    "beta_prefix" : "p!!",
     "token" : "",
-    "beta_token" : "",
+    "default_bitrate": 384,
     "embed_color" : 16752128,
     "activity" : "type: p!help",
     "bot_devs": [ "174511937151827969", "187548138456743936" ],

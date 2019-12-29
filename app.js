@@ -5,10 +5,14 @@ const { connect, makeUser } = require('./library/persistence')
 
 let client = new Discord.Client({ fetchAllMembers: true })
 
-// check devmode state
-if (settings.dev_mode) {
-  settings.token = settings.beta_token
-  settings.prefix = settings.beta_prefix
+if (process.env.PINANO_TOKEN !== undefined) {
+  settings.token = process.env.PINANO_TOKEN
+}
+if (process.env.PINANO_PREFIX !== undefined) {
+  settings.prefix = process.env.PINANO_PREFIX
+}
+if (process.env.PINANO_DEFAULT_BITRATE !== undefined) {
+  settings.default_bitrate = process.env.PINANO_DEFAULT_BITRATE
 }
 
 require('./library/client_functions.js')(client)
