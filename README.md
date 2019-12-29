@@ -31,9 +31,20 @@ And run any tests:
 
     npm test
 
+# Testing instructions
+
 If you'd like to actually run a test bot, you will need to follow the instructions to
-[create a bot user](https://discordjs.guide/preparations/setting-up-a-bot-application.html)
-and then update your `settings/settings.json` file with the appropriate `beta_token` etc.
+[create a bot user](https://discordjs.guide/preparations/setting-up-a-bot-application.html).
+
+Set the following environment variables customize what the bot connects to and what messages
+it responds to:
+
+    export PINANO_TOKEN='your token here'
+    export PINANO_PREFIX='x!!'
+    export PINANO_DEFAULT_BITRATE=96
+
+The token can be obtained from the bot's Discord settings page.
+
 
 # Contribution instructions
 

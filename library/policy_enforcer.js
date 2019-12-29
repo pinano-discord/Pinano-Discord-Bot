@@ -298,7 +298,7 @@ class PolicyEnforcer {
   }
 
   async resetBitrateIfEmpty (channel) {
-    let defaultBitrate = settings.dev_mode ? 96 : 384
+    let defaultBitrate = settings.default_bitrate
     if (channel != null &&
       !channel.members.some(m => !m.deleted) &&
       channel.bitrate !== defaultBitrate) {
