@@ -1,7 +1,7 @@
 const settings = require('./settings/settings.json')
 
 module.exports.load = (client) => {
-  client.commands['eval'] = async (message) => {
+  client.commands['eval'] = async (client, message) => {
     if (settings.bot_devs.includes(message.author.id)) {
       const args = message.content.split(' ').slice(1)
       const clean = text => {

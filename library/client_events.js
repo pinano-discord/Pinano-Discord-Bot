@@ -96,7 +96,7 @@ module.exports = client => {
         throw new Error('Please use this bot on the [Pinano server](https://discordapp.com/invite/3q3gWuD).')
       }
 
-      await client.commands[command](message)
+      await client.commands[command](client, message)
     } catch (err) {
       client.errorMessage(message, err.message)
     }

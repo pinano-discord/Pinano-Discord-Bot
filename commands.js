@@ -42,7 +42,7 @@ class Commands {
     this.client = client
   }
 
-  async addtime (message) {
+  async addtime (client, message) {
     requireRole(message.member)
 
     let args = message.content.split(' ').splice(1)
@@ -52,20 +52,20 @@ class Commands {
     requireParameterFormat(args[1], arg => Number.isInteger(parseInt(arg)), usageStr)
 
     let delta = parseInt(args[1])
-    let userInfo = await this.client.userRepository.load(args[0].replace(/[<@!>]/g, ''))
+    let userInfo = await client.userRepository.load(args[0].replace(/[<@!>]/g, ''))
     if (userInfo == null) {
       throw new Error('The user was not found in the database.')
     }
 
     userInfo.current_session_playtime += delta
     userInfo.overall_session_playtime += delta
-    await this.client.userRepository.save(userInfo)
+    await client.userRepository.save(userInfo)
 
-    this.client.log(`Add ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
+    client.log(`Add ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
     selfDestructMessage(() => message.reply('added time to user.'))
   }
 
-  async bitrate (message) {
+  async bitrate (client, message) {
     let args = message.content.split(' ').splice(1).filter(str => str !== '')
     let channel = message.member.voiceChannel
     if (channel == null) {
@@ -90,7 +90,7 @@ class Commands {
     selfDestructMessage(() => message.reply(`set bitrate for <#${channel.id}> to ${channel.bitrate} kbps.`))
   }
 
-  async deltime (message) {
+  async deltime (client, message) {
     requireRole(message.member)
 
     let args = message.content.split(' ').splice(1)
@@ -100,20 +100,20 @@ class Commands {
     requireParameterFormat(args[1], arg => Number.isInteger(parseInt(arg)), usageStr)
 
     let delta = parseInt(args[1])
-    let userInfo = await this.client.userRepository.load(args[0].replace(/[<@!>]/g, ''))
+    let userInfo = await client.userRepository.load(args[0].replace(/[<@!>]/g, ''))
     if (userInfo == null) {
       throw new Error('The user was not found in the database.')
     }
 
     userInfo.current_session_playtime = Math.max(0, userInfo.current_session_playtime - delta)
     userInfo.overall_session_playtime = Math.max(0, userInfo.overall_session_playtime - delta)
-    await this.client.userRepository.save(userInfo)
+    await client.userRepository.save(userInfo)
 
-    this.client.log(`Delete ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
+    client.log(`Delete ${delta} time for user <@${userInfo.id}> by <@${message.member.user.id}> ${message.member.user.username}#${message.member.user.discriminator}`)
     selfDestructMessage(() => message.reply('removed time from user.'))
   }
 
-  async help (message) {
+  async help (client, message) {
     let isBotManager = message.member.roles.find(r => r.name === 'Bot Manager')
     let isRecitalManager = message.member.roles.find(r => r.name === 'Recital Manager')
 
@@ -157,7 +157,7 @@ class Commands {
     selfDestructMessage(() => message.reply('sent you the command list.'))
   }
 
-  async lock (message) {
+  async lock (client, message) {
     let channel, mem
 
     let args = message.content.split(' ').splice(1)
@@ -180,7 +180,7 @@ class Commands {
       mem = message.member
     }
 
-    if (channel == null || !this.client.policyEnforcer.isPracticeRoom(channel)) {
+    if (channel == null || !client.policyEnforcer.isPracticeRoom(channel)) {
       throw new Error(`<@${message.author.id}>! This isn't the time to use that!`)
     }
 
@@ -192,11 +192,11 @@ class Commands {
       throw new Error('This channel is already locked.')
     }
 
-    await this.client.policyEnforcer.lockPracticeRoom(message.guild, channel, mem)
+    await client.policyEnforcer.lockPracticeRoom(message.guild, channel, mem)
     selfDestructMessage(() => message.reply(`locked channel <#${channel.id}>.`))
   }
 
-  async recital (message) {
+  async recital (client, message) {
     requireRole(message.member, 'Recital Manager', 'You require the Recital Manager role to use this command.')
 
     let args = message.content.split(' ').splice(1)
@@ -205,7 +205,7 @@ class Commands {
     requireParameterFormat(args[1], arg => arg.startsWith('<@') && arg.endsWith('>'), usageStr)
 
     let userId = args[1].replace(/[<@!>]/g, '')
-    let userInfo = await this.client.userRepository.load(userId)
+    let userInfo = await client.userRepository.load(userId)
     if (userInfo == null) {
       userInfo = {
         'id': userId,
@@ -213,13 +213,13 @@ class Commands {
         'overall_session_playtime': 0
       }
 
-      await this.client.userRepository.save(userInfo)
+      await client.userRepository.save(userInfo)
     }
 
     switch (args[0]) {
       case 'add':
       {
-        await this.client.userRepository.addToField(userInfo, 'recitals', args[2])
+        await client.userRepository.addToField(userInfo, 'recitals', args[2])
         selfDestructMessage(() => message.reply(`added recital to user.`))
         return
       }
@@ -228,7 +228,7 @@ class Commands {
       case 'rem':
       case 'remove':
       {
-        await this.client.userRepository.removeFromField(userInfo, 'recitals', args[2])
+        await client.userRepository.removeFromField(userInfo, 'recitals', args[2])
         selfDestructMessage(() => message.reply(`removed recital from user.`))
         return
       }
@@ -237,15 +237,15 @@ class Commands {
     }
   }
 
-  async restart (message) {
+  async restart (client, message) {
     requireRole(message.member)
     await message.delete() // we're not going to get a chance anywhere else
-    await this.client.restart(message.guild, false)
+    await client.restart(message.guild, false)
 
     throw new Error('Something that should never happen has happened.')
   }
 
-  async rooms (message) {
+  async rooms (client, message) {
     throw new Error('This command is deprecated; please use [#information](http://discordapp.com/channels/188345759408717825/629841121551581204) instead.')
   }
 
@@ -312,10 +312,10 @@ class Commands {
     return true
   }
 
-  async stats (message) {
+  async stats (client, message) {
     let userInfo = this._selectTargetUser(message)
 
-    const user = await this.client.userRepository.load(userInfo.mem.id)
+    const user = await client.userRepository.load(userInfo.mem.id)
     if (user != null) {
       userInfo.currentSession = user.current_session_playtime
       userInfo.overallSession = user.overall_session_playtime
@@ -326,7 +326,7 @@ class Commands {
 
     const mem = userInfo.mem
     let hasLongSession = false
-    if (mem.voiceChannel != null && this.client.policyEnforcer.isPracticeRoom(mem.voiceChannel) && !mem.mute && mem.s_time != null) {
+    if (mem.voiceChannel != null && client.policyEnforcer.isPracticeRoom(mem.voiceChannel) && !mem.mute && mem.s_time != null) {
       let activeTime = moment().unix() - mem.s_time
       userInfo.currentSession += activeTime
       userInfo.overallSession += activeTime
@@ -369,7 +369,7 @@ class Commands {
     selfDestructMessage(() => message.channel.send(embed))
   }
 
-  async unlock (message) {
+  async unlock (client, message) {
     let args = message.content.split(' ').splice(1)
     let channel
     if (args.length >= 1) {
@@ -388,7 +388,7 @@ class Commands {
       throw new Error('You do not have this channel locked.')
     }
 
-    await this.client.policyEnforcer.unlockPracticeRoom(message.guild, channel)
+    await client.policyEnforcer.unlockPracticeRoom(message.guild, channel)
     selfDestructMessage(() => message.reply(`unlocked channel <#${channel.id}>.`))
   }
 }
@@ -397,16 +397,16 @@ function loadCommands (client) {
   let c = new Commands(client)
   client.commands = {}
 
-  client.commands['addtime'] = (message) => { return c.addtime(message) }
-  client.commands['bitrate'] = (message) => { return c.bitrate(message) }
-  client.commands['deltime'] = (message) => { return c.deltime(message) }
-  client.commands['help'] = (message) => { return c.help(message) }
-  client.commands['lock'] = (message) => { return c.lock(message) }
-  client.commands['recital'] = client.commands['recitals'] = (message) => { return c.recital(message) }
-  client.commands['restart'] = client.commands['reboot'] = (message) => { return c.restart(message) }
-  client.commands['rooms'] = (message) => { return c.rooms(message) }
-  client.commands['stats'] = (message) => { return c.stats(message) }
-  client.commands['unlock'] = (message) => { return c.unlock(message) }
+  client.commands['addtime'] = (client, message) => { return c.addtime(client, message) }
+  client.commands['bitrate'] = (client, message) => { return c.bitrate(client, message) }
+  client.commands['deltime'] = (client, message) => { return c.deltime(client, message) }
+  client.commands['help'] = (client, message) => { return c.help(client, message) }
+  client.commands['lock'] = (client, message) => { return c.lock(client, message) }
+  client.commands['recital'] = client.commands['recitals'] = (client, message) => { return c.recital(client, message) }
+  client.commands['restart'] = client.commands['reboot'] = (client, message) => { return c.restart(client, message) }
+  client.commands['rooms'] = (client, message) => { return c.rooms(client, message) }
+  client.commands['stats'] = (client, message) => { return c.stats(client, message) }
+  client.commands['unlock'] = (client, message) => { return c.unlock(client, message) }
 }
 
 module.exports = loadCommands
