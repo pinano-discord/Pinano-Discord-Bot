@@ -27,13 +27,6 @@ module.exports = client => {
     console.log(`${moment().format('MMMM Do YYYY, h:mm:ss a')} :: ${string}`)
   }
 
-  client.loadCommands = async () => {
-    let loadCommands = require('../commands.js')
-    loadCommands(client)
-
-    require('../eval.js').load(client)
-  }
-
   client.errorMessage = async (message, response) => {
     let m = await message.channel.send({
       embed: {

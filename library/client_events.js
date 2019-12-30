@@ -36,9 +36,6 @@ module.exports = client => {
       client.log('Could not set activity.')
     }
 
-    await client.loadCommands()
-    client.log('Successfully loaded commands!')
-
     // create leaderboard objects
     client.weeklyLeaderboard =
       new Leaderboard(client.userRepository, 'current_session_playtime', settings.leaderboard_size)
