@@ -20,7 +20,7 @@ module.exports = client => {
       await Promise.all(settings.pinano_guilds.map(guildId => {
         let guild = client.guilds.get(guildId)
         return Promise.all(client.policyEnforcer.getPracticeRooms(guild)
-          .map(chan => chan.policyEnforcer.unlockPracticeRoom(guild, chan)))
+          .map(chan => client.policyEnforcer.unlockPracticeRoom(guild, chan)))
       }))
 
       client.restart(null, true)
