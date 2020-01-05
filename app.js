@@ -21,6 +21,9 @@ client.log('Loaded client functions')
 require('./library/client_events.js')(client)
 client.log('Loaded client events')
 
+client.commands = require('./commands')
+client.log('Successfully loaded commands')
+
 // weekly wipe at midnight on Monday (local time zone)
 cron.schedule('0 0 * * mon', async () => {
   await client.submitWeek()

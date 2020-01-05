@@ -36,9 +36,6 @@ module.exports = client => {
       client.log('Could not set activity.')
     }
 
-    await client.loadCommands()
-    client.log('Successfully loaded commands!')
-
     // create leaderboard objects
     client.weeklyLeaderboard =
       new Leaderboard(client.userRepository, 'current_session_playtime', settings.leaderboard_size)
@@ -96,7 +93,7 @@ module.exports = client => {
         throw new Error('Please use this bot on the [Pinano server](https://discordapp.com/invite/3q3gWuD).')
       }
 
-      await client.commands[command](message)
+      await client.commands[command](client, message)
     } catch (err) {
       client.errorMessage(message, err.message)
     }
