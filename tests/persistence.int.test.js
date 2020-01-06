@@ -44,9 +44,9 @@ test('can load top users', async () => {
 
   expect(topThree).toHaveLength(3)
   expect(topThree[0].current_session_playtime)
-    .toBeGreaterThan(topThree[1].current_session_playtime)
+    .toBeGreaterThanOrEqual(topThree[1].current_session_playtime)
   expect(topThree[1].current_session_playtime)
-    .toBeGreaterThan(topThree[2].current_session_playtime)
+    .toBeGreaterThanOrEqual(topThree[2].current_session_playtime)
 })
 
 test('can get overall rank', async () => {
