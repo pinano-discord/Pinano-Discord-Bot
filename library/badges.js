@@ -51,6 +51,10 @@ function badgesForUser (userInfo, user, isPracticing) {
       badges += `:sparkles: I've practiced concurrently with ${user.max_concurrent - 1} other people\n`
     }
 
+    if (user.subscribers != null && user.subscribers.length > 0) {
+      badges += `:ear: I have ${user.subscribers.length} subscriber${user.subscribers.length > 1 ? 's' : ''}\n`
+    }
+
     if (user.max_twinning >= 2) {
       switch (user.max_twinning) {
         case 2:
