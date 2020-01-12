@@ -1,7 +1,9 @@
 const moment = require('moment')
+const EventEmitter = require('events')
 
-class SessionManager {
+class SessionManager extends EventEmitter {
   constructor (userRepository, logFn) {
+    super()
     this.userRepository_ = userRepository
     this.logFn_ = logFn
   }
