@@ -85,13 +85,13 @@ async function stats (client, message) {
   }
 
   const mem = userInfo.mem
-  let hasLongSession = false
+  let isPracticing = false
   if (mem.voiceChannel != null && client.policyEnforcer.isPracticeRoom(mem.voiceChannel) && !mem.mute && mem.s_time != null) {
     let activeTime = moment().unix() - mem.s_time
     userInfo.currentSession += activeTime
     userInfo.overallSession += activeTime
-    if (activeTime >= 15 * 60) {
-      hasLongSession = true
+    if (activeTime >= settings.practice_session_minimum_time) {
+      isPracticing = true
     }
   }
 
@@ -101,7 +101,7 @@ async function stats (client, message) {
       user.rooms_practiced = []
     }
 
-    if (hasLongSession && mem.voiceChannel.emoji != null && !user.rooms_practiced.includes(mem.voiceChannel.emoji)) {
+    if (isPracticing && mem.voiceChannel.emoji != null && !user.rooms_practiced.includes(mem.voiceChannel.emoji)) {
       user.rooms_practiced.push(mem.voiceChannel.emoji)
     }
 
@@ -116,7 +116,7 @@ async function stats (client, message) {
     .addField('Weekly Time', `\`${abbreviateTime(userInfo.currentSession)}\``, true)
     .addField('Overall Time', `\`${abbreviateTime(userInfo.overallSession)}\``, true)
     .addField('Rooms Seen', roomsSeen, true)
-    .addField('Badges', badgesForUser(userInfo, user, hasLongSession))
+    .addField('Badges', badgesForUser(userInfo, user, isPracticing))
 
   // checks if user has pfp because discord dosnt return default pfp url >:C
   if (userInfo.mem.user.avatarURL != null) {

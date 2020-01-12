@@ -11,6 +11,7 @@
     "default_welcome" : "Welcome {user} to the server!",
     "default_leave" : "Goodbye {user}!",
 
+    "practice_session_minimum_time": 900,
     "leaderboard_size" : 10,
     "res_destruct_time" : 30,
     "req_destruct_time" : 3,

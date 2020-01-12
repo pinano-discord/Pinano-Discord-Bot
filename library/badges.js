@@ -2,7 +2,7 @@ const moment = require('moment')
 const { RoomIdentifiers } = require('../library/policy_enforcer')
 const settings = require('../settings/settings.json')
 
-function badgesForUser (userInfo, user, hasLongSession) {
+function badgesForUser (userInfo, user, isPracticing) {
   const mem = userInfo.mem
 
   const now = moment().unix()
@@ -96,7 +96,7 @@ function badgesForUser (userInfo, user, hasLongSession) {
       badges += `:notes: I've played in ${user.recitals.length} recitals\n`
     }
 
-    if (hasLongSession || now - user.last_practiced_time < 7 * 86400) {
+    if (isPracticing || now - user.last_practiced_time < 7 * 86400) {
       badges += ':calendar: I\'ve practiced within the last week\n'
     } else if (now - user.last_practiced_time < 30 * 86400) {
       badges += ':calendar: I\'ve practiced within the last thirty days\n'

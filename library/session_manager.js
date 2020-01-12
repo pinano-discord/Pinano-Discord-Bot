@@ -1,6 +1,8 @@
 const moment = require('moment')
 const EventEmitter = require('events')
 
+const settings = require('../settings/settings.json')
+
 class SessionManager extends EventEmitter {
   constructor (userRepository, logFn) {
     super()
@@ -42,7 +44,7 @@ class SessionManager extends EventEmitter {
       const delta = now - member.s_time
       userInfo.current_session_playtime += delta
       userInfo.overall_session_playtime += delta
-      if (delta >= 15 * 60) {
+      if (delta >= settings.practice_session_minimum_time) {
         userInfo.last_practiced_time = now
       }
       await this.userRepository_.save(userInfo)
@@ -61,7 +63,7 @@ class SessionManager extends EventEmitter {
         await this.userRepository_.save(teamInfo)
       }
 
-      if (delta >= 15 * 60 && emoji != null) {
+      if (delta >= settings.practice_session_minimum_time && emoji != null) {
         await this.userRepository_.addToField(userInfo, 'rooms_practiced', emoji)
       }
 
