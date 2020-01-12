@@ -1,3 +1,5 @@
+const settings = require('../settings/settings.json')
+
 class SubscriberManager {
   constructor (client, sessionManager, userRepository) {
     this.client_ = client
@@ -11,7 +13,7 @@ class SubscriberManager {
     const user = await this.userRepository_.load(member.id)
     for (const subId of user.subscribers) {
       const sub = this.client_.users.get(subId)
-      sub.send(`${member.user.username} just started practicing!`)
+      sub.send(`${member.user.username} just started practicing! Use the ${settings.prefix}unsubscribe command to stop receiving these notifications`)
     }
   }
 
