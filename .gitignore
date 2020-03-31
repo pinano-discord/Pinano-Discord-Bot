@@ -2,3 +2,5 @@
 settings/settings\.json
 node_modules/
 startBotAndDB\.bat
+.db
+.env*

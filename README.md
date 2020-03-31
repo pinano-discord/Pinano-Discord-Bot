@@ -1,4 +1,4 @@
-# Pinano Bot
+# The Pracitce Room Recital Bot
 
 [![Build Status](https://travis-ci.com/pinano-discord/Pinano-Discord-Bot.svg?branch=master)](https://travis-ci.com/pinano-discord/Pinano-Discord-Bot)
 
@@ -39,12 +39,11 @@ If you'd like to actually run a test bot, you will need to follow the instructio
 Set the following environment variables customize what the bot connects to and what messages
 it responds to:
 
-    export PINANO_TOKEN='your token here'
-    export PINANO_PREFIX='x!!'
-    export PINANO_DEFAULT_BITRATE=96
+    export BOT_TOKEN='your token here'
+    export BOT_PREFIX='x!!'
+    export BOT_BITRATE=96
 
 The token can be obtained from the bot's Discord settings page.
-
 
 # Contribution instructions
 

@@ -1,16 +1,16 @@
 {
-  "name": "Pinano-Bot",
+  "name": "practice-room-recitial-bot",
   "version": "1.0.0",
-  "description": "A Discord bot for pinano",
-  "main": "app.js",
-  "author": "uber#0001",
+  "description": "A Discord bot for The Practice Room",
+  "main": "./src/app.js",
+  "author": "Abgier Avraha",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ubermadness/Pinano-Discord-Bot.git"
+    "url": "https://github.com/rgbdelta/Practice-Room-Recital-Bot.git"
   },
   "dependencies": {
-    "discord.js": "^11.5.1",
+    "discord.js": "^12.1.1",
     "humanize-duration": "^3.21.0",
     "moment": "^2.22.2",
     "mongodb": "^3.4.1",
@@ -18,10 +18,30 @@
     "opusscript": "0.0.6"
   },
   "devDependencies": {
-    "jest": "^24.9.0",
-    "standard": "^12.0.1"
+    "@types/node": "^13.1.6",
+    "@typescript-eslint/eslint-plugin": "^2.12.0",
+    "@typescript-eslint/parser": "^2.12.0",
+    "eslint": "^6.7.2",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.17.0",
+    "eslint-plugin-sonarjs": "^0.5.0",
+    "jest": "^25.1.0",
+    "prettier": "^1.19.1",
+    "sonarjs": "^1.0.0",
+    "standard": "^12.0.1",
+    "ts-jest": "25.2.0",
+    "ts-loader": "^6.2.1",
+    "ts-node": "^8.6.0",
+    "ts-node-dev": "^1.0.0-pre.44",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "^3.8.3"
   },
   "scripts": {
+    "dev": "tsnd --respawn ./src/app.js",
+    "lint": "eslint './src/**/*.{jsx,js,ts,tsx,json}' && tsc --noEmit",
+    "lint:fix": "eslint --fix './src/**/*.{jsx,js,ts,tsx,json}' && tsc --noEmit",
     "test": "standard --verbose && jest",
     "test:int": "standard --verbose && jest int --passWithNoTests",
     "test:unit": "standard --verbose && jest unit --passWithNoTests"
