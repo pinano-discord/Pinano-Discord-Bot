@@ -1,34 +1,25 @@
+import Discord from 'discord.js';
+import { connect } from './database/repository';
+import { UserRepository } from './database/userRepository';
 import { environment } from './environment';
+import { listenForUsers } from './listeners/userListener';
+import { listenForCommands } from './listeners/commandListener';
+import { commands } from './commands/commands';
 
-import * as Discord from 'discord.js';
-const cron = require('node-cron');
-const { connect, makeUser } = require('./library/persistence');
+async function init() {
+  const discord = new Discord.Client({ fetchAllMembers: true });
+  const database = await connect(environment.mongo_url, environment.mong_db_name);
+  const userRepo = new UserRepository(database);
 
-const discordClient = new Discord.Client({ fetchAllMembers: true });
+  listenForCommands(discord, userRepo, commands);
+  listenForUsers(discord, userRepo);
 
-require('./library/client_functions.js')(discordClient);
-discordClient.log('Loaded client functions');
-
-require('./library/client_events.js')(discordClient);
-discordClient.log('Loaded client events');
-
-discordClient.commands = require('./commands');
-discordClient.log('Successfully loaded commands');
-
-// weekly wipe at midnight on Monday (local time zone)
-cron.schedule('0 0 * * mon', async () => {
-  await discordClient.submitWeek();
-  await discordClient.userRepository.resetSessionTimes();
-  discordClient.log('Cleared weekly results');
-});
-
-connect('mongodb://localhost:27017/', 'user').then((mongoManager) => {
-  discordClient.log('Connected to database');
-
-  discordClient.userRepository = mongoManager.newUserRepository();
-  discordClient.makeUser = makeUser;
-  discordClient.login(environment.token).catch((error) => {
-    discordClient.log(error);
+  try {
+    await discord.login(environment.token);
+  } catch (error) {
+    console.log(error);
     process.exit(1);
-  });
-});
+  }
+}
+
+init();

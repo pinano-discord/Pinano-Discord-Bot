@@ -4,3 +4,4 @@ node_modules/
 startBotAndDB\.bat
 .db
 .env*
+dist/

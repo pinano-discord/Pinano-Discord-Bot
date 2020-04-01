@@ -18,6 +18,7 @@
     "opusscript": "0.0.6"
   },
   "devDependencies": {
+    "@types/mongodb": "^3.5.4",
     "@types/node": "^13.1.6",
     "@typescript-eslint/eslint-plugin": "^2.12.0",
     "@typescript-eslint/parser": "^2.12.0",
@@ -39,12 +40,9 @@
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "dev": "tsnd --respawn ./src/app.js",
-    "lint": "eslint './src/**/*.{jsx,js,ts,tsx,json}' && tsc --noEmit",
-    "lint:fix": "eslint --fix './src/**/*.{jsx,js,ts,tsx,json}' && tsc --noEmit",
-    "test": "standard --verbose && jest",
-    "test:int": "standard --verbose && jest int --passWithNoTests",
-    "test:unit": "standard --verbose && jest unit --passWithNoTests"
+    "dev": "tsnd --respawn ./src/app.ts",
+    "lint": "eslint './src/**/*.{jsx,js,ts,tsx,json}' && tsc",
+    "lint:fix": "eslint --fix './src/**/*.{jsx,js,ts,tsx,json}' && tsc"
   },
   "standard": {
     "env": [
