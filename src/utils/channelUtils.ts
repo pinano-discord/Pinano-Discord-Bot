@@ -77,10 +77,15 @@ export async function unlockChannel(
   if (isLockedVoiceChannel(voiceChannel)) {
     const practiceChannels = getPracticeCategoryVoiceChannels(guildManager);
     if (practiceChannels) {
-      return await voiceChannel.setName(
+      await voiceChannel.setName(
         `${environment.voice_channel_name_prefix}-${practiceChannels.size + 1}`,
       );
     }
+
+    const unmuteRequest = voiceChannel.members.map(async (a) => {
+      await a.voice.setMute(false);
+    });
+    await Promise.all(unmuteRequest);
   }
 }
 

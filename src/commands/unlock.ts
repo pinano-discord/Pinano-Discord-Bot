@@ -13,7 +13,6 @@ export async function unlock(
   userRepo: UserRepository,
 ) {
   const voiceChannel = message.member?.voice.channel;
-  const otherUsers = voiceChannel?.members.filter((m) => m.id !== message.member?.id);
 
   if (!message.member) {
     return;
@@ -39,12 +38,4 @@ export async function unlock(
   }
 
   await unlockChannel(guildManager, voiceChannel);
-  if (!otherUsers) {
-    return;
-  }
-
-  const unmuteRequest = otherUsers.map(async (a) => {
-    await a.voice.setMute(false);
-  });
-  await Promise.all(unmuteRequest);
 }
