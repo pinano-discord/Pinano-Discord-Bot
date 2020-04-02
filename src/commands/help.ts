@@ -2,7 +2,11 @@ import Discord from 'discord.js';
 import { UserRepository } from '../database/userRepository';
 import { environment } from '../environment';
 
-export function help(message: Discord.Message, discord: Discord.Client, userRepo: UserRepository) {
+export async function help(
+  message: Discord.Message,
+  discord: Discord.Client,
+  userRepo: UserRepository,
+) {
   const response = new Discord.MessageEmbed()
     .setTitle('Help')
     .addField(`\`${environment.command_prefix}help\``, 'Displays this help message')
@@ -45,5 +49,5 @@ export function help(message: Discord.Message, discord: Discord.Client, userRepo
     .setColor(environment.embed_color)
     .setTimestamp();
 
-  message.author.send(response);
+  await message.author.send(response);
 }
