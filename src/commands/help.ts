@@ -1,12 +1,7 @@
 import Discord from 'discord.js';
-import { UserRepository } from '../database/userRepository';
 import { environment } from '../environment';
 
-export async function help(
-  message: Discord.Message,
-  discord: Discord.Client,
-  userRepo: UserRepository,
-) {
+export async function help(message: Discord.Message, discord: Discord.Client) {
   const response = new Discord.MessageEmbed()
     .setTitle('Help')
     .addField(`\`${environment.command_prefix}help\``, 'Displays this help message')

@@ -1,17 +1,8 @@
 import Discord from 'discord.js';
-import { UserRepository } from '../database/userRepository';
-import {
-  getPracticeCategoryVoiceChannels,
-  isLockedVoiceChannel,
-  unlockChannel,
-} from '../utils/channelUtils';
 import { environment } from '../environment';
+import { isLockedVoiceChannel, unlockChannel } from '../utils/channelUtils';
 
-export async function unlock(
-  message: Discord.Message,
-  discord: Discord.Client,
-  userRepo: UserRepository,
-) {
+export async function unlock(message: Discord.Message, discord: Discord.Client) {
   const voiceChannel = message.member?.voice.channel;
 
   if (!message.member) {

@@ -12,13 +12,9 @@
   "dependencies": {
     "discord.js": "^12.1.1",
     "humanize-duration": "^3.21.0",
-    "moment": "^2.22.2",
-    "mongodb": "^3.4.1",
-    "node-cron": "^2.0.3",
-    "opusscript": "0.0.6"
+    "moment": "^2.22.2"
   },
   "devDependencies": {
-    "@types/mongodb": "^3.5.4",
     "@types/node": "^13.1.6",
     "@types/ws": "^7.2.3",
     "@typescript-eslint/eslint-plugin": "^2.12.0",

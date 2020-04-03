@@ -1,5 +1,4 @@
 import Discord from 'discord.js';
-import { UserRepository } from '../database/userRepository';
 import {
   isPracticeVoiceChannel,
   isLockedVoiceChannel,
@@ -7,12 +6,9 @@ import {
   getPracticeCategoryVoiceChannels,
 } from '../utils/channelUtils';
 
-export function listenForUsers(discord: Discord.Client, userRepo: UserRepository) {
+export function listenForUsers(discord: Discord.Client) {
   // eslint-disable-next-line sonarjs/cognitive-complexity
   discord.on('voiceStateUpdate', async (prevMember, newMember) => {
-    // User repo management
-    decideToAddUserToUserRepo(newMember, userRepo);
-
     if (prevMember.channelID === newMember.channelID) {
       return;
     }
@@ -52,15 +48,5 @@ async function cleanVoiceChannel(channel: Discord.VoiceChannel) {
   }
   if (existingUnlockedChannels.size > 1 && channel.members.size === 0) {
     await channel.delete();
-  }
-}
-
-async function decideToAddUserToUserRepo(member: Discord.VoiceState, userRepo: UserRepository) {
-  if (!(await userRepo.findByField('id', member.id))) {
-    userRepo.create({
-      id: member.id,
-      current_session_playtime: 0,
-      overall_session_playtime: 0,
-    });
   }
 }

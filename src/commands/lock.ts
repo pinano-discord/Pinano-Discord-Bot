@@ -1,12 +1,7 @@
 import Discord from 'discord.js';
-import { UserRepository } from '../database/userRepository';
 import { lockChannelAndCreateNewChannel, isLockedVoiceChannel } from '../utils/channelUtils';
 
-export async function lock(
-  message: Discord.Message,
-  discord: Discord.Client,
-  userRepo: UserRepository,
-) {
+export async function lock(message: Discord.Message, discord: Discord.Client) {
   if (!message.member) {
     return;
   }
