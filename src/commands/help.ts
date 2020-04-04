@@ -18,8 +18,8 @@ export async function help(message: Discord.Message, discord: Discord.Client) {
       'TODO: Adjusts the bitrate of the currently occupied room',
     )
     .addField(
-      `\`${environment.command_prefix} unlock <CHANNEL_ID>\``,
-      'TODO: Unlocks the specified room for shared use (default: currently occupied room)',
+      `\`${environment.command_prefix} unlock <CHANNEL_ID (optional)>\``,
+      'TODO: Unlocks the current room for shared use. Admins can specify a channel id',
     )
     .addField(
       `\`${environment.command_prefix} unlock\``,

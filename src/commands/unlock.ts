@@ -1,32 +1,50 @@
 import Discord from 'discord.js';
-import { environment } from '../environment';
-import { isLockedVoiceChannel, unlockChannel } from '../utils/channelUtils';
-import { replyToMessage } from '../utils/memberUtils';
+import { unlockChannel } from '../utils/channelUtils';
+import { isAdmin, replyToMessage } from '../utils/memberUtils';
 
 export async function unlock(message: Discord.Message, discord: Discord.Client) {
-  const voiceChannel = message.member?.voice.channel;
+  const channelArg = message.content.split('unlock ')[1];
+  const currentVC = message.member?.voice.channel;
 
-  if (!message.member) {
+  if (channelArg && channelArg.length > 0) {
+    await unlockFromArg(message, channelArg);
     return;
   }
 
-  if (!voiceChannel) {
+  if (currentVC) {
+    await unlockCurrentChannel(message, currentVC);
+  }
+}
+
+async function unlockFromArg(message: Discord.Message, channel: string) {
+  const guildManager = message.guild?.channels;
+  if (!guildManager || !message.member) {
     return;
   }
 
-  if (isLockedVoiceChannel(voiceChannel) && message.member.voice.mute === true) {
+  if (!isAdmin(message.member)) {
     const response = new Discord.MessageEmbed().addField(
-      'You are not the host',
-      `Only the host can unlock a room by typing \`${environment.command_prefix} unlock\` or by leaving the room`,
+      'You are not an admin',
+      `Only an admin can unlock a room by specifying the name`,
+    );
+    await replyToMessage(message, response);
+  } else {
+    await unlockChannel(guildManager, channel);
+  }
+}
+
+async function unlockCurrentChannel(message: Discord.Message, channel: Discord.VoiceChannel) {
+  const guildManager = message.guild?.channels;
+  if (!guildManager || !message.member) {
+    return;
+  }
+  if (message.member.voice.mute === true && !isAdmin(message.member)) {
+    const response = new Discord.MessageEmbed().addField(
+      'You are not the host or an admin',
+      `Only an admin or host can unlock your current room`,
     );
     await replyToMessage(message, response);
     return;
   }
-
-  const guildManager = message.guild?.channels;
-  if (!guildManager) {
-    return;
-  }
-
-  await unlockChannel(guildManager, voiceChannel);
+  await unlockChannel(guildManager, channel);
 }

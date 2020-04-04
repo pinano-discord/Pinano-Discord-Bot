@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
 
-export async function isAdmin(member: Discord.GuildMember) {
+export function isAdmin(member: Discord.GuildMember) {
   return member.hasPermission('ADMINISTRATOR');
 }
 

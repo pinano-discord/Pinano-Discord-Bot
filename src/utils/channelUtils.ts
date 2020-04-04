@@ -55,9 +55,11 @@ export async function lockChannelAndCreateNewChannel(
 
 export async function unlockChannel(
   guildManager: Discord.GuildChannelManager,
-  voiceChannel: Discord.VoiceChannel,
+  channel: Discord.VoiceChannel | string,
 ) {
-  if (isLockedVoiceChannel(voiceChannel)) {
+  const voiceChannel =
+    typeof channel === 'string' ? await getChannelFromName(guildManager, channel) : channel;
+  if (voiceChannel && isLockedVoiceChannel(voiceChannel)) {
     const practiceChannels = getPracticeCategoryVoiceChannels(guildManager);
     if (practiceChannels) {
       const identifier = getNewChannelIdentifier(practiceChannels);
@@ -95,6 +97,13 @@ async function createNewChannel(manager: Discord.GuildChannelManager) {
       parent: practiceRoomCategory,
     });
   }
+}
+
+async function getChannelFromName(manager: Discord.GuildChannelManager, channelName: string) {
+  const existingChannels = getPracticeCategoryVoiceChannels(manager);
+  return existingChannels?.find((c) =>
+    c.name.toLocaleLowerCase().includes(channelName.toLocaleLowerCase()),
+  );
 }
 
 function getNewChannelIdentifier(
