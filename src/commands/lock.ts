@@ -1,5 +1,6 @@
 import Discord from 'discord.js';
 import { lockChannelAndCreateNewChannel, isLockedVoiceChannel } from '../utils/channelUtils';
+import { replyToMessage } from '../utils/memberUtils';
 
 export async function lock(message: Discord.Message, discord: Discord.Client) {
   if (!message.member) {
@@ -17,7 +18,7 @@ export async function lock(message: Discord.Message, discord: Discord.Client) {
       "You cannot lock a room that's already locked",
     );
 
-    await message.member.lastMessage?.channel.send(response);
+    await replyToMessage(message, response);
     return;
   }
 
