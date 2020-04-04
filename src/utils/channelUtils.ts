@@ -95,7 +95,25 @@ async function createNewChannel(manager: Discord.GuildChannelManager) {
     await manager.create(`${environment.voice_channel_name_prefix}-${identifier}`, {
       type: 'voice',
       parent: practiceRoomCategory,
+      bitrate: environment.default_bitrate,
     });
+  }
+}
+
+export async function setChannelBitrate(
+  guildManager: Discord.GuildChannelManager,
+  channel: Discord.VoiceChannel | string,
+  bitrate: number,
+) {
+  const voiceChannel =
+    typeof channel === 'string' ? await getChannelFromName(guildManager, channel) : channel;
+
+  // TODO: check bitrate limits of each server
+  if (voiceChannel) {
+    if (bitrate < 8000 || bitrate > 96000) {
+      throw new Error('Bit rate must be above 8kbps and below 96kbps');
+    }
+    return await voiceChannel.edit({ bitrate: bitrate });
   }
 }
 
