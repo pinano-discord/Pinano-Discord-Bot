@@ -12,7 +12,7 @@ export function listenForCommands(discord: Discord.Client, commands: { [key: str
       if (
         message.content
           .toLowerCase()
-          .startsWith(`${environment.command_prefix} ${command.toLowerCase()}`)
+          .startsWith(`${environment.command_prefix}${command.toLowerCase()}`)
       ) {
         console.log(`Executing command ${command}`);
         commands[command](message, discord);

@@ -1,5 +1,5 @@
 import Discord from 'discord.js';
-import { unlockChannel } from '../utils/channelUtils';
+import { unlockChannelAndDeleteEmptyChannels } from '../utils/channelUtils';
 import { isAdmin, replyToMessage } from '../utils/memberUtils';
 
 export async function unlock(message: Discord.Message, discord: Discord.Client) {
@@ -29,7 +29,7 @@ async function unlockFromArg(message: Discord.Message, channel: string) {
     );
     await replyToMessage(message, response);
   } else {
-    await unlockChannel(guildManager, channel);
+    await unlockChannelAndDeleteEmptyChannels(guildManager, channel);
   }
 }
 
@@ -38,7 +38,7 @@ async function unlockCurrentChannel(message: Discord.Message, channel: Discord.V
   if (!guildManager || !message.member) {
     return;
   }
-  if (message.member.voice.mute === true && !isAdmin(message.member)) {
+  if (message.member.voice.serverMute === true && !isAdmin(message.member)) {
     const response = new Discord.MessageEmbed().addField(
       'You are not the host or an admin',
       `Only an admin or host can unlock your current room`,
@@ -46,5 +46,5 @@ async function unlockCurrentChannel(message: Discord.Message, channel: Discord.V
     await replyToMessage(message, response);
     return;
   }
-  await unlockChannel(guildManager, channel);
+  await unlockChannelAndDeleteEmptyChannels(guildManager, channel);
 }

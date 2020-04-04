@@ -4,9 +4,9 @@ import { environment } from '../environment';
 export async function help(message: Discord.Message, discord: Discord.Client) {
   const response = new Discord.MessageEmbed()
     .setTitle('Help')
-    .addField(`\`${environment.command_prefix} help\``, 'Displays this help message')
+    .addField(`\`${environment.command_prefix}help\``, 'Displays this help message')
     .addField(
-      `\`${environment.command_prefix} setup\``,
+      `\`${environment.command_prefix}setup\``,
       "Creates the initial category and voice channel if you're admin",
     )
     .addField(
@@ -14,15 +14,15 @@ export async function help(message: Discord.Message, discord: Discord.Client) {
       'Locks the currently occupied room for exclusive use',
     )
     .addField(
-      `\`${environment.command_prefix} bitrate <BITRATE_IN_KBPS>\``,
+      `\`${environment.command_prefix}bitrate <BITRATE_IN_KBPS>\``,
       'Admins can adjust the bitrate of the currently occupied room',
     )
     .addField(
-      `\`${environment.command_prefix} unlock <CHANNEL_ID (optional)>\``,
-      'Unlocks the current room for shared use. Admins can specify a channel id',
+      `\`${environment.command_prefix}unlock <CHANNEL_ID>\``,
+      'Admins unlock a channel bt specifying an id',
     )
     .addField(
-      `\`${environment.command_prefix} unlock\``,
+      `\`${environment.command_prefix}unlock\``,
       'Unlocks the currently occupied room for shared use',
     )
     .setColor(environment.embed_color)

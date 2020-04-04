@@ -28,7 +28,7 @@ module.exports = {
     '@typescript-eslint/class-name-casing': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-empty-function': 'off',
-    'sonarjs/cognitive-complexity': ['error', 7],
+    'sonarjs/cognitive-complexity': ['error', 9],
     'sonarjs/no-identical-expressions': 'error',
     'sonarjs/no-small-switch': 'off',
   },

@@ -20,7 +20,7 @@ export async function setup(message: Discord.Message, discord: Discord.Client) {
   await initialiseCategoryAndChannels(message.member.guild.channels);
   const response = new Discord.MessageEmbed().addField(
     'Setup Complete',
-    `Category intialised with 1 voice channel`,
+    `Category intialised with voice channels`,
   );
 
   await replyToMessage(message, response);
