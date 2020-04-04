@@ -10,6 +10,3 @@ jobs:
         with:
           node-version: "12.16.1"
       - run: npm install
-        working-directory: website
-      - run: npm run lint
-        working-directory: website
