@@ -10,15 +10,14 @@
     "url": "https://github.com/ubermadness/Pinano-Discord-Bot.git"
   },
   "dependencies": {
-    "discord.js": "^11.5.1",
-    "humanize-duration": "^3.21.0",
+    "discord.js": "^11.6.4",
+    "humanize-duration": "^3.22.0",
     "moment": "^2.22.2",
-    "mongodb": "^3.4.1",
-    "node-cron": "^2.0.3",
-    "opusscript": "0.0.6"
+    "mongodb": "^3.5.5",
+    "node-cron": "^2.0.3"
   },
   "devDependencies": {
-    "jest": "^24.9.0",
+    "jest": "^25.3.0",
     "standard": "^12.0.1"
   },
   "scripts": {

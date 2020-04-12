@@ -7,7 +7,7 @@ test('has commands', () => {
   Object.entries(commands).forEach(
     ([key, value]) => {
       expect(value).toBeInstanceOf(Function) // all commands must be functions
-      expect(value).toHaveLength(2) // called with (client, message)
+      expect(value.length).toBe(2) // called with (client, message)
     }
   )
 })
