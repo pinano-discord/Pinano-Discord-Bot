@@ -1,9 +1,11 @@
 const {
+  memberFromQualifiedName,
   selfDestructMessage
 } = require('./helpers')
 
 async function subscribe (client, message) {
-  const subscribee = message.mentions.users.first()
+  const args = message.content.split(' ').splice(1)
+  const subscribee = memberFromQualifiedName(args, message.guild.members)
   if (subscribee == null) {
     throw new Error('Must subscribe to a user!')
   }
@@ -12,7 +14,8 @@ async function subscribe (client, message) {
 }
 
 async function unsubscribe (client, message) {
-  const subscribee = message.mentions.users.first()
+  const args = message.content.split(' ').splice(1)
+  const subscribee = memberFromQualifiedName(args, message.guild.members)
   if (subscribee == null) {
     throw new Error('Must unsubscribe to a user!')
   }

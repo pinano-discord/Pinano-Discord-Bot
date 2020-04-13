@@ -20,6 +20,16 @@ function requireParameterFormat (arg, formatFn, usageStr) {
   }
 }
 
+function memberFromQualifiedName (args, members) {
+  // fqName: "fully qualified name"
+  const fqName = args.join(' ').trim().split('#')
+  if (fqName.length !== 2) {
+    throw new Error('unable to parse name of form username#discriminator')
+  }
+  return members.find(val => val.user.username === fqName[0] &&
+    val.user.discriminator === fqName[1])
+}
+
 async function selfDestructMessage (messageFn) {
   let m = await messageFn()
   setTimeout(() => m.delete(), settings.res_destruct_time * 1000)
@@ -39,6 +49,7 @@ module.exports = {
   requireRole,
   requireParameterCount,
   requireParameterFormat,
+  memberFromQualifiedName,
   selfDestructMessage,
   abbreviateTime
 }
