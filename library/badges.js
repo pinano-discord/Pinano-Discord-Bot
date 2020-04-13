@@ -27,19 +27,12 @@ function badgesForUser (userInfo, user, isPracticing) {
         badges += ':christmas_tree: [Practising knows no holiday](http://euge.ca/61)\n'
       }
 
-      let fishBadgeAwarded = false
-      if (user.rooms_practiced.includes('🐟')) {
-        badges += ':fish: Never gonna give 魚 up\n'
-        fishBadgeAwarded = true
+      if (_includesAll(user.rooms_practiced, RoomIdentifiers.valentines)) {
+        badges += ':heart: I\'m no stranger to love\n'
       }
 
       if (_includesAll(user.rooms_practiced, RoomIdentifiers.rickroll)) {
-        if (!fishBadgeAwarded) {
-          badges += ':arrow_up: Never gonna give you :arrow_up:\n'
-        }
-        badges += ':arrow_down: Never gonna let you :arrow_down:\n'
-        badges += ':person_running: Never gonna :person_running: around\n'
-        badges += ':desert: And :desert: you\n'
+        badges += ':cake: Never gonna run around and :cake: you\n'
       }
     }
 
@@ -53,36 +46,6 @@ function badgesForUser (userInfo, user, isPracticing) {
 
     if (user.subscribers != null && user.subscribers.length > 0) {
       badges += `:ear: I have ${user.subscribers.length} subscriber${user.subscribers.length > 1 ? 's' : ''}\n`
-    }
-
-    if (user.max_twinning >= 2) {
-      switch (user.max_twinning) {
-        case 2:
-          badges += `:dancers: I've been a practice twin\n`
-          break
-        case 3:
-          badges += `:baby::baby::baby: I've been a practice triplet\n`
-          break
-        case 4:
-          badges += `:baby::baby::baby::baby: I've been a practice quadruplet\n`
-          break
-        case 5:
-          badges += `:baby::baby::baby::baby::baby: I've been a practice quintuplet\n`
-          break
-        case 6:
-          badges += `:baby::baby::baby::baby::baby::baby: I've been a practice sextuplet\n`
-          break
-        case 7:
-          badges += `:baby::baby::baby::baby::baby::baby::baby: I've been a practice septuplet\n`
-          break
-        case 8:
-          badges += `:baby::baby::baby::baby::baby::baby::baby::baby: I've been a practice octuplet\n`
-          break
-        default:
-          badges += `:baby::baby::baby::baby::baby::baby::baby::baby: I've been a practice octuplet\n`
-          badges += `:hammer: I like trying to break Pinano Bot\n`
-          break
-      }
     }
 
     if (user.quiz_score >= 10) {

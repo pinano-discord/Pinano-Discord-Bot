@@ -19,13 +19,13 @@ module.exports = client => {
       // missed some events and we cannot be sure about the state of the world. Forcibly restart
       // the bot WITHOUT saving any sessions. Do unlock rooms, though.
       client.log('WARNING: forcibly restarting Pinano Bot after reconnection to Discord')
-      await Promise.all(settings.pinano_guilds.map(guildId => {
-        let guild = client.guilds.get(guildId)
-        return Promise.all(client.policyEnforcer.getPracticeRooms(guild)
-          .map(chan => client.policyEnforcer.unlockPracticeRoom(guild, chan)))
-      }))
-
-      client.restart(null, true)
+      // await Promise.all(settings.pinano_guilds.map(guildId => {
+      //   let guild = client.guilds.get(guildId)
+      //   return Promise.all(client.policyEnforcer.getPracticeRooms(guild)
+      //     .map(chan => client.policyEnforcer.unlockPracticeRoom(guild, chan)))
+      // }))
+      //
+      // client.restart(null, true)
     }
 
     alreadyInitialized = true
