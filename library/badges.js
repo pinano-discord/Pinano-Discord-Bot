@@ -55,36 +55,6 @@ function badgesForUser (userInfo, user, isPracticing) {
       badges += `:ear: I have ${user.subscribers.length} subscriber${user.subscribers.length > 1 ? 's' : ''}\n`
     }
 
-    if (user.max_twinning >= 2) {
-      switch (user.max_twinning) {
-        case 2:
-          badges += `:dancers: I've been a practice twin\n`
-          break
-        case 3:
-          badges += `:baby::baby::baby: I've been a practice triplet\n`
-          break
-        case 4:
-          badges += `:baby::baby::baby::baby: I've been a practice quadruplet\n`
-          break
-        case 5:
-          badges += `:baby::baby::baby::baby::baby: I've been a practice quintuplet\n`
-          break
-        case 6:
-          badges += `:baby::baby::baby::baby::baby::baby: I've been a practice sextuplet\n`
-          break
-        case 7:
-          badges += `:baby::baby::baby::baby::baby::baby::baby: I've been a practice septuplet\n`
-          break
-        case 8:
-          badges += `:baby::baby::baby::baby::baby::baby::baby::baby: I've been a practice octuplet\n`
-          break
-        default:
-          badges += `:baby::baby::baby::baby::baby::baby::baby::baby: I've been a practice octuplet\n`
-          badges += `:hammer: I like trying to break Pinano Bot\n`
-          break
-      }
-    }
-
     if (user.quiz_score >= 10) {
       badges += `:question: I've correctly answered ${user.quiz_score} riddles on [#🎶literature-quiz]` +
         '(https://discordapp.com/channels/188345759408717825/505872476903964674)\n'
