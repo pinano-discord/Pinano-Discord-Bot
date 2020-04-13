@@ -19,9 +19,9 @@ async function help (client, message) {
     'Locks the currently occupied room for exclusive use')
   msg.addField(`\`${settings.prefix}bitrate [ BITRATE_IN_KBPS ]\``,
     'Adjusts the bitrate of the currently occupied room')
-  msg.addField(`\`${settings.prefix}subscribe @user\``,
+  msg.addField(`\`${settings.prefix}subscribe username#discriminator\``,
     'Get a DM when @user starts practicing')
-  msg.addField(`\`${settings.prefix}unsubscribe @user\``,
+  msg.addField(`\`${settings.prefix}unsubscribe username#discriminator\``,
     'Stop getting a DM when @user starts practicing')
 
   if (isBotManager) {
