@@ -106,7 +106,7 @@ class PolicyEnforcer {
 
     if (RoomIdentifiers.rare.includes(channel.emoji)) {
       channel.emoji = this._pickRandomFromList(RoomIdentifiers.onDemand)
-      await channel.setName(`Pracice Room ${channel.emoji}`)
+      await channel.setName(`Practice Room ${channel.emoji}`)
     }
 
     channel.locked_by = null
