@@ -32,7 +32,7 @@ cron.schedule('0 0 * * mon', async () => {
 })
 
 // every hour, reset the daily time
-cron.schedule('* * * * *', async() => {
+cron.schedule('0 * * * *', async() => {
   await client.userRepository.resetDailyTimes((new Date()).getUTCHours())
 })
 
