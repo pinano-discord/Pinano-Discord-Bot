@@ -21,7 +21,8 @@ const RoomIdentifiers = {
 
   rare: ['🌎', '🌍', '🌏'],
   christmas: ['🎅', '🎁', '🎄', '⛄️'],
-  rickroll: ['⬆️', '⬇️', '🏃', '🏜️'],
+  rickroll: ['🍮', '🍰', '🧁', '🥧'],
+  valentines: ['❤️', '💖', '💕', '💙'],
 
   get all () {
     return this.original + this.onDemand + this.rare + this.christmas + this.rickroll
@@ -167,8 +168,10 @@ class PolicyEnforcer {
         this.deletedEmoji = null
       } else if (current.month() === 11 && current.date() >= 20) {
         identifier = this._pickRandomFromList(RoomIdentifiers.christmas)
-      } else if (current.month() === 3 && current.date() === 1) {
+      } else if (current.month() === 3 && current.date() >= 1 && current.date() <= 7) {
         identifier = this._pickRandomFromList(RoomIdentifiers.rickroll)
+      } else if (current.month() === 1 && current.date() >= 13 && current.date() < 20) {
+        identifier = this._pickRandomFromList(RoomIdentifiers.valentines)
       } else if (Math.floor(Math.random() * 40) === 21) {
         identifier = this._pickRandomFromList(RoomIdentifiers.rare)
       } else {
