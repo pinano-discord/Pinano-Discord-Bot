@@ -214,7 +214,6 @@ module.exports = client => {
 
   client.redrawInformation = async (guild) => {
     let weeklyData = client.weeklyLeaderboard.getPageData()
-    let teamData = client.teamLeaderboard.getPageData()
     let overallData = client.overallLeaderboard.getPageData()
     let currentTime = moment().unix()
     let endOfWeek = moment().endOf('isoWeek').unix()
@@ -226,7 +225,6 @@ module.exports = client => {
       .setColor(settings.embed_color)
       .setDescription(`${client.roomInfo}\n\u200B`) // stupid formatting hack
       .addField('Weekly Leaderboard', translateLeaderboard(weeklyData), true)
-      .addField('Team Standings', translateLeaderboard(teamData, '@&'), true)
       .addField('Overall Leaderboard', translateLeaderboard(overallData), true)
       .addField(`Weekly leaderboard resets in ${timeUntilReset}`,
         `\u200B\nClick [here](${pinnedPostUrl}) for optimal Discord voice settings\n\
