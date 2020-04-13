@@ -31,6 +31,11 @@ cron.schedule('0 0 * * mon', async () => {
   client.log('Cleared weekly results')
 })
 
+// every hour, reset the daily time
+cron.schedule('* * * * *', async() => {
+  await client.userRepository.resetDailyTimes((new Date()).getUTCHours())
+})
+
 connect('mongodb://localhost:27017/', 'pinano').then(mongoManager => {
   client.log('Connected to database')
 

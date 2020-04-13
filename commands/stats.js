@@ -79,9 +79,11 @@ async function stats (client, message) {
   if (user != null) {
     userInfo.currentSession = user.current_session_playtime
     userInfo.overallSession = user.overall_session_playtime
+    userInfo.dailySession = user.daily_session_playtime
   } else {
     userInfo.currentSession = 0
     userInfo.overallSession = 0
+    userInfo.dailySession = 0
   }
 
   const mem = userInfo.mem
@@ -90,6 +92,7 @@ async function stats (client, message) {
     let activeTime = moment().unix() - mem.s_time
     userInfo.currentSession += activeTime
     userInfo.overallSession += activeTime
+    userInfo.dailySession += activeTime
     if (activeTime >= settings.practice_session_minimum_time) {
       isPracticing = true
     }
@@ -113,6 +116,7 @@ async function stats (client, message) {
   let embed = new Discord.RichEmbed()
     .setTitle(`${userInfo.username}#${userInfo.discriminator}`)
     .setColor(settings.embed_color)
+    .addField(`Daily Time (resets on ${user.daily_reset_hour}:00 UTC`, `\`${abbreviateTime(userInfo.dailySession)}\``, true)
     .addField('Weekly Time', `\`${abbreviateTime(userInfo.currentSession)}\``, true)
     .addField('Overall Time', `\`${abbreviateTime(userInfo.overallSession)}\``, true)
     .addField('Rooms Seen', roomsSeen, true)

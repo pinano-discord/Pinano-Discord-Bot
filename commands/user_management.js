@@ -52,4 +52,26 @@ async function deltime (client, message) {
   selfDestructMessage(() => message.reply('removed time from user.'))
 }
 
-module.exports = { addtime, deltime }
+async function setdailyreset (client, message) {
+  let args = message.content.split(' ').splice(1)
+  let usageStr = `${settings.prefix}setdailyreset HOUR`
+  requireParameterCount(args, 1, usageStr)
+  requireParameterFormat(args[0], arg => Number.isInteger(parseInt(arg)), usageStr)
+  let hour = parseInt(args[0])
+  if (hour < 0 || hour >= 24) {
+    throw new Error('Hour must be between 0 and 23')
+  }
+
+  client.log(`load ${message.member.id}`)
+  let userInfo = await client.userRepository.load(message.member.id)
+  if (userInfo == null) {
+    throw new Error('The user was not found in the database.')
+  }
+  userInfo.daily_reset_hour = hour
+  await client.userRepository.save(userInfo)
+
+  client.log(`Set <@${message.member.id}>'s daily reset hour to ${hour}`)
+  selfDestructMessage(() => message.reply(`set daily reset hour to ${hour}`))
+}
+
+module.exports = { addtime, deltime, setdailyreset }
