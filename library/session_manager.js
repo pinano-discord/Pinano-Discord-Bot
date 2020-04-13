@@ -1,7 +1,11 @@
 const moment = require('moment')
+const EventEmitter = require('events')
 
-class SessionManager {
+const settings = require('../settings/settings.json')
+
+class SessionManager extends EventEmitter {
   constructor (userRepository, logFn) {
+    super()
     this.userRepository_ = userRepository
     this.logFn_ = logFn
   }
@@ -12,6 +16,12 @@ class SessionManager {
     if (member.s_time == null) {
       this.logFn_(`Beginning session for user <@${member.id}> ${username}#${discriminator}`)
       member.s_time = moment().unix()
+
+      setTimeout(() => {
+        if (member.s_time != null) {
+          this.emit('startPractice', member)
+        }
+      }, settings.practice_session_minimum_time * 1000)
     }
   }
 
@@ -40,7 +50,7 @@ class SessionManager {
       const delta = now - member.s_time
       userInfo.current_session_playtime += delta
       userInfo.overall_session_playtime += delta
-      if (delta >= 15 * 60) {
+      if (delta >= settings.practice_session_minimum_time) {
         userInfo.last_practiced_time = now
       }
       await this.userRepository_.save(userInfo)
@@ -59,7 +69,7 @@ class SessionManager {
         await this.userRepository_.save(teamInfo)
       }
 
-      if (delta >= 15 * 60 && emoji != null) {
+      if (delta >= settings.practice_session_minimum_time && emoji != null) {
         await this.userRepository_.addToField(userInfo, 'rooms_practiced', emoji)
       }
 

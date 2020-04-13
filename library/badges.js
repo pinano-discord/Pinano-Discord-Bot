@@ -2,7 +2,7 @@ const moment = require('moment')
 const { RoomIdentifiers } = require('../library/policy_enforcer')
 const settings = require('../settings/settings.json')
 
-function badgesForUser (userInfo, user, hasLongSession) {
+function badgesForUser (userInfo, user, isPracticing) {
   const mem = userInfo.mem
 
   const now = moment().unix()
@@ -51,6 +51,10 @@ function badgesForUser (userInfo, user, hasLongSession) {
       badges += `:sparkles: I've practiced concurrently with ${user.max_concurrent - 1} other people\n`
     }
 
+    if (user.subscribers != null && user.subscribers.length > 0) {
+      badges += `:ear: I have ${user.subscribers.length} subscriber${user.subscribers.length > 1 ? 's' : ''}\n`
+    }
+
     if (user.max_twinning >= 2) {
       switch (user.max_twinning) {
         case 2:
@@ -96,7 +100,7 @@ function badgesForUser (userInfo, user, hasLongSession) {
       badges += `:notes: I've played in ${user.recitals.length} recitals\n`
     }
 
-    if (hasLongSession || now - user.last_practiced_time < 7 * 86400) {
+    if (isPracticing || now - user.last_practiced_time < 7 * 86400) {
       badges += ':calendar: I\'ve practiced within the last week\n'
     } else if (now - user.last_practiced_time < 30 * 86400) {
       badges += ':calendar: I\'ve practiced within the last thirty days\n'
