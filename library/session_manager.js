@@ -44,7 +44,7 @@ class SessionManager extends EventEmitter {
           'current_session_playtime': 0,
           'overall_session_playtime': 0,
           'daily_session_playtime': 0,
-          'daily_reset_hour': 0 // UTC
+          'daily_reset_hour': null // UTC
         }
       }
 
@@ -52,7 +52,9 @@ class SessionManager extends EventEmitter {
       const delta = now - member.s_time
       userInfo.current_session_playtime += delta
       userInfo.overall_session_playtime += delta
-      userInfo.daily_session_playtime += delta
+      if (userInfo.daily_reset_hour != null) {
+        userInfo.daily_session_playtime += delta
+      }
       if (delta >= settings.practice_session_minimum_time) {
         userInfo.last_practiced_time = now
       }

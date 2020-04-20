@@ -116,8 +116,12 @@ async function stats (client, message) {
   let embed = new Discord.RichEmbed()
     .setTitle(`${userInfo.username}#${userInfo.discriminator}`)
     .setColor(settings.embed_color)
-    .addField(`Daily Time (resets on ${user.daily_reset_hour}:00 UTC`, `\`${abbreviateTime(userInfo.dailySession)}\``, true)
-    .addField('Weekly Time', `\`${abbreviateTime(userInfo.currentSession)}\``, true)
+
+  if (user != null && user.daily_reset_hour != null) {
+    embed.addField('Daily Time', `\`${abbreviateTime(userInfo.dailySession)}\``, true)
+  }
+
+  embed.addField('Weekly Time', `\`${abbreviateTime(userInfo.currentSession)}\``, true)
     .addField('Overall Time', `\`${abbreviateTime(userInfo.overallSession)}\``, true)
     .addField('Rooms Seen', roomsSeen, true)
     .addField('Badges', badgesForUser(userInfo, user, isPracticing))
