@@ -64,13 +64,12 @@ async function setdailyreset (client, message) {
   let args = message.content.split(' ').splice(1)
   let usageStr = `${settings.prefix}setdailyreset [ HOUR ]`
   requireParameterCount(args, 1, usageStr)
-  requireParameterFormat(args[0], arg => arg == 'off' || Number.isInteger(parseInt(arg)), usageStr)
+  requireParameterFormat(args[0], arg => arg === 'off' || Number.isInteger(parseInt(arg)), usageStr)
 
-  let hour;
-  if (args[0] == 'off') {
-    hour = null;
-  }
-  else {
+  let hour
+  if (args[0] === 'off') {
+    hour = null
+  } else {
     hour = parseInt(args[0])
     if (hour < 0 || hour >= 24) {
       throw new Error('Hour must be between 0 and 23 (or off)')
@@ -89,8 +88,7 @@ async function setdailyreset (client, message) {
   if (hour == null) {
     client.log(`Turned off <@${message.member.id}>'s daily reset hour`)
     selfDestructMessage(() => message.reply(`turned off daily hour`))
-  }
-  else {
+  } else {
     client.log(`Set <@${message.member.id}>'s daily reset hour to ${hour}`)
     selfDestructMessage(() => message.reply(`set daily reset hour to ${hour}`))
   }
