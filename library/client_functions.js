@@ -112,23 +112,27 @@ module.exports = client => {
       message = await message.edit(`${message.content} ready.\nDetecting room status...`)
     }
 
-    let channel = guild.channels.find(c => c.name === 'Practice Room ⚡')
+    let channel = guild.channels.get('580937092155179018')
     if (channel != null) {
+      await channel.setName('Practice Room ⚡')
       channel.emoji = '⚡'
     }
 
-    channel = guild.channels.find(c => c.name === 'Practice Room 🐮')
+    channel = guild.channels.get('698619298721038378')
     if (channel != null) {
+      await channel.setName('Practice Room 🐮')
       channel.emoji = '🐮'
     }
 
     channel = guild.channels.find(c => c.name === 'Practice Room 🐺')
     if (channel != null) {
+      await channel.setName('Practice Room 🐺')
       channel.emoji = '🐺'
     }
 
-    channel = guild.channels.find(c => c.name === 'Practice Room 🤔')
+    channel = guild.channels.get('549041858760671233')
     if (channel != null) {
+      await channel.setName('Practice Room 🤔')
       channel.emoji = '🤔'
     }
 
