@@ -10,7 +10,7 @@ async function subscribe (client, message) {
     throw new Error('Must subscribe to a user!')
   }
   await client.subscriberManager.subscribe(message.author, subscribee)
-  selfDestructMessage(() => message.reply(`subscribed to ${subscribee.username}`))
+  selfDestructMessage(() => message.reply(`subscribed to ${subscribee.user.username}#${subscribee.user.discriminator}`))
 }
 
 async function unsubscribe (client, message) {
@@ -20,7 +20,7 @@ async function unsubscribe (client, message) {
     throw new Error('Must unsubscribe to a user!')
   }
   await client.subscriberManager.unsubscribe(message.author, subscribee)
-  selfDestructMessage(() => message.reply(`unsubscribed to ${subscribee.username}`))
+  selfDestructMessage(() => message.reply(`unsubscribed to ${subscribee.user.username}#${subscribee.user.discriminator}`))
 }
 
 module.exports = { subscribe, unsubscribe }
