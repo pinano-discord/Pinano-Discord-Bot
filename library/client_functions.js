@@ -174,7 +174,7 @@ module.exports = client => {
     const reducer = (rooms, chan) => {
       let displayName = (chan.locked_by != null) ? chan.unlocked_name : chan.name
       rooms += `\n\n${displayName}`
-      if (chan.bitrate !== 384) {
+      if (chan.bitrate !== settings.default_bitrate) {
         rooms += ` | ${chan.bitrate}kbps`
       }
 

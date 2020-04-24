@@ -181,7 +181,7 @@ class PolicyEnforcer {
       let channel = await guild.createChannel(`Practice Room ${identifier}`, {
         type: 'voice',
         parent: categoryChan,
-        bitrate: settings.dev_mode ? 96000 : 384000,
+        bitrate: settings.dev_mode ? 96000 : settings.default_bitrate * 1000,
         position: basePosition + rooms.size + 1,
         permissionOverwrites: [{
           id: pinanoBot,
