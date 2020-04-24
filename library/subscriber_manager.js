@@ -19,13 +19,13 @@ class SubscriberManager {
 
   async subscribe (subscriber, subscribee) {
     const user = await this.userRepository_.load(subscribee.id)
-    this.client.log(`${subscriber.id} subscribing to ${user.id} ${subscribee.id}`)
+    this.client_.log(`${subscriber.id} subscribing to ${user.id} ${subscribee.id}`)
     return this.userRepository_.addToField(user, 'subscribers', subscriber.id)
   }
 
   async unsubscribe (subscriber, subscribee) {
     const user = await this.userRepository_.load(subscribee.id)
-    this.client.log(`${subscriber.id} unsubscribing to ${user.id}`)
+    this.client_.log(`${subscriber.id} unsubscribing to ${user.id}`)
     return this.userRepository_.removeFromField(user, 'subscribers', subscriber.id)
   }
 }
