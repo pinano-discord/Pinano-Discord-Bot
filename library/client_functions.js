@@ -124,7 +124,7 @@ module.exports = client => {
       channel.emoji = '🐮'
     }
 
-    channel = guild.channels.find(c => c.name === 'Practice Room 🐺')
+    channel = guild.channels.get('621375893012480000')
     if (channel != null) {
       await channel.setName('Practice Room 🐺')
       channel.emoji = '🐺'
