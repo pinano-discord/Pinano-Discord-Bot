@@ -1,5 +1,5 @@
 const { help } = require('./help')
-const { addtime, deltime } = require('./user_management')
+const { addtime, deltime, setdailyreset } = require('./user_management')
 const { lock, unlock, bitrate, rooms } = require('./room_management')
 const { recital } = require('./recital_management')
 const { stats } = require('./stats.js')
@@ -10,6 +10,7 @@ module.exports = {
   help,
   addtime,
   deltime,
+  setdailyreset,
   lock,
   unlock,
   bitrate,

@@ -13,6 +13,8 @@ async function help (client, message) {
   msg.setTitle('Help')
   msg.addField(`\`${settings.prefix}help\``,
     'Displays this help message')
+  msg.addField(`\`${settings.prefix}setdailyreset [ HOUR ]\``,
+    `Sets your daily reset hour to the specified hour (UTC time, current hour is ${(new Date()).getUTCHours()}, hour must be between 0 and 23 (or off)`)
   msg.addField(`\`${settings.prefix}stats [ USERNAME#DISCRIMINATOR ]\``,
     'Displays practice statistics for the specified user (default: calling user)')
   msg.addField(`\`${settings.prefix}lock\``,

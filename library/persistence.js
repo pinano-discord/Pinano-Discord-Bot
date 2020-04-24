@@ -32,7 +32,9 @@ function makeUser (userId) {
   return {
     id: userId,
     current_session_playtime: 0,
-    overall_session_playtime: 0
+    overall_session_playtime: 0,
+    daily_session_playtime: 0,
+    daily_reset_hour: null // UTC
   }
 }
 
@@ -87,6 +89,13 @@ class MongoUserRepository {
     return this.collection.updateMany(
       { current_session_playtime: { $gt: 0 } },
       { $set: { current_session_playtime: 0 } })
+  }
+
+  async resetDailyTimes (hour) {
+    // reset all the users whose daily_reset_hour matches the current hour
+    return this.collection.updateMany(
+      { daily_reset_hour: { $eq: hour } },
+      { $set: { daily_session_playtime: 0 } })
   }
 
   async getOverallRank (userId) {
