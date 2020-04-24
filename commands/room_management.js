@@ -1,3 +1,5 @@
+const settings = require('../settings/settings.json')
+
 const {
   requireRole,
   selfDestructMessage
@@ -78,8 +80,8 @@ async function bitrate (client, message) {
   }
 
   let newrate = parseInt(args[0])
-  if (isNaN(args[0]) || newrate < 8 || newrate > 384) {
-    throw new Error('Bitrate must be a number between 8 and 384.')
+  if (isNaN(args[0]) || newrate < 8 || newrate > settings.default_bitrate) {
+    throw new Error(`Bitrate must be a number between 8 and ${settings.default_bitrate}.`)
   }
 
   if (channel.locked_by !== message.author.id) {
