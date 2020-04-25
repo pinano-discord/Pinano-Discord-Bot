@@ -1,11 +1,11 @@
 import Discord from 'discord.js';
 import {
-  cleanChannels,
   isLockedVoiceChannel,
-  isPracticeChannel,
   unlockChannel,
-  isHost,
-} from '../utils/channelUtils';
+  isPracticeChannel,
+} from '../utils/discordUtils/channels';
+import { isHost } from '../utils/discordUtils/users';
+import { cleanChannels } from '../utils/discordUtils/misc';
 
 export function listenForUsers(discord: Discord.Client) {
   // eslint-disable-next-line sonarjs/cognitive-complexity

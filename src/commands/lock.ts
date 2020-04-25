@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
-import { lockChannel, isLockedVoiceChannel } from '../utils/channelUtils';
 import { replyToMessage } from '../utils/memberUtils';
+import { isLockedVoiceChannel, lockChannel } from '../utils/discordUtils/channels';
 
 export async function lock(message: Discord.Message, discord: Discord.Client) {
   if (!message.member) {

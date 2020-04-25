@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
-import { setChannelBitrate } from '../utils/channelUtils';
 import { isAdmin, replyToMessage } from '../utils/memberUtils';
+import { setChannelBitrate } from '../utils/discordUtils/channels';
 
 export async function bitrate(message: Discord.Message, discord: Discord.Client) {
   const bitrateArg = message.content.split('bitrate ')[1];

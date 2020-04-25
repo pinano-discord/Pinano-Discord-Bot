@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
-import { unlockChannel, cleanChannels } from '../utils/channelUtils';
 import { isAdmin, replyToMessage } from '../utils/memberUtils';
+import { unlockChannel } from '../utils/discordUtils/channels';
+import { cleanChannels } from '../utils/discordUtils/misc';
 
 export async function unlock(message: Discord.Message, discord: Discord.Client) {
   const channelArg = message.content.split('unlock ')[1];
