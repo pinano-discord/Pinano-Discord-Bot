@@ -1,33 +1,105 @@
+/* eslint-disable max-lines */
 import Discord from 'discord.js';
 import { environment } from '../environment';
 import { createIterable } from './arrayUtils';
 
-const UNLOCKED_VC_LIMIT = 5;
+const VC_IDENTIFERS = ['🎸', '🎹', '🎤', '🎼', '🥁', '🍆', '🍑'];
 
-// The amount of identifiers is the maximum amount of channels
-const UNLOCKED_VC_IDENTIFERS = [
-  '🎸',
-  '🎹',
-  '🎤',
-  '🎧',
-  '🎼',
-  '🥁',
-  '🎷',
-  '🎺',
-  '🎻',
-  '🥢',
-  '🎊',
-  '🍆',
-  '🍑',
-  '👽',
-];
+const MAX_EMPTY_UNLOCKED_ROOMS = 3;
 
-export function isPracticeVoiceChannel(channel: Discord.VoiceChannel) {
-  if (channel?.parent?.name !== environment.voice_channel_category) {
+// CHANNEL HELPERS
+
+export async function lockChannel(
+  manager: Discord.GuildChannelManager,
+  voiceChannel: Discord.VoiceChannel,
+  member: Discord.GuildMember,
+) {
+  if (voiceChannel.parent?.name !== environment.channel_category) {
+    return;
+  }
+
+  // Mute other users
+  const otherUsers = voiceChannel.members.filter((m) => m.id !== member?.id);
+
+  if (otherUsers) {
+    const muteRequest = otherUsers.map(async (a) => {
+      await a.voice.setMute(true);
+    });
+    await Promise.all(muteRequest);
+  }
+
+  // Update voice and text channel names
+  const matchingTextChannel = getMatchingTextChannel(manager, voiceChannel.name);
+  const roomName = `${member.user.username} 🔒`;
+  const updatedManger = (await voiceChannel.setName(roomName)).guild.channels;
+
+  await matchingTextChannel?.setName(roomName);
+
+  const unlockedChannels = getPracticeCategoryVoiceChannels(updatedManger)?.filter(
+    (vc) => !isLockedVoiceChannel(vc),
+  );
+
+  // Pad category with unlocked rooms
+  if (unlockedChannels && unlockedChannels.size < MAX_EMPTY_UNLOCKED_ROOMS) {
+    const practiceCategory = getPracticeCategory(manager);
+    const identifier = getNewChannelIdentifier(unlockedChannels.map((c) => c.name));
+    if (!identifier) {
+      return;
+    }
+    const newChannelName = `${environment.channel_name_prefix}${identifier}`;
+    await manager.create(newChannelName, {
+      type: 'voice',
+      parent: practiceCategory,
+      bitrate: environment.default_bitrate * 1000,
+    });
+    await manager.create(newChannelName, {
+      type: 'text',
+      parent: practiceCategory,
+      bitrate: environment.default_bitrate * 1000,
+    });
+  }
+}
+
+export async function unlockChannel(
+  guildManager: Discord.GuildChannelManager,
+  channel: Discord.VoiceChannel | string,
+) {
+  let updatedManager = guildManager;
+  const voiceChannel =
+    typeof channel === 'string' ? await getVoiceChannelFromName(updatedManager, channel) : channel;
+
+  if (voiceChannel && isLockedVoiceChannel(voiceChannel)) {
+    const matchingTextChannel = getMatchingTextChannel(updatedManager, voiceChannel.name);
+    const practiceChannels = getPracticeCategoryVoiceChannels(updatedManager);
+    if (practiceChannels) {
+      const identifier = getNewChannelIdentifier(practiceChannels.map((c) => c.name) ?? []);
+      if (!identifier) {
+        return updatedManager;
+      }
+      const roomName = `${environment.channel_name_prefix}${identifier}`;
+      const resp = await voiceChannel.setName(roomName);
+      await matchingTextChannel?.setName(roomName);
+      updatedManager = resp.guild.channels;
+    }
+
+    const unmuteRequest = voiceChannel.members.map(async (a) => {
+      await a.voice.setMute(false);
+    });
+    await Promise.all(unmuteRequest);
+  }
+  return updatedManager;
+}
+
+export function isPracticeChannel(channel: Discord.GuildChannel) {
+  if (channel?.parent?.name !== environment.channel_category) {
     return false;
   }
-  if (channel?.name.startsWith(environment.voice_channel_name_prefix)) {
-    return true;
+  if (channel?.name.startsWith(`${environment.channel_name_prefix}`)) {
+    const id = channel.name.split(environment.channel_name_prefix)[1];
+
+    if (VC_IDENTIFERS.includes(id)) {
+      return true;
+    }
   }
   if (channel?.name.endsWith(' 🔒')) {
     return true;
@@ -42,113 +114,135 @@ export function isLockedVoiceChannel(channel: Discord.VoiceChannel | Discord.Gui
   return false;
 }
 
+async function getVoiceChannelFromName(manager: Discord.GuildChannelManager, channelName: string) {
+  const existingChannels = getPracticeCategoryVoiceChannels(manager);
+  return existingChannels?.find((c) =>
+    c.name.toLocaleLowerCase().includes(channelName.toLocaleLowerCase()),
+  );
+}
+
+function getNewChannelIdentifier(existingChannels: string[]) {
+  const leftOverIdentifiers = VC_IDENTIFERS.filter(
+    (n) => !existingChannels?.find((e) => e.includes(n)),
+  );
+  if (leftOverIdentifiers.length > 0) {
+    return leftOverIdentifiers[existingChannels.length % (leftOverIdentifiers.length - 1)];
+  }
+}
+
+function getMatchingTextChannel(channelManager: Discord.GuildChannelManager, roomName: string) {
+  const existingTextChannels = getPracticeCategoryTextChannels(channelManager);
+  return existingTextChannels?.find((tc) => tc.name === roomName.toLowerCase().replace(/\s/g, '-'));
+}
+
+// CATEGROY HELPERS
 export function getPracticeCategory(channelManager: Discord.GuildChannelManager) {
-  return channelManager.cache.find((c) => c.name === environment.voice_channel_category);
+  return channelManager.cache.find((c) => c.name === environment.channel_category);
 }
 
 export function getPracticeCategoryVoiceChannels(channelManager: Discord.GuildChannelManager) {
   const practiceCategory = getPracticeCategory(channelManager);
   if (practiceCategory) {
-    return channelManager.cache.filter((c) => c.parent === practiceCategory);
+    return channelManager.cache.filter((c) => c.parent === practiceCategory && c.type === 'voice');
   }
 }
 
-export async function lockChannelAndCreateNewChannel(
-  manager: Discord.GuildChannelManager,
-  voiceChannel: Discord.VoiceChannel,
-  member: Discord.GuildMember,
-) {
-  const otherUsers = voiceChannel.members.filter((m) => m.id !== member?.id);
-
-  if (!otherUsers) {
-    return;
+export function getPracticeCategoryTextChannels(channelManager: Discord.GuildChannelManager) {
+  const practiceCategory = getPracticeCategory(channelManager);
+  if (practiceCategory) {
+    return channelManager.cache.filter((c) => c.parent === practiceCategory && c.type === 'text');
   }
-
-  const muteRequest = otherUsers.map(async (a) => {
-    await a.voice.setMute(true);
-  });
-  await Promise.all(muteRequest);
-  const updatedVoiceChannel = voiceChannel.setName(`${member.user.username} 🔒`);
-  const upadatedManager = (await updatedVoiceChannel).guild.channels;
-
-  createUnlockedVoiceChannels(upadatedManager);
 }
 
-export async function unlockChannelAndDeleteEmptyChannels(
-  guildManager: Discord.GuildChannelManager,
-  channel: Discord.VoiceChannel | string,
-) {
-  const voiceChannel =
-    typeof channel === 'string' ? await getChannelFromName(guildManager, channel) : channel;
-
-  if (voiceChannel && isLockedVoiceChannel(voiceChannel)) {
-    const practiceChannels = getPracticeCategoryVoiceChannels(guildManager);
-    if (practiceChannels) {
-      const identifier = getNewChannelIdentifier(practiceChannels.map((c) => c.name) ?? []);
-      if (!identifier) {
-        return;
-      }
-      await voiceChannel.setName(`${environment.voice_channel_name_prefix} ${identifier}`);
-    }
-
-    const unmuteRequest = voiceChannel.members.map(async (a) => {
-      await a.voice.setMute(false);
-    });
-    await Promise.all(unmuteRequest);
-  }
-
-  await cleanVoiceChannels(guildManager);
-}
+// INITIALISATION
 
 export async function initialiseCategoryAndChannels(manager: Discord.GuildChannelManager) {
-  await cleanVoiceChannels(manager);
+  let currentManager = manager;
 
   const existingCategory = getPracticeCategory(manager);
   if (!existingCategory) {
-    const category = await manager.create(environment.voice_channel_category, { type: 'category' });
-    const updatedManager = category.guild.channels;
-    createUnlockedVoiceChannels(updatedManager);
-  } else {
-    createUnlockedVoiceChannels(manager);
+    const category = await manager.create(environment.channel_category, { type: 'category' });
+    currentManager = category.guild.channels;
   }
+  currentManager = (await setupVoiceChannels(currentManager)) ?? currentManager;
+  currentManager = (await setupTextChannels(currentManager)) ?? currentManager;
 }
 
-function createUnlockedVoiceChannels(manager: Discord.GuildChannelManager) {
-  const existingChannels = getPracticeCategoryVoiceChannels(manager);
-  const unlockedChannels = existingChannels?.filter((c) => !isLockedVoiceChannel(c));
+async function setupVoiceChannels(manager: Discord.GuildChannelManager) {
+  let lastManager = manager;
+  const existingChannels = getPracticeCategoryVoiceChannels(lastManager);
 
-  if (!unlockedChannels) {
-    return;
+  const deleteChannelsReq = existingChannels?.map(async (e) => await e.delete());
+  if (deleteChannelsReq) {
+    const responses = await Promise.all(deleteChannelsReq);
+    const lastElement = responses.pop();
+    if (lastElement) {
+      lastManager = lastElement.guild.channels;
+    }
   }
 
-  // Create as many channels to reach the UNLOCKED_VC_LIMIT
-  // but do not create more channels than identifers
-  const idsAvailableCount = UNLOCKED_VC_IDENTIFERS.length - unlockedChannels.size;
-  const amountToReachUnlockedVCLimit = UNLOCKED_VC_LIMIT - unlockedChannels.size;
-  const channelsToBeCreated =
-    amountToReachUnlockedVCLimit > idsAvailableCount
-      ? idsAvailableCount
-      : amountToReachUnlockedVCLimit;
-  if (channelsToBeCreated < 0) {
-    return;
-  }
-  const channelsToBeCreatedIter = createIterable(channelsToBeCreated);
+  const channelsToBeCreated = createIterable(MAX_EMPTY_UNLOCKED_ROOMS);
+  const usedChannelNames = [];
   const practiceCategory = getPracticeCategory(manager);
-  const channelNames = existingChannels?.map((c) => c.name) ?? [];
-  for (const _ in channelsToBeCreatedIter) {
-    const identifier = getNewChannelIdentifier(channelNames);
+  for (const _ in channelsToBeCreated) {
+    const identifier = getNewChannelIdentifier(usedChannelNames);
     if (!identifier) {
       return;
     }
-    const newChannelName = `${environment.voice_channel_name_prefix} ${identifier}`;
-    manager.create(newChannelName, {
-      type: 'voice',
-      parent: practiceCategory,
-      bitrate: environment.default_bitrate * 1000,
-    });
-    channelNames.push(newChannelName);
+    const newChannelName = `${environment.channel_name_prefix}${identifier}`;
+    lastManager = (
+      await manager.create(newChannelName, {
+        type: 'voice',
+        parent: practiceCategory,
+        bitrate: environment.default_bitrate * 1000,
+      })
+    ).guild.channels;
+    usedChannelNames.push(newChannelName);
   }
+  return lastManager;
 }
+
+async function setupTextChannels(manager: Discord.GuildChannelManager) {
+  let lastManager = manager;
+  const existingChannels = getPracticeCategoryTextChannels(lastManager);
+
+  const deleteChannelsReq = existingChannels?.map(async (e) => await e.delete());
+  if (deleteChannelsReq) {
+    const responses = await Promise.all(deleteChannelsReq);
+    const lastElement = responses.pop();
+    if (lastElement) {
+      lastManager = lastElement.guild.channels;
+    }
+  }
+
+  const channelsToBeCreated = createIterable(MAX_EMPTY_UNLOCKED_ROOMS);
+  const usedChannelNames = [];
+  const practiceCategory = getPracticeCategory(manager);
+  for (const _ in channelsToBeCreated) {
+    const identifier = getNewChannelIdentifier(usedChannelNames);
+    if (!identifier) {
+      return;
+    }
+    const newChannelName = `${environment.channel_name_prefix}${identifier}`;
+    lastManager = (
+      await manager.create(newChannelName, {
+        type: 'text',
+        parent: practiceCategory,
+        bitrate: environment.default_bitrate * 1000,
+      })
+    ).guild.channels;
+    usedChannelNames.push(newChannelName);
+  }
+  return lastManager;
+}
+
+// USER HELPERS
+
+export function isHost(user: Discord.VoiceState) {
+  return user.serverMute === false;
+}
+
+// MISC
 
 export async function setChannelBitrate(
   guildManager: Discord.GuildChannelManager,
@@ -156,7 +250,7 @@ export async function setChannelBitrate(
   bitrate: number,
 ) {
   const voiceChannel =
-    typeof channel === 'string' ? await getChannelFromName(guildManager, channel) : channel;
+    typeof channel === 'string' ? await getVoiceChannelFromName(guildManager, channel) : channel;
 
   if (voiceChannel) {
     try {
@@ -167,44 +261,30 @@ export async function setChannelBitrate(
   }
 }
 
-async function getChannelFromName(manager: Discord.GuildChannelManager, channelName: string) {
-  const existingChannels = getPracticeCategoryVoiceChannels(manager);
-  return existingChannels?.find((c) =>
-    c.name.toLocaleLowerCase().includes(channelName.toLocaleLowerCase()),
-  );
-}
-
-export async function cleanVoiceChannels(
-  manager: Discord.GuildChannelManager,
-  lastExitedChannel?: Discord.VoiceChannel,
-) {
-  const unlockedChannels = getPracticeCategoryVoiceChannels(manager);
-  const channelsToDelete = (unlockedChannels?.size ?? 0) - UNLOCKED_VC_LIMIT;
-  if (!unlockedChannels || channelsToDelete <= 0) {
+export async function cleanChannels(manager: Discord.GuildChannelManager) {
+  const existingTextChannels = getPracticeCategoryTextChannels(manager);
+  const existingVoiceChannels = getPracticeCategoryVoiceChannels(manager);
+  if (!existingVoiceChannels || !existingTextChannels) {
     return;
   }
-  const channelsToDeletIter = createIterable(channelsToDelete);
-  for (const _ in channelsToDeletIter) {
-    const lastChannel = unlockedChannels?.last();
-    const lastExitedChannelInMap = lastExitedChannel
-      ? unlockedChannels?.get(lastExitedChannel.id)
-      : undefined;
-    if (lastExitedChannelInMap) {
-      unlockedChannels.get(lastExitedChannelInMap.id)?.delete();
-      unlockedChannels.delete(lastExitedChannelInMap.id);
-    } else if (lastChannel) {
-      lastChannel.delete();
-      unlockedChannels.delete(lastChannel.id);
+
+  // Make sure we don't hit the limit on max empty unlocked rooms
+  const emptyUnlockedChannels = existingVoiceChannels?.filter(
+    (vc) => vc.members.size === 0 && !isLockedVoiceChannel(vc),
+  );
+
+  if (emptyUnlockedChannels && emptyUnlockedChannels.size >= MAX_EMPTY_UNLOCKED_ROOMS) {
+    const voiceChannelsToDeletIter = createIterable(
+      emptyUnlockedChannels.size - MAX_EMPTY_UNLOCKED_ROOMS,
+    );
+    for (const _ in voiceChannelsToDeletIter) {
+      const lastVoiceChannel = emptyUnlockedChannels.last();
+      if (lastVoiceChannel) {
+        const matchingTextChannel = getMatchingTextChannel(manager, lastVoiceChannel.name);
+        matchingTextChannel?.delete();
+        lastVoiceChannel.delete();
+        emptyUnlockedChannels.delete(lastVoiceChannel.id);
+      }
     }
   }
-}
-
-function getNewChannelIdentifier(existingChannels: string[]) {
-  const leftOverIdentifiers = UNLOCKED_VC_IDENTIFERS.filter(
-    (n) => !existingChannels?.find((e) => e.includes(n)),
-  );
-  if (leftOverIdentifiers.length === 0) {
-    return;
-  }
-  return leftOverIdentifiers[Math.floor(Math.random() * leftOverIdentifiers.length)];
 }

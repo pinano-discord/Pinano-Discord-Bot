@@ -1,10 +1,10 @@
 const devScheme = {
-  voice_channel_category: 'Practice Rooms [DEV]',
-  voice_channel_name_prefix: 'Practice Room [DEV]',
+  channel_category: 'Practice Rooms Dev',
+  channel_name_prefix: 'Practice Room Dev',
 };
 const prodScheme = {
-  voice_channel_category: 'Practice Rooms',
-  voice_channel_name_prefix: 'Practice Room',
+  channel_category: 'Practice Rooms',
+  channel_name_prefix: 'Practice Room',
 };
 
 const schemeSettings = process.env.SCHEME === 'dev' ? devScheme : prodScheme;

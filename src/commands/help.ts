@@ -18,8 +18,8 @@ export async function help(message: Discord.Message, discord: Discord.Client) {
       'Admins can adjust the bitrate of the currently occupied room',
     )
     .addField(
-      `\`${environment.command_prefix}unlock <CHANNEL_ID>\``,
-      'Admins unlock a channel bt specifying an id',
+      `\`${environment.command_prefix}unlock <CHANNEL_NAME>\``,
+      "Admins unlock a channel by specifying the channel name. You may also just write a partial bit of the channel's name",
     )
     .addField(
       `\`${environment.command_prefix}unlock\``,
