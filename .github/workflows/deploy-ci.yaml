@@ -4,15 +4,22 @@
 #     - '*'
 #   branches:
 #     - master
-# name: Bot Deploy
-# jobs:
-#   build:
-    
-#   deploy:
-#     runs-on: ubuntu-latest
-#     steps:
-#     - uses: actions/checkout@master
-#     - name: Build and Publish to Heroku
-#       uses: actions/heroku@master
-#       args: "container:release -a calm-fortress-1234 web"
-#       secrets: ["HEROKU_API_KEY"]
+on: [push]
+name: Bot Deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Login to Heroku Container registry
+      env: 
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: heroku container:login 
+    - name: Build and push
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: heroku container:push -a ${{ secrets.HEROKU_APP_NAME }} discord-recital-bot 
+    - name: Release
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: heroku container:release -a ${{ secrets.HEROKU_APP_NAME }} discord-recital-bot 
