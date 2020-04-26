@@ -18,8 +18,8 @@ jobs:
     - name: Build and push
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: heroku container:push -a discord-recital-bot 
+      run: heroku container:push -a discord-recital-bot worker
     - name: Release
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: heroku container:release -a discord-recital-bot 
+      run: heroku container:release -a discord-recital-bot worker
