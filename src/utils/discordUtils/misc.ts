@@ -1,15 +1,13 @@
 import Discord from 'discord.js';
-
-import { getPracticeCategoryTextChannels, getPracticeCategoryVoiceChannels } from './categories';
-import { isLockedVoiceChannel, getMatchingTextChannel } from './channels';
+import { getPracticeCategoryVoiceChannels } from './categories';
+import { getMatchingTextChannel, isLockedVoiceChannel } from './channels';
 import { MAX_EMPTY_UNLOCKED_ROOMS } from './constants';
 import { createIterable } from '../arrayUtils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export async function cleanChannels(manager: Discord.GuildChannelManager) {
-  const existingTextChannels = getPracticeCategoryTextChannels(manager);
   const existingVoiceChannels = getPracticeCategoryVoiceChannels(manager);
-  if (!existingVoiceChannels || !existingTextChannels) {
+  if (!existingVoiceChannels) {
     return;
   }
 
@@ -18,7 +16,7 @@ export async function cleanChannels(manager: Discord.GuildChannelManager) {
     (vc) => vc.members.size === 0 && !isLockedVoiceChannel(vc),
   );
 
-  if (emptyUnlockedChannels && emptyUnlockedChannels.size >= MAX_EMPTY_UNLOCKED_ROOMS) {
+  if (emptyUnlockedChannels.size >= MAX_EMPTY_UNLOCKED_ROOMS) {
     const voiceChannelsToDeletIter = createIterable(
       emptyUnlockedChannels.size - MAX_EMPTY_UNLOCKED_ROOMS,
     );

@@ -30,7 +30,8 @@ async function unlockFromArg(message: Discord.Message, channel: string) {
     );
     await replyToMessage(message, response);
   } else {
-    await unlockChannel(guildManager, channel);
+    const updatedManager = await unlockChannel(guildManager, channel);
+    await cleanChannels(updatedManager);
   }
 }
 
