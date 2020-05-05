@@ -2,6 +2,6 @@ export function notEmpty<TValue>(value: TValue | null | undefined): value is TVa
   return value !== null && value !== undefined;
 }
 
-export function createIterable(length: number) {
+export function createIterable(length: number): number[] {
   return new Array(length).fill(1);
 }

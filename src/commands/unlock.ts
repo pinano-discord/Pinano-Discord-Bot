@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
-import { unlockChannelAndDeleteEmptyChannels } from '../utils/channelUtils';
 import { isAdmin, replyToMessage } from '../utils/memberUtils';
+import { unlockChannel } from '../utils/discordUtils/channels';
+import { cleanChannels } from '../utils/discordUtils/misc';
 
 export async function unlock(message: Discord.Message, discord: Discord.Client) {
   const channelArg = message.content.split('unlock ')[1];
@@ -29,7 +30,8 @@ async function unlockFromArg(message: Discord.Message, channel: string) {
     );
     await replyToMessage(message, response);
   } else {
-    await unlockChannelAndDeleteEmptyChannels(guildManager, channel);
+    const updatedManager = await unlockChannel(guildManager, channel);
+    await cleanChannels(updatedManager);
   }
 }
 
@@ -46,5 +48,6 @@ async function unlockCurrentChannel(message: Discord.Message, channel: Discord.V
     await replyToMessage(message, response);
     return;
   }
-  await unlockChannelAndDeleteEmptyChannels(guildManager, channel);
+  const updatedManager = await unlockChannel(guildManager, channel);
+  await cleanChannels(updatedManager);
 }

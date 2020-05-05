@@ -12,7 +12,7 @@
     ```
 
 - Then run
-    `npm install` and `source .env && npm run dev`
+    `npm install` and `source .env && npm start`
 
 ### Invite the bot to your server
 
@@ -22,3 +22,7 @@
 - Setup the necessary voice channels by having an admin type `p! setup` in any text channel.
     - The default command prefix is `p!` but it can be configured with by an environment variable.
     - Other configurable variables and their defaults can be found under `src/environment.ts`
+
+## Running Dockerfile
+
+- `docker build -t bot_tmp . && docker run --rm -it bot_tmp`

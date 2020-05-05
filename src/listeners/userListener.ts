@@ -1,10 +1,11 @@
 import Discord from 'discord.js';
 import {
-  cleanVoiceChannels,
   isLockedVoiceChannel,
-  isPracticeVoiceChannel,
-  unlockChannelAndDeleteEmptyChannels,
-} from '../utils/channelUtils';
+  unlockChannel,
+  isPracticeChannel,
+} from '../utils/discordUtils/channels';
+import { isHost } from '../utils/discordUtils/users';
+import { cleanChannels } from '../utils/discordUtils/misc';
 
 export function listenForUsers(discord: Discord.Client) {
   // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -14,12 +15,8 @@ export function listenForUsers(discord: Discord.Client) {
     }
 
     // Unlock if host leaves
-    if (
-      prevMember.channel &&
-      isLockedVoiceChannel(prevMember.channel) &&
-      prevMember.mute === false
-    ) {
-      await unlockChannelAndDeleteEmptyChannels(newMember.guild.channels, prevMember.channel);
+    if (prevMember.channel && isLockedVoiceChannel(prevMember.channel) && isHost(prevMember)) {
+      await unlockChannel(newMember.guild.channels, prevMember.channel);
     }
 
     // Unmute if in unlocked server
@@ -32,8 +29,8 @@ export function listenForUsers(discord: Discord.Client) {
     }
 
     // Clean up empty voice channels
-    if (prevMember.channel && isPracticeVoiceChannel(prevMember.channel)) {
-      await cleanVoiceChannels(newMember.guild.channels, prevMember.channel);
+    if (prevMember.channel && isPracticeChannel(prevMember.channel)) {
+      await cleanChannels(newMember.guild.channels);
     }
   });
 }

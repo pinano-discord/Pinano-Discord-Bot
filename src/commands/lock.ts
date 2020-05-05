@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
-import { lockChannelAndCreateNewChannel, isLockedVoiceChannel } from '../utils/channelUtils';
 import { replyToMessage } from '../utils/memberUtils';
+import { isLockedVoiceChannel, lockChannel } from '../utils/discordUtils/channels';
 
 export async function lock(message: Discord.Message, discord: Discord.Client) {
   if (!message.member) {
@@ -22,5 +22,5 @@ export async function lock(message: Discord.Message, discord: Discord.Client) {
     return;
   }
 
-  await lockChannelAndCreateNewChannel(message.member.guild.channels, voiceChannel, message.member);
+  await lockChannel(message.member.guild.channels, voiceChannel, message.member);
 }
