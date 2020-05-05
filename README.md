@@ -12,7 +12,7 @@
     ```
 
 - Then run
-    `npm install` and `source .env && npm start`
+    `npm install` and `source .env && npm run dev`
 
 ### Invite the bot to your server
 

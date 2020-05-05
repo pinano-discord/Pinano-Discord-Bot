@@ -37,7 +37,8 @@
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "start": "SCHEME=dev tsnd --respawn ./src/app.ts",
+    "dev": "SCHEME=dev tsnd --respawn ./src/app.ts",
+    "start": "node ./dist/app.js",
     "build": "tsc",
     "lint": "eslint './src/**/*.{jsx,js,ts,tsx,json}' && tsc",
     "lint:fix": "eslint --fix './src/**/*.{jsx,js,ts,tsx,json}' && tsc"
