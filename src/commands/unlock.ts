@@ -2,6 +2,7 @@ import Discord from 'discord.js';
 import { isAdmin, replyToMessage } from '../utils/memberUtils';
 import { unlockChannel } from '../utils/discordUtils/channels';
 import { cleanChannels } from '../utils/discordUtils/misc';
+import { isHost } from '../utils/discordUtils/users';
 
 export async function unlock(message: Discord.Message, discord: Discord.Client) {
   const channelArg = message.content.split('unlock ')[1];
@@ -40,7 +41,7 @@ async function unlockCurrentChannel(message: Discord.Message, channel: Discord.V
   if (!guildManager || !message.member) {
     return;
   }
-  if (message.member.voice.serverMute === true && !isAdmin(message.member)) {
+  if (!isHost(message.member, channel) && !isAdmin(message.member)) {
     const response = new Discord.MessageEmbed().addField(
       'You are not the host or an admin',
       `Only an admin or host can unlock your current room`,

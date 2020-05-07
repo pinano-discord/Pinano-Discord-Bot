@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import crypto from 'crypto';
 
 import { environment } from '../../environment';
 import {
@@ -29,7 +30,7 @@ export async function lockChannel(
 
   // Update voice and text channel names
   const matchingTextChannel = getMatchingTextChannel(manager, voiceChannel.name);
-  const roomName = `${member.user.username} 🔒`;
+  const roomName = getLockedChannelName(member);
   const updatedManger = (await voiceChannel.setName(roomName)).guild.channels;
 
   await matchingTextChannel?.setName(roomName);
@@ -41,11 +42,10 @@ export async function lockChannel(
   // Pad category with unlocked rooms
   if (unlockedChannels && unlockedChannels.size < MAX_EMPTY_UNLOCKED_ROOMS) {
     const practiceCategory = getPracticeCategory(manager);
-    const identifier = getNewChannelIdentifier(unlockedChannels.map((c) => c.name));
-    if (!identifier) {
+    const newChannelName = getNewUnlockedChannelName(unlockedChannels.map((c) => c.name));
+    if (!newChannelName) {
       return;
     }
-    const newChannelName = `${environment.channel_name_prefix}${identifier}`;
     await manager.create(newChannelName, {
       type: 'voice',
       parent: practiceCategory,
@@ -71,11 +71,10 @@ export async function unlockChannel(
     const matchingTextChannel = getMatchingTextChannel(updatedManager, voiceChannel.name);
     const practiceChannels = getPracticeCategoryVoiceChannels(updatedManager);
     if (practiceChannels) {
-      const identifier = getNewChannelIdentifier(practiceChannels.map((c) => c.name) ?? []);
-      if (!identifier) {
+      const roomName = getNewUnlockedChannelName(practiceChannels.map((c) => c.name));
+      if (!roomName) {
         return updatedManager;
       }
-      const roomName = `${environment.channel_name_prefix}${identifier}`;
       const resp = await voiceChannel.setName(roomName);
       await matchingTextChannel?.setName(roomName);
       updatedManager = resp.guild.channels;
@@ -113,20 +112,24 @@ export function isLockedVoiceChannel(channel: Discord.VoiceChannel | Discord.Gui
   return false;
 }
 
-async function getVoiceChannelFromName(manager: Discord.GuildChannelManager, channelName: string) {
-  const existingChannels = getPracticeCategoryVoiceChannels(manager);
-  return existingChannels?.find((c) =>
-    c.name.toLocaleLowerCase().includes(channelName.toLocaleLowerCase()),
-  );
+export function getLockedChannelName(member: Discord.GuildMember) {
+  const name = member.user.id;
+  const hash = crypto
+    .createHash('md5')
+    .update(name)
+    .digest('hex');
+  return `${member.user.username.slice(0, 6)}'s  Room (${hash.slice(0, 6).toUpperCase()}) 🔒`;
 }
 
-export function getNewChannelIdentifier(existingChannels: string[]) {
+export function getNewUnlockedChannelName(existingChannels: string[]) {
   const leftOverIdentifiers = VC_IDENTIFERS.filter(
     (n) => !existingChannels?.find((e) => e.includes(n)),
   );
   if (leftOverIdentifiers.length > 0) {
-    return leftOverIdentifiers[existingChannels.length % (leftOverIdentifiers.length - 1)];
+    const id = leftOverIdentifiers[existingChannels.length % (leftOverIdentifiers.length - 1)];
+    return `${environment.channel_name_prefix}${id}`;
   }
+  console.log('Out of room ids');
 }
 
 export function getMatchingTextChannel(
@@ -134,7 +137,23 @@ export function getMatchingTextChannel(
   roomName: string,
 ) {
   const existingTextChannels = getPracticeCategoryTextChannels(channelManager);
-  return existingTextChannels?.find((tc) => tc.name === roomName.toLowerCase().replace(/\s/g, '-'));
+  const regex = /\((.+)\) 🔒$/g;
+  const ids = regex.exec(roomName);
+  const id = ids && ids[1];
+
+  // Search unlocked channels
+  const existingUnlockedChannel = existingTextChannels?.find(
+    (tc) => tc.name === roomName.toLowerCase().replace(/\s/g, '-'),
+  );
+  if (existingUnlockedChannel) {
+    return existingUnlockedChannel;
+  }
+
+  // Search locked channels
+  const lockedChannelName = `${id}-🔒`.toLowerCase();
+  return existingTextChannels?.find((tc) => {
+    return tc.name.toLowerCase().endsWith(lockedChannelName);
+  });
 }
 
 export async function setChannelBitrate(
@@ -152,4 +171,11 @@ export async function setChannelBitrate(
       throw new Error(error.toString().split('int ')[1]);
     }
   }
+}
+
+async function getVoiceChannelFromName(manager: Discord.GuildChannelManager, channelName: string) {
+  const existingChannels = getPracticeCategoryVoiceChannels(manager);
+  return existingChannels?.find((c) =>
+    c.name.toLocaleLowerCase().includes(channelName.toLocaleLowerCase()),
+  );
 }

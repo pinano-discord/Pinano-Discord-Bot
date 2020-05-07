@@ -7,7 +7,7 @@ import {
 import { environment } from '../../environment';
 import { createIterable } from '../arrayUtils';
 import { MAX_EMPTY_UNLOCKED_ROOMS } from './constants';
-import { getNewChannelIdentifier } from './channels';
+import { getNewUnlockedChannelName } from './channels';
 
 export async function initialiseCategoryAndChannels(manager: Discord.GuildChannelManager) {
   let currentManager = manager;
@@ -38,11 +38,10 @@ async function setupVoiceChannels(manager: Discord.GuildChannelManager) {
   const usedChannelNames = [];
   const practiceCategory = getPracticeCategory(manager);
   for (const _ in channelsToBeCreated) {
-    const identifier = getNewChannelIdentifier(usedChannelNames);
-    if (!identifier) {
+    const newChannelName = getNewUnlockedChannelName(usedChannelNames);
+    if (!newChannelName) {
       return;
     }
-    const newChannelName = `${environment.channel_name_prefix}${identifier}`;
     lastManager = (
       await manager.create(newChannelName, {
         type: 'voice',
@@ -72,11 +71,10 @@ async function setupTextChannels(manager: Discord.GuildChannelManager) {
   const usedChannelNames = [];
   const practiceCategory = getPracticeCategory(manager);
   for (const _ in channelsToBeCreated) {
-    const identifier = getNewChannelIdentifier(usedChannelNames);
-    if (!identifier) {
+    const newChannelName = getNewUnlockedChannelName(usedChannelNames);
+    if (!newChannelName) {
       return;
     }
-    const newChannelName = `${environment.channel_name_prefix}${identifier}`;
     lastManager = (
       await manager.create(newChannelName, {
         type: 'text',

@@ -15,7 +15,7 @@ export function listenForUsers(discord: Discord.Client) {
     }
 
     // Unlock if host leaves
-    if (prevMember.channel && isLockedVoiceChannel(prevMember.channel) && isHost(prevMember)) {
+    if (prevMember.channel && prevMember.member && isHost(prevMember.member, prevMember.channel)) {
       await unlockChannel(newMember.guild.channels, prevMember.channel);
     }
 
@@ -23,8 +23,14 @@ export function listenForUsers(discord: Discord.Client) {
     if (newMember.channel && !isLockedVoiceChannel(newMember.channel)) {
       await newMember.setMute(false);
     }
+
     // Mute if in locked server
-    else if (newMember.channel && isLockedVoiceChannel(newMember.channel)) {
+    else if (
+      newMember.channel &&
+      prevMember.member &&
+      isLockedVoiceChannel(newMember.channel) &&
+      !isHost(prevMember.member, newMember.channel)
+    ) {
       await newMember.setMute(true);
     }
 
