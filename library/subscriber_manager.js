@@ -1,15 +1,12 @@
 const settings = require('../settings/settings.json')
 
 class SubscriberManager {
-  constructor (client, sessionManager, userRepository) {
+  constructor (client, userRepository) {
     this.client_ = client
-    this.sessionManager_ = sessionManager
     this.userRepository_ = userRepository
-
-    this.sessionManager_.on('startPractice', (member) => this.handleStartPractice(member))
   }
 
-  async handleStartPractice (member) {
+  async notify (member) {
     const user = await this.userRepository_.load(member.id)
     for (const subId of user.subscribers) {
       const sub = this.client_.users.get(subId)

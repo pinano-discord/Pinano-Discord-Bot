@@ -49,7 +49,9 @@ module.exports = client => {
       new SessionManager(client.userRepository, client.log)
     client.policyEnforcer = new PolicyEnforcer(client.log)
     client.quizMaster = new QuizMaster(client.userRepository)
-    client.subscriberManager = new SubscriberManager(client, client.sessionManager, client.userRepository)
+    client.subscriberManager = new SubscriberManager(client, client.userRepository)
+
+    client.policyEnforcer.on('lockPracticeRoom', (member) => client.subscriberManager.notify(member))
 
     await Promise.all(settings.pinano_guilds.map(async guildId => {
       let guild = client.guilds.get(guildId)
