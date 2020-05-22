@@ -2,6 +2,7 @@
 const settings = require('../settings/settings.json')
 const Discord = require('discord.js')
 const moment = require('moment')
+const EventEmitter = require('events')
 
 function findChannel (guild, name) {
   return guild.channels.find(c => c.name === name)
@@ -30,8 +31,9 @@ const RoomIdentifiers = {
 }
 Object.freeze(RoomIdentifiers)
 
-class PolicyEnforcer {
+class PolicyEnforcer extends EventEmitter {
   constructor (logFn) {
+    super()
     this.logFn_ = logFn
   }
 
@@ -62,6 +64,8 @@ class PolicyEnforcer {
       // this is likely an issue with trying to mute a user who has already left the channel
       this.logFn_(err)
     }
+
+    this.emit('lockPracticeRoom', member)
   }
 
   async unlockPracticeRoom (guild, channel) {

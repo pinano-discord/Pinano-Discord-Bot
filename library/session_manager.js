@@ -1,11 +1,9 @@
 const moment = require('moment')
-const EventEmitter = require('events')
 
 const settings = require('../settings/settings.json')
 
-class SessionManager extends EventEmitter {
+class SessionManager {
   constructor (userRepository, logFn) {
-    super()
     this.userRepository_ = userRepository
     this.logFn_ = logFn
   }
@@ -16,12 +14,6 @@ class SessionManager extends EventEmitter {
     if (member.s_time == null) {
       this.logFn_(`Beginning session for user <@${member.id}> ${username}#${discriminator}`)
       member.s_time = moment().unix()
-
-      setTimeout(() => {
-        if (member.s_time != null) {
-          this.emit('startPractice', member)
-        }
-      }, settings.practice_session_minimum_time * 1000)
     }
   }
 
