@@ -1,13 +1,8 @@
-import Discord from 'discord.js';
 import crypto from 'crypto';
-
+import Discord from 'discord.js';
 import { environment } from '../../environment';
-import {
-  getPracticeCategoryVoiceChannels,
-  getPracticeCategory,
-  getPracticeCategoryTextChannels,
-} from './categories';
-import { MAX_EMPTY_UNLOCKED_ROOMS, VC_IDENTIFERS } from './constants';
+import { getPracticeCategoryTextChannels, getPracticeCategoryVoiceChannels } from './categories';
+import { VC_IDENTIFERS } from './constants';
 
 export async function lockChannel(
   manager: Discord.GuildChannelManager,
@@ -31,32 +26,8 @@ export async function lockChannel(
   // Update voice and text channel names
   const matchingTextChannel = getMatchingTextChannel(manager, voiceChannel.name);
   const roomName = getLockedChannelName(member);
-  const updatedManger = (await voiceChannel.setName(roomName)).guild.channels;
-
+  await voiceChannel.setName(roomName);
   await matchingTextChannel?.setName(roomName);
-
-  const unlockedChannels = getPracticeCategoryVoiceChannels(updatedManger)?.filter(
-    (vc) => !isLockedVoiceChannel(vc),
-  );
-
-  // Pad category with unlocked rooms
-  if (unlockedChannels && unlockedChannels.size < MAX_EMPTY_UNLOCKED_ROOMS) {
-    const practiceCategory = getPracticeCategory(manager);
-    const newChannelName = getNewUnlockedChannelName(unlockedChannels.map((c) => c.name));
-    if (!newChannelName) {
-      return;
-    }
-    await manager.create(newChannelName, {
-      type: 'voice',
-      parent: practiceCategory,
-      bitrate: environment.default_bitrate * 1000,
-    });
-    await manager.create(newChannelName, {
-      type: 'text',
-      parent: practiceCategory,
-      bitrate: environment.default_bitrate * 1000,
-    });
-  }
 }
 
 export async function unlockChannel(
