@@ -1,7 +1,7 @@
-const Leaderboard = require('../library/leaderboard.js')
+const Leaderboard = require('./leaderboard')
 
 class MockRepository {
-  async loadRowsWithNonZeroKeyValue (keyName) {
+  loadPositive (keyName) {
     if (keyName === 'key_column') {
       return [
         { id: '35035', key_column: 3500, not_key_column: 0 },
@@ -36,13 +36,13 @@ beforeEach(async () => {
 })
 
 test('no data results in empty leaderboard', async () => {
-  lb.repository_.loadRowsWithNonZeroKeyValue = async (keyName) => {
+  lb._repository.loadPositive = async (keyName) => {
     return []
   }
 
   await lb.refresh(new Map())
 
-  let page = lb.getPageData()
+  const page = lb.getPageData()
   expect(page.startRank).toBe(1)
   expect(page.data.length).toBe(0)
 
@@ -51,19 +51,19 @@ test('no data results in empty leaderboard', async () => {
 })
 
 test('single entry in storage', async () => {
-  lb.repository_.loadRowsWithNonZeroKeyValue = async (keyName) => {
+  lb._repository.loadPositive = async (keyName) => {
     return [{ id: '12345', key_column: 3456, not_key_column: 3333 }]
   }
 
   await lb.refresh(new Map())
 
-  let page = lb.getPageData()
+  const page = lb.getPageData()
   expect(page.data.length).toBe(1)
   expect(page.data[0]).toStrictEqual({ id: '12345', time: 3456 })
 })
 
 test('single entry in live data', async () => {
-  lb.repository_.loadRowsWithNonZeroKeyValue = async (keyName) => {
+  lb._repository.loadPositive = async (keyName) => {
     return []
   }
 
@@ -71,13 +71,13 @@ test('single entry in live data', async () => {
     ['12345', 10000]
   ]))
 
-  let page = lb.getPageData()
+  const page = lb.getPageData()
   expect(page.data.length).toBe(1)
   expect(page.data[0]).toStrictEqual({ id: '12345', time: 10000 })
 })
 
 test('entries with same id merge', async () => {
-  lb.repository_.loadRowsWithNonZeroKeyValue = async (keyName) => {
+  lb._repository.loadPositive = async (keyName) => {
     return [{ id: '12345', key_column: 3456, not_key_column: 3333 }]
   }
 
@@ -85,13 +85,13 @@ test('entries with same id merge', async () => {
     ['12345', 10000]
   ]))
 
-  let page = lb.getPageData()
+  const page = lb.getPageData()
   expect(page.data.length).toBe(1)
   expect(page.data[0]).toStrictEqual({ id: '12345', time: 13456 })
 })
 
 test('entries with different ids do not merge', async () => {
-  lb.repository_.loadRowsWithNonZeroKeyValue = async (keyName) => {
+  lb._repository.loadPositive = async (keyName) => {
     return [{ id: '12345', key_column: 3456, not_key_column: 3333 }]
   }
 
@@ -99,7 +99,7 @@ test('entries with different ids do not merge', async () => {
     ['54321', 10000]
   ]))
 
-  let page = lb.getPageData()
+  const page = lb.getPageData()
   expect(page.data.length).toBe(2)
   expect(page.data[0]).toStrictEqual({ id: '54321', time: 10000 })
   expect(page.data[1]).toStrictEqual({ id: '12345', time: 3456 })
@@ -121,8 +121,8 @@ test('can scroll through pages and whole leaderboard is sorted', async () => {
 })
 
 test('no blank pages when evenly divided', async () => {
-  lb.pageLength_ = 11
-  let page = lb.getPageData()
+  lb._pageLength = 11
+  const page = lb.getPageData()
   expect(page.startRank).toBe(1)
   expect(page.data.length).toBe(11)
 
@@ -132,7 +132,7 @@ test('no blank pages when evenly divided', async () => {
 })
 
 test('no stored data results in live times only', async () => {
-  lb.repository_.loadRowsWithNonZeroKeyValue = async (keyName) => {
+  lb._repository.loadPositive = async (keyName) => {
     return []
   }
 
@@ -148,7 +148,7 @@ test('no stored data results in live times only', async () => {
 
   let page = lb.getPageData()
   verifyPage(page, /* startRank */ 1, /* length */ 4, 999)
-  let lastTime = page.data[3].time
+  const lastTime = page.data[3].time
 
   lb.incrementPage()
   page = lb.getPageData()
@@ -190,8 +190,8 @@ test('no blank pages when live entries cause even page divisions', async () => {
     ['22222', 135] // new
   ]))
 
-  lb.page_ = 3
-  let page = lb.getPageData()
+  lb._page = 3
+  const page = lb.getPageData()
   verifyPage(page, /* startRank */ 9, /* length */ 4)
 
   lb.incrementPage()
@@ -203,7 +203,7 @@ test('live times cause ranking changes', async () => {
     ['55055', 10000]
   ]))
 
-  let page = lb.getPageData()
+  const page = lb.getPageData()
   expect(page.data[0]).toStrictEqual({ id: '55055', time: 15555 })
   expect(page.data[1]).toStrictEqual({ id: '75075', time: 9999 })
 })
@@ -215,7 +215,7 @@ test('live times cause ranking changes across page boundaries', async () => {
     ['80080', 100]
   ]))
 
-  lb.page_ = 2
+  lb._page = 2
   let page = lb.getPageData()
   expect(page.data[0]).toStrictEqual({ id: '99099', time: 5001 })
   expect(page.data[1]).toStrictEqual({ id: '22022', time: 5000 })
@@ -275,7 +275,7 @@ test('weekly reset scenario', async () => {
 
   expect(lb.getPageData().data.length).toBe(4)
 
-  lb.repository_.loadRowsWithNonZeroKeyValue = async (keyName) => {
+  lb._repository.loadPositive = async (keyName) => {
     return []
   }
 
@@ -285,7 +285,7 @@ test('weekly reset scenario', async () => {
     ['80080', 200]
   ]))
 
-  let page = lb.getPageData()
+  const page = lb.getPageData()
   expect(page.data.length).toBe(3)
   expect(page.data[0]).toStrictEqual({ id: '99099', time: 3101 })
   expect(page.data[1]).toStrictEqual({ id: '35035', time: 350 })
@@ -295,13 +295,13 @@ test('weekly reset scenario', async () => {
 test('reset page resets to first page', async () => {
   lb.page_ = 2
   lb.resetPage()
-  expect(lb.page_).toBe(1)
+  expect(lb._page).toBe(1)
 })
 
 test('cannot decrement past page 1', async () => {
   lb.resetPage()
   lb.decrementPage()
-  expect(lb.page_).toBe(1)
+  expect(lb._page).toBe(1)
 })
 
 test('cannot increment past last page', async () => {
