@@ -1,4 +1,2 @@
-
-settings/settings\.json
+config.json
 node_modules/
-startBotAndDB\.bat

@@ -1,66 +1,68 @@
 class Leaderboard {
-  constructor (repository, key, pageLength) {
-    this.repository_ = repository
-    this.key_ = key
-    this.pageLength_ = pageLength
+  constructor (repository, key, pageLength, title) {
+    this.title = title
+
+    this._repository = repository
+    this._key = key
+    this._pageLength = pageLength
     this.resetPage()
-    this.refresh(new Map())
+    this.refresh()
   }
 
   // refresh the cache based on a pull from repository + provided liveness data
-  async refresh (liveData) {
-    let storedData = await this.repository_.loadRowsWithNonZeroKeyValue(this.key_)
-    let pushed = new Set()
-    this.cache_ = []
+  async refresh (liveData = new Map()) {
+    const storedData = await this._repository.loadPositive(this._key)
+    const pushed = new Set()
+    this._cache = []
     storedData.forEach(row => {
-      let totalTime = row[this.key_]
-      let liveTime = liveData.get(row.id)
+      let totalTime = row[this._key]
+      const liveTime = liveData.get(row.id)
       if (liveTime != null) {
         totalTime += liveTime
         pushed.add(row.id)
       }
 
-      this.cache_.push({ id: row.id, time: totalTime })
+      this._cache.push({ id: row.id, time: totalTime })
     })
 
     liveData.forEach((value, key) => {
       if (!pushed.has(key)) {
-        this.cache_.push({ id: key, time: value })
+        this._cache.push({ id: key, time: value })
       }
     })
 
-    this.cache_.sort((a, b) => b.time - a.time)
+    this._cache.sort((a, b) => b.time - a.time)
   }
 
   resetPage () {
-    this.page_ = 1
+    this._page = 1
   }
 
   incrementPage () {
-    this.page_++
+    ++this._page
     this._checkPageOutOfRange()
   }
 
   decrementPage () {
-    this.page_--
+    --this._page
     this._checkPageOutOfRange()
   }
 
   getPageData () {
-    let begin = this.pageLength_ * (this.page_ - 1)
-    let end = this.pageLength_ * this.page_
-    return { startRank: begin + 1, data: this.cache_.slice(begin, end) }
+    const begin = this._pageLength * (this._page - 1)
+    const end = this._pageLength * this._page
+    return { startRank: begin + 1, data: this._cache.slice(begin, end) }
   }
 
   _checkPageOutOfRange () {
-    let totalPages = Math.ceil(this.cache_.length / this.pageLength_)
-    if (this.page_ > totalPages) {
-      this.page_ = totalPages
+    const totalPages = Math.ceil(this._cache.length / this._pageLength)
+    if (this._page > totalPages) {
+      this._page = totalPages
     }
 
     // in the post-reset case where lb is empty, this gets us onto page 1.
-    if (this.page_ < 1) {
-      this.page_ = 1
+    if (this._page < 1) {
+      this._page = 1
     }
   }
 }
