@@ -1,4 +1,5 @@
 const Discord = require('discord.js')
+const fs = require('fs')
 
 const globalConfig = require('./config.json')
 
@@ -32,6 +33,12 @@ const modules = [
   require('./modules/token_collecting'),
   require('./modules/user_management')
 ]
+
+for (const filename of fs.readdirSync('./modules/custom/')) {
+  if (filename.endsWith('.js')) {
+    modules.push(require(`./modules/custom/${filename}`))
+  }
+}
 
 const moduleManagers = new Map()
 const connect = require('./base/persistence')
