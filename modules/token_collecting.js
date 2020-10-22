@@ -53,11 +53,12 @@ class TokenCollecting {
 
     cron.schedule('*/5 * * * *', () => {
       if (Math.floor(Math.random() * 100) === 42 && Object.values(this._pracman._tracker).find(tracker => RoomIdentifiers.exclusive.includes(tracker.token)) == null) {
-        // take a random channel that someone is practicing in, and turn it
-        // into a rare or exclusive token.
-        const eligibleChannels = Object.keys(this._pracman._tracker).filter(channelId => this._pracman._tracker[channelId].live.length > 0)
-        if (eligibleChannels.length > 0) {
-          const channelId = util.pickRandomFromList(eligibleChannels)
+        // take the empty channel (not a feedback room) and turn it into a monkey.
+        const channelId = Object.keys(this._pracman._tracker).find(channelId => {
+          const channel = guild.channels.cache.get(channelId)
+          return channel != null && channel.members.size === 0 && !channel.name.includes('Feedback')
+        })
+        if (channelId != null) {
           const tracker = this._pracman._tracker[channelId]
           let newToken
           if (this._config.get('enableExclusiveTokens') && Math.floor(Math.random() * 100) % 2 === 0) {
