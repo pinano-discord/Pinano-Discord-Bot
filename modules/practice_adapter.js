@@ -346,6 +346,12 @@ class PracticeAdapter extends EventEmitter {
       return channel.setName(`${isLocked ? '🔒' : ''} ${isFeedback ? 'Feedback' : 'Practice'} Room ${token}`)
     }
   }
+
+  notifyUntrackedRoom (channelId) {
+    if (this._announcementsChannel != null) {
+      this._announcementsChannel.send(`WARNING: not tracking time for <#${channelId}>.`)
+    }
+  }
 }
 
 function makeModule (moduleManager) {

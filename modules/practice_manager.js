@@ -220,6 +220,10 @@ class PracticeManager extends EventEmitter {
 
   _startPracticing (userId, channelId) {
     log(`- startPracticing ${userId} ${channelId}`)
+    if (this._tracker[channelId] == null) {
+      logError(`startPracticing failed because there is no channel tracker for channel ${channelId}.`)
+      return
+    }
     this._tracker[channelId].live.push({
       id: userId,
       since: this._timestampFn()
@@ -228,6 +232,10 @@ class PracticeManager extends EventEmitter {
 
   _startListening (userId, channelId) {
     log(`- startListening ${userId} ${channelId}`)
+    if (this._tracker[channelId] == null) {
+      logError(`startListening failed because there is no channel tracker for channel ${channelId}.`)
+      return
+    }
     this._tracker[channelId].listening.push({
       id: userId,
       since: this._timestampFn()
