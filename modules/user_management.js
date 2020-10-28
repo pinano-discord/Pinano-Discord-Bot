@@ -31,9 +31,6 @@ class UserManagement {
 
       const delta = parseInt(tokenized[1])
       const targetId = tokenized[0].replace(/[<@!>]/g, '')
-      if (targetId === authorMember.id) {
-        throw new Error('Cannot modify own record')
-      }
 
       const result = userRepository.incrementSessionPlaytimes(targetId, delta, false)
       if (result == null) {
@@ -61,9 +58,6 @@ class UserManagement {
 
       const delta = parseInt(tokenized[1])
       const userId = tokenized[0].replace(/[<@!>]/g, '')
-      if (userId === authorMember.id) {
-        throw new Error('Cannot modify own record')
-      }
 
       const result = userRepository.decrementSessionPlaytimes(userId, delta, false)
       if (result == null) {
