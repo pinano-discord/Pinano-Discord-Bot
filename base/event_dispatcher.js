@@ -87,6 +87,14 @@ class EventDispatcher {
       const guildId = newState.guild.id
       this.emit(guildId, 'voiceStateUpdate', oldState, newState)
     })
+    client.on('guildMemberAdd', member => {
+      const guildId = member.guild.id
+      this.emit(guildId, 'guildMemberAdd', member)
+    })
+    client.on('guildMemberRemove', member => {
+      const guildId = member.guild.id
+      this.emit(guildId, 'guildMemberRemove', member)
+    })
   }
 
   async reactableMessage (request, response, timeout, reacts) {

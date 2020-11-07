@@ -1,3 +1,5 @@
+const util = require('../library/util')
+
 const MODULE_NAME = 'Roles'
 
 class RoleManager {
@@ -9,6 +11,7 @@ class RoleManager {
   resume () {
     const guild = this._moduleManager.getGuild()
     const dispatcher = this._moduleManager.getDispatcher()
+    const userRepository = this._moduleManager.getPersistence().getUserRepository(guild.id)
     if (this._config.get('toggleableRoles') != null) {
       this._config.get('toggleableRoles').forEach(role => {
         dispatcher.command(role.command, guild.id, authorMember => {
@@ -36,6 +39,22 @@ class RoleManager {
             }
           }
         })
+      })
+    }
+
+    if (this._config.get('persistRoles')) {
+      dispatcher.on('guildMemberAdd', guild.id, async member => {
+        const user = await userRepository.get(member.id)
+        if (user != null && user.persistedRoles != null) {
+          for (const role of user.persistedRoles) {
+            member.roles.add(role).catch(err => {
+              util.log(`Failed to persist role ${role} to user ${member.id}: ${err}. This message is safe to ignore.`)
+            })
+          }
+        }
+      })
+      dispatcher.on('guildMemberRemove', guild.id, member => {
+        userRepository.setField(member.id, 'persistedRoles', member.roles.cache.keyArray())
       })
     }
 
