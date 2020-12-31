@@ -6,6 +6,7 @@ const MODULE_NAME = 'Quiz Adapter'
 class QuizAdapter {
   constructor (moduleManager) {
     this._activeRiddles = []
+    this._lastSuccessfulAnswerMap = {}
     this._client = moduleManager.getClient()
     this._guild = moduleManager.getGuild()
     this._config = moduleManager.getConfig()
@@ -55,6 +56,16 @@ class QuizAdapter {
       } else {
         const guesses = message.content.match(/\|\|(.*?)\|\|/g)
         if (guesses == null) {
+          return
+        }
+
+        const lastSuccessfulAnswer = this._lastSuccessfulAnswerMap[message.author.id]
+        if (lastSuccessfulAnswer != null && Math.floor(Date.now() / 1000) - lastSuccessfulAnswer < (this._config.get('quizSuccessTimeout') || 0)) {
+          // if the guesser has been recently successful, give somebody else a turn.
+          setTimeout(() => message.delete(), 1000)
+          this._channel.send(`<@${message.author.id}>, you're too good at this! Why don't you give someone else a turn?`).then(m => {
+            setTimeout(() => m.delete(), (this._config.get('resultDeleteTimeInSeconds') || 30) * 1000)
+          })
           return
         }
 
@@ -118,6 +129,7 @@ class QuizAdapter {
   }
 
   notifyCorrectAnswer (guesserId, guess, reactorId, newScore) {
+    this._lastSuccessfulAnswerMap[guesserId] = Math.floor(Date.now() / 1000)
     this._channel.send(
       `The guess ${guess} was marked as correct by <@${reactorId}>!\n\n` +
       `<@${guesserId}> now has ${newScore} point${newScore === 1 ? '.' : 's.'}`)
