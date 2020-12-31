@@ -46,34 +46,50 @@ class PracticeManager extends EventEmitter {
 
     this._adapter.on('joinPracticeRoom', (userId, channelId, isMuted, isDeaf) => {
       log(`joinPracticeRoom ${userId} ${channelId} ${isMuted} ${isDeaf}`)
-      if (!isMuted) {
-        this._startPracticing(userId, channelId)
-      } else if (!isDeaf) {
-        this._startListening(userId, channelId)
+      if (this._tracker[channelId] != null) {
+        if (!isMuted) {
+          this._startPracticing(userId, channelId)
+        } else if (!isDeaf) {
+          this._startListening(userId, channelId)
+        }
+      } else {
+        logError(`Ignoring joinPracticeRoom event for channel ${channelId} because there is no channel tracker.`)
       }
     })
 
     this._adapter.on('leavePracticeRoom', (userId, channelId, wasMuted, wasDeaf) => {
       log(`leavePracticeRoom ${userId} ${channelId} ${wasMuted} ${wasDeaf}`)
-      if (!wasMuted) {
-        this._stopPracticing(userId, channelId)
-      } else if (!wasDeaf) {
-        this._stopListening(userId, channelId)
+      if (this._tracker[channelId] != null) {
+        if (!wasMuted) {
+          this._stopPracticing(userId, channelId)
+        } else if (!wasDeaf) {
+          this._stopListening(userId, channelId)
+        }
+      } else {
+        logError(`Ignoring leavePracticeRoom event for channel ${channelId} because there is no channel tracker.`)
       }
     })
 
     this._adapter.on('switchPracticeRoom', (userId, oldChannelId, newChannelId, wasMuted, wasDeaf, isMuted, isDeaf) => {
       log(`switchPracticeRoom ${userId} ${oldChannelId} ${newChannelId} ${wasMuted} ${wasDeaf} ${isMuted} ${isDeaf}`)
-      if (!wasMuted) {
-        this._stopPracticing(userId, oldChannelId)
-      } else if (!wasDeaf) {
-        this._stopListening(userId, oldChannelId)
+      if (this._tracker[oldChannelId] != null) {
+        if (!wasMuted) {
+          this._stopPracticing(userId, oldChannelId)
+        } else if (!wasDeaf) {
+          this._stopListening(userId, oldChannelId)
+        }
+      } else {
+        logError(`Ignoring switchPracticeRoom event for channel ${oldChannelId} because there is no channel tracker.`)
       }
 
-      if (!isMuted) {
-        this._startPracticing(userId, newChannelId)
-      } else if (!isDeaf) {
-        this._startListening(userId, newChannelId)
+      if (this._tracker[newChannelId] != null) {
+        if (!isMuted) {
+          this._startPracticing(userId, newChannelId)
+        } else if (!isDeaf) {
+          this._startListening(userId, newChannelId)
+        }
+      } else {
+        logError(`Ignoring switchPracticeRoom event for channel ${newChannelId} because there is no channel tracker.`)
       }
     })
 
@@ -237,10 +253,6 @@ class PracticeManager extends EventEmitter {
   _stopPracticing (userId, channelId) {
     log(`- stopPracticing ${userId} ${channelId}`)
     const channelTracker = this._tracker[channelId]
-    if (channelTracker == null) {
-      logError(`stopPracticing failed because there is no channel tracker for channel ${channelId}.`)
-      return
-    }
     const currentTimestamp = this._timestampFn()
     const index = channelTracker.live.findIndex(r => r.id === userId)
     if (index === -1) {
@@ -277,10 +289,6 @@ class PracticeManager extends EventEmitter {
   _stopListening (userId, channelId) {
     log(`- stopListening ${userId} ${channelId}`)
     const channelTracker = this._tracker[channelId]
-    if (channelTracker == null) {
-      logError(`stopListening failed because there is no channel tracker for channel ${channelId}.`)
-      return
-    }
     const currentTimestamp = this._timestampFn()
     const index = channelTracker.listening.findIndex(r => r.id === userId)
     if (index === -1) {

@@ -209,6 +209,7 @@ class PolicyEnforcer extends EventEmitter {
       this._applyRoomAutocreationPolicy()
     }
     const tracker = this._pracman._tracker[channelId]
+    if (tracker == null) return
     if (tracker.lockedBy == null) {
       this._enforceAutolock(channelId)
     } else {
@@ -222,8 +223,10 @@ class PolicyEnforcer extends EventEmitter {
     if (this._config.get('enableRoomAutocreation')) {
       removedChannelId = await this._applyRoomAutodeletionPolicy()
     }
+    const tracker = this._pracman._tracker[channelId]
+    if (tracker == null) return
     if (removedChannelId !== channelId) {
-      if (this._pracman._tracker[channelId].lockedBy === userId) {
+      if (tracker.lockedBy === userId) {
         this._unlockPracticeRoom(this._guild.channels.cache.get(channelId))
       }
       this._enforceAutolock(channelId)
@@ -269,6 +272,7 @@ class PolicyEnforcer extends EventEmitter {
 
     const channel = this._guild.channels.resolve(channelId)
     const tracker = this._pracman._tracker[channelId]
+    if (tracker == null) return
     if (channel.members.get(tracker.occupant) == null) {
       // occupant has left this room, clear out the value. Basically, start over again.
       // We will destroy the task if it exists below.
