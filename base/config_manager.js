@@ -13,7 +13,8 @@ const keys = [
   { name: 'riddleAcceptancePolicy', type: SettingTypes.STRING, values: ['blacklist', 'whitelist'] },
   { name: 'ranks', type: SettingTypes.ARRAY },
   { name: 'bitrate', type: SettingTypes.INTEGER },
-  { name: 'enableExclusiveTokens', type: SettingTypes.BOOLEAN }
+  { name: 'enableExclusiveTokens', type: SettingTypes.BOOLEAN },
+  { name: 'quizSuccessTimeout', type: SettingTypes.INTEGER }
 ]
 
 class ConfigManager {
