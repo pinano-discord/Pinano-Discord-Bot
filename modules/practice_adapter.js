@@ -52,7 +52,8 @@ class PracticeAdapter extends EventEmitter {
         return
       }
 
-      this.emit('createPracticeRoom', channel.id, channel.name.includes('Feedback'), channel.name.match(/Room (.*?)$/)[1])
+      const tokenMatch = channel.name.match(/Room (.*?)$/)
+      this.emit('createPracticeRoom', channel.id, channel.name.includes('Feedback'), (tokenMatch == null) ? null : tokenMatch[1])
     })
     dispatcher.on('channelDelete', this._guild.id, channel => {
       if (channel.parent !== this._category) {
@@ -341,15 +342,11 @@ class PracticeAdapter extends EventEmitter {
   }
 
   adjustChannelName (channelId, isLocked, isFeedback, token) {
+    // don't adjust channel names when we don't have a token; it's probably a custom room.
+    if (token == null) return
     const channel = this._guild.channels.cache.get(channelId)
     if (channel != null) {
       return channel.setName(`${isLocked ? '🔒' : ''} ${isFeedback ? 'Feedback' : 'Practice'} Room ${token}`)
-    }
-  }
-
-  notifyUntrackedRoom (channelId) {
-    if (this._announcementsChannel != null) {
-      this._announcementsChannel.send(`WARNING: not tracking time for <#${channelId}>.`)
     }
   }
 }
