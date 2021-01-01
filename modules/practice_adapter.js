@@ -139,6 +139,14 @@ class PracticeAdapter extends EventEmitter {
     this._announcementsChannel.send(`The wise monkey ${token} was claimed by <@${userId}>!${completedSet ? ` <@${userId}> has collected all three wise monkeys!` : ''}`)
   }
 
+  notifyExclusiveTokenExpired (token) {
+    this._announcementsChannel.send(`The wise monkey ${token} ran away. \`"I haven't got all day!"\``)
+  }
+
+  notifyExclusiveTokenDenied (token) {
+    this._announcementsChannel.send(`The wise monkey ${token} won't respond. \`"Someone else was here first!"\``)
+  }
+
   getCurrentState () {
     const currentTimestamp = Math.floor(Date.now() / 1000)
     const result = {}
