@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const TokenCollecting = require('./token_collecting')
 
-class MockAdapter {
+class MockAdapter extends EventEmitter {
   notifyEggHatched () {}
   notifyEggObtained () {}
 }

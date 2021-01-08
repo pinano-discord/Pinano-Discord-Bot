@@ -1,4 +1,5 @@
 const EventEmitter = require('events')
+const RoomIdentifiers = require('../library/room_identifiers')
 const util = require('../library/util')
 
 const MODULE_NAME = 'Policy Enforcer'
@@ -247,6 +248,9 @@ class PolicyEnforcer extends EventEmitter {
           this._config.get('newChannelPermissions'),
           roomType === 'Feedback')
         this._pracman.addPracticeRoom(channelId, roomType === 'Feedback', token)
+        if (RoomIdentifiers.exclusive.includes(token)) {
+          this._pracman._tracker[channelId].exclusiveAt = Math.floor(Date.now() / 1000)
+        }
       }
     }
   }

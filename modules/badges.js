@@ -114,7 +114,9 @@ class Badges {
     }
 
     if (userRecord.badges != null) {
-      if (this._config.get('monkeyBadge') != null && userRecord.badges.includes('monkey')) {
+      if (this._config.get('monkeyV2Badge') != null && userRecord.badges.includes('monkey_v2')) {
+        badges.push(this._config.get('monkeyV2Badge'))
+      } else if (this._config.get('monkeyBadge') != null && userRecord.badges.includes('monkey')) {
         badges.push(this._config.get('monkeyBadge'))
       }
 
