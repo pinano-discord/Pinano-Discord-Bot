@@ -59,6 +59,10 @@ class Badges {
         badges.push(this._config.get('collectionBadgeChristmas'))
       }
 
+      if (this._config.get('collectionBadgeLunarNewYear') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.lunarNewYear)) {
+        badges.push(this._config.get('collectionBadgeLunarNewYear'))
+      }
+
       if (this._config.get('collectionBadgeValentines') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.valentines)) {
         badges.push(this._config.get('collectionBadgeValentines'))
       }
