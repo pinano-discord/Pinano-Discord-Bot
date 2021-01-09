@@ -113,7 +113,7 @@ class Badges {
       badges.push(`${this._config.get('streakBadgeIcon')} I practiced for ${Math.max(currentStreak, userRecord.max_daily_streak)} days in a row`)
     }
 
-    if (this._config.get('virusBadge') != null && now >= userRecord.virus_visible_at) {
+    if (this._config.get('virusBadge') != null && now >= userRecord.virus_visible_at && !userRecord.rooms_practiced.includes('💉')) {
       badges.push(this._config.get('virusBadge'))
     }
 
