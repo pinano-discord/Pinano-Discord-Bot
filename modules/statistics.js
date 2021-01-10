@@ -34,10 +34,11 @@ class Statistics {
         target = resolveUntaggedMember(guild, fullyQualifiedName)
       }
 
+      const now = new Date()
       const embed = new Discord.MessageEmbed()
         .setTitle(`${target.user.username}#${target.user.discriminator}`)
         .setColor(this._config.get('embedColor') || 'DEFAULT')
-        .setTimestamp(new Date())
+        .setTimestamp(now)
 
       const userRecord = await userRepository.get(target.id) || {}
       let roomsSeen = userRecord.rooms_practiced || []
@@ -91,6 +92,9 @@ class Statistics {
         embed.addField('Daily Streak', `\`${dailyStreak}\``, true)
       }
 
+      const joinDate = target.joinedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      const isAnniversary = target.joinedAt.getMonth() === now.getMonth() && target.joinedAt.getDate() === now.getDate()
+      embed.addField(this._config.get('statsAnniversaryLabel') || 'Pinanoversary', isAnniversary ? `${joinDate} 🎂` : joinDate, true)
       embed.addField('Tokens Earned', roomsSeen.join(''))
       embed.setThumbnail(target.user.displayAvatarURL())
 
