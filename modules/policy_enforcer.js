@@ -211,6 +211,11 @@ class PolicyEnforcer extends EventEmitter {
     }
     const tracker = this._pracman._tracker[channelId]
     if (tracker == null) return
+    const channel = this._guild.channels.resolve(channelId)
+    if (channel.name.includes('🧧')) {
+      // reveal token when someone joins the room
+      this._adapter.adjustChannelName(channel.id, tracker.lockedBy != null, tracker.isFeedback, tracker.token)
+    }
     if (tracker.lockedBy == null) {
       this._enforceAutolock(channelId)
     } else {
@@ -243,8 +248,10 @@ class PolicyEnforcer extends EventEmitter {
           token = this._tokenCollecting.generateNewToken()
         }
 
+        // cover Lunar New Year tokens with red pockets
+        const displayToken = this._tokenCollecting._isInLunarNewYearPeriod() && RoomIdentifiers.lunarNewYear.includes(token) ? '🧧' : token
         const channelId = await this._adapter.createChannel(
-          token == null ? `Extra ${roomType} Room` : `${roomType} Room ${token}`,
+          token == null ? `Extra ${roomType} Room` : `${roomType} Room ${displayToken}`,
           this._config.get('newChannelPermissions'),
           roomType === 'Feedback')
         this._pracman.addPracticeRoom(channelId, roomType === 'Feedback', token)
