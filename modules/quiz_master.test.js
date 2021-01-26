@@ -76,6 +76,7 @@ class MockModuleManager {
     this._config = config
   }
 
+  getClient () { return { user: { id: 5 } } }
   getGuild () { return {} }
   getPersistence () {
     const persistence = {}
