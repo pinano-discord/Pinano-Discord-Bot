@@ -99,7 +99,7 @@ class QuizAdapter {
           }
         }
       }
-    })
+    }, 'q')
   }
 
   onContentDownloaded (riddleId) {
