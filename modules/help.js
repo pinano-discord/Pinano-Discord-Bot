@@ -56,6 +56,9 @@ class Help {
         response.addField(`\`${prefix}unsubscribe USERNAME#DISCRIMINATOR\``, 'Stop getting a DM when @user starts practicing')
         response.addField(`\`${prefix}subscribers [ on | off | silent ]\``, 'Enable/disable subscription to self, or disables notifications')
       }
+      if (this._config.get('enableLiteratureQuiz')) {
+        response.addField(`\`${prefix}queue\``, 'Display the active riddle queue in Literature Quiz')
+      }
       if (this._config.get('enableFaq')) {
         response.addField(`\`${prefix}faq KEYWORD\``, 'Display the FAQ entry for `KEYWORD`')
       }

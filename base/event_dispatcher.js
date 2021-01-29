@@ -166,12 +166,15 @@ class EventDispatcher {
     }
   }
 
-  command (command, guildId, handler) {
+  command (command, guildId, handler, ...aliases) {
     if (this._commandHandlers[guildId] == null) {
       this._commandHandlers[guildId] = {}
     }
 
     this._commandHandlers[guildId][command] = handler
+    aliases.forEach(alias => {
+      this._commandHandlers[guildId][alias] = handler
+    })
   }
 
   on (eventName, guildId, handler) {

@@ -176,6 +176,10 @@ class QuizMaster {
     }
   }
 
+  getActiveQueue () {
+    return this._activeQueue
+  }
+
   _setTimeoutHandles (quizzerId) {
     let nagTimeoutHandle, skipTimeoutHandle
 
