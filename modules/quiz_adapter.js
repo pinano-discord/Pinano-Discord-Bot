@@ -73,6 +73,33 @@ class QuizAdapter {
         this._handleGuess(message, message.author.id, guesses[0], quizzer)
       }
     })
+
+    dispatcher.command('queue', this._guild.id, () => {
+      const activeQueue = this._quizModule.getActiveQueue()
+      if (activeQueue.length === 0) {
+        return {
+          embed: {
+            title: 'Queue',
+            description: 'The queue is currently empty.',
+            color: this._config.get('embedColor') || 'DEFAULT',
+            timestamp: new Date()
+          }
+        }
+      } else {
+        const reducer = (msgStr, riddle, index) => {
+          return msgStr + `**${index + 1}. <@${riddle.quizzerId}>**` + (riddle.active ? ' (active)\n' : '\n')
+        }
+        return {
+          embed: {
+            title: 'Queue',
+            description: activeQueue.reduce(reducer, ''),
+            footer: { text: 'Only the first riddle by each user is shown in this list' },
+            color: this._config.get('embedColor') || 'DEFAULT',
+            timestamp: new Date()
+          }
+        }
+      }
+    }, 'q')
   }
 
   onContentDownloaded (riddleId) {
