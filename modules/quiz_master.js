@@ -1,4 +1,5 @@
-const logError = require('../library/util').logError
+const fs = require('fs')
+const util = require('../library/util')
 
 const MODULE_NAME = 'Literature Quiz'
 
@@ -15,6 +16,7 @@ class QuizMaster {
 
   async resume () {
     this._adapter = this._moduleManager.getModule('Quiz Adapter')
+    this._clientId = this._moduleManager.getClient().user.id
 
     this._activeQueue = await this._quizRepository.getActiveQueue()
     if (this._activeQueue.length > 0) {
@@ -25,9 +27,12 @@ class QuizMaster {
       const { nagTimeoutHandle, skipTimeoutHandle } = this._setTimeoutHandles(quizzerId)
       const riddle = this._activeQueue.find(r => r.quizzerId === quizzerId)
       if (riddle == null) {
-        // this should never happen, but if it does, insert a barebones entry
-        // into the queue and try to continue.
-        logError(`Adapter returned an existing riddle that did not match any quizzer in the active queue. Quizzer ID: ${quizzerId}`)
+        // this should only ever happen when continuing house riddles, which
+        // aren't stored in the db. Insert a barebones entry into the queue and
+        // try to continue.
+        if (quizzerId !== this._clientId) {
+          util.logError(`Adapter returned an existing riddle that did not match any quizzer in the active queue. Quizzer ID: ${quizzerId}`)
+        }
         this._activeQueue.push({
           quizzerId: quizzerId,
           nagTimeoutHandle: nagTimeoutHandle,
@@ -42,11 +47,12 @@ class QuizMaster {
     })
 
     if (this._config.get('automaticallyStartQueue')) {
-      while (this._activeQueue.filter(r => r.active).length < (this._config.get('maxConcurrentRiddles') || 1)) {
-        // send more riddles while we have room
+      while (this._activeRiddleCount() < (this._config.get('maxConcurrentRiddles') || 1)) {
+        // send more riddles while we have room. Exclude house riddles from the
+        // count if alwaysAutoquiz is enabled - the house has its own slot.
         const newRiddle = this._activeQueue.filter(r => !r.active).sort((a, b) => a.priority - b.priority)[0]
         if (newRiddle == null) {
-          return
+          break
         }
 
         this._adapter.postRiddle(newRiddle.quizzerId, newRiddle.content, `riddle${newRiddle.extension || '.png'}`)
@@ -56,6 +62,8 @@ class QuizMaster {
         newRiddle.skipTimeoutHandle = skipTimeoutHandle
         newRiddle.active = true
       }
+
+      this._postAutoquizIfConfigured()
     }
   }
 
@@ -64,7 +72,7 @@ class QuizMaster {
     // We calculate this first because if the riddle rejection policy is to
     // ignore (i.e. silently drop) the riddle, then we continue processing
     // the riddle if there were no rejection policy.
-    const willBeActive = this._activeQueue.filter(r => r.active).length < (this._config.get('maxConcurrentRiddles') || 1) &&
+    const willBeActive = this._activeRiddleCount() < (this._config.get('maxConcurrentRiddles') || 1) &&
       !this._activeQueue.some(r => r.active && r.quizzerId === quizzerId)
     const preventedByPolicy =
       (this._config.get('riddleAcceptancePolicy') === 'blacklist' && (this._config.get('blacklist') || []).includes(quizzerId)) ||
@@ -136,7 +144,10 @@ class QuizMaster {
       clearTimeout(riddle.skipTimeoutHandle)
     }
 
-    await this._quizRepository.removeRiddle(riddle.id)
+    if (riddle.quizzerId !== this._clientId) {
+      // house riddles aren't stored in the db.
+      await this._quizRepository.removeRiddle(riddle.id)
+    }
     this._adapter.endRiddle(quizzerId)
 
     const promotedRiddle = await this._quizRepository.promoteRiddle(quizzerId, ++this._priority)
@@ -146,15 +157,64 @@ class QuizMaster {
     }
 
     const newRiddle = this._activeQueue.filter(r => !r.active).sort((a, b) => a.priority - b.priority)[0]
-    if (newRiddle != null && this._activeQueue.filter(r => r.active).length < (this._config.get('maxConcurrentRiddles') || 1)) {
+    if (newRiddle != null && this._activeRiddleCount() < (this._config.get('maxConcurrentRiddles') || 1)) {
       this._adapter.postRiddle(newRiddle.quizzerId, newRiddle.content, `riddle${newRiddle.extension || '.png'}`)
 
       const { nagTimeoutHandle, skipTimeoutHandle } = this._setTimeoutHandles(newRiddle.quizzerId)
       newRiddle.nagTimeoutHandle = nagTimeoutHandle
       newRiddle.skipTimeoutHandle = skipTimeoutHandle
       newRiddle.active = true
-    } else if (this._activeQueue.length === 0) {
+    }
+
+    this._postAutoquizIfConfigured()
+
+    if (this._activeQueue.length === 0) {
       this._adapter.notifyQueueEmpty()
+    }
+  }
+
+  // returns the effective number of active riddles, accounting for the state
+  // of the alwaysAutoquiz flag (if enabled, then the house always has its own
+  // slot for riddles, so we don't count it as part of the limit).
+  _activeRiddleCount () {
+    return this._activeQueue.filter(r => r.active && !(this._config.get('alwaysAutoquiz') && r.quizzerId === this._clientId)).length
+  }
+
+  // if autoquiz is turned on and the house doesn't have a riddle posted, and
+  // there are at most two fewer than maximum riddles posted, have the house
+  // post a riddle. Two fewer than maximum ensures that the first user who
+  // subsequently uploads a riddle will have it immediately appear. If
+  // alwaysAutoquiz is enabled, the house will post a riddle if it doesn't have
+  // one posted, regardless of how many riddles are active.
+  _shouldPostAutoquiz () {
+    return this._config.get('enableAutoquiz') &&
+      this._activeQueue.find(r => r.quizzerId === this._clientId) == null &&
+      (this._config.get('alwaysAutoquiz') || this._activeQueue.filter(r => r.active).length <= ((this._config.get('maxConcurrentRiddles') || 1) - 2))
+  }
+
+  _postAutoquizIfConfigured () {
+    if (this._shouldPostAutoquiz()) {
+      try {
+        const filename = util.pickRandomFromList(fs.readdirSync('../autoquiz/'))
+        if (filename != null) {
+          const { nagTimeoutHandle, skipTimeoutHandle } = this._setTimeoutHandles(this._clientId)
+          const houseRiddle = {
+            id: 'HOUSE_RIDDLE',
+            quizzerId: this._clientId,
+            timeAdded: Date.now(),
+            content: `../autoquiz/${filename}`,
+            extension: filename.substring(filename.lastIndexOf('.')),
+            nagTimeoutHandle: nagTimeoutHandle,
+            skipTimeoutHandle: skipTimeoutHandle,
+            active: true
+          }
+          this._activeQueue.push(houseRiddle)
+          this._adapter.postRiddle(this._clientId, houseRiddle.content, `riddle${houseRiddle.extension}`)
+          util.log(`Posted ${filename} as a house riddle`)
+        }
+      } catch (ex) {
+        util.logError('Failed to post a house riddle.')
+      }
     }
   }
 
@@ -186,14 +246,20 @@ class QuizMaster {
     const nagTimeout = this._config.get('nagTimeoutInSeconds') || 0
     if (nagTimeout > 0) {
       nagTimeoutHandle = setTimeout(() => {
-        this._adapter.nagQuizzer(quizzerId)
+        if (quizzerId !== this._clientId) {
+          // don't notify the house about timeout
+          this._adapter.nagQuizzer(quizzerId)
+        }
       }, nagTimeout * 1000)
     }
 
     const skipTimeout = this._config.get('skipTimeoutInSeconds') || 0
     if (skipTimeout > 0) {
       skipTimeoutHandle = setTimeout(() => {
-        this._adapter.notifySkip(quizzerId)
+        if (quizzerId !== this._clientId) {
+          // don't notify the house about timeout
+          this._adapter.notifySkip(quizzerId)
+        }
         this.endRiddle(quizzerId)
       }, skipTimeout * 1000)
     }
