@@ -258,9 +258,8 @@ class TokenCollecting {
     this._deletedTokens = []
     let tokenPool = []
 
-    const currentDate = new Date()
     for (const period in PeriodicBadges) {
-      if (PeriodicBadges[period].isHappening(currentDate)) {
+      if (PeriodicBadges[period].isHappening(current)) {
         tokenPool = tokenPool.concat(RoomIdentifiers[period])
       }
     }
