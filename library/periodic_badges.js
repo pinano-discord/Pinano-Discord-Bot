@@ -58,5 +58,8 @@ const PeriodicBadges = {
           return false
       }
     }
-  },
-};
+  }
+}
+Object.freeze(PeriodicBadges)
+
+module.exports = PeriodicBadges

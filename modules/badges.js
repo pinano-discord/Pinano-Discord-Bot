@@ -56,7 +56,7 @@ class Badges {
         badges.push(this._config.get('collectionBadgeRare'))
       }
 
-      for (let period in PeriodicBadges) {
+      for (const period in PeriodicBadges) {
         if (this._config.get(PeriodicBadges[period].config) != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers[period])) {
           badges.push(this._config.get(PeriodicBadges[period].config))
         }

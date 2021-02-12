@@ -257,8 +257,8 @@ class TokenCollecting {
     // the deleted tokens stack is too old - clear it and we'll start again.
     this._deletedTokens = []
     let tokenPool = []
-    for (let period in PeriodicBadges) {
-      if (PeriodBadges[period].isHappening(new Date())) {
+    for (const period in PeriodicBadges) {
+      if (PeriodicBadges[period].isHappening(new Date())) {
         tokenPool = tokenPool.concat(RoomIdentifiers[period])
       }
     }
