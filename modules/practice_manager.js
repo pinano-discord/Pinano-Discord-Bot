@@ -95,28 +95,44 @@ class PracticeManager extends EventEmitter {
 
     this._adapter.on('unmute', async (userId, channelId, wasDeaf) => {
       log(`unmute ${userId} ${channelId} ${wasDeaf}`)
-      if (!wasDeaf) {
-        this._stopListening(userId, channelId)
+      if (this._tracker[channelId] != null) {
+        if (!wasDeaf) {
+          this._stopListening(userId, channelId)
+        }
+        this._startPracticing(userId, channelId)
+      } else {
+        logError(`Ignoring unmute event for channel ${channelId} because there is no channel tracker.`)
       }
-      this._startPracticing(userId, channelId)
     })
 
     this._adapter.on('mute', (userId, channelId, isDeaf) => {
       log(`mute ${userId} ${channelId} ${isDeaf}`)
-      this._stopPracticing(userId, channelId)
-      if (!isDeaf) {
-        this._startListening(userId, channelId)
+      if (this._tracker[channelId] != null) {
+        this._stopPracticing(userId, channelId)
+        if (!isDeaf) {
+          this._startListening(userId, channelId)
+        }
+      } else {
+        logError(`Ignoring mute event for channel ${channelId} because there is no channel tracker.`)
       }
     })
 
     this._adapter.on('deafen', (userId, channelId) => {
       log(`deafen ${userId} ${channelId}`)
-      this._stopListening(userId, channelId)
+      if (this._tracker[channelId] != null) {
+        this._stopListening(userId, channelId)
+      } else {
+        logError(`Ignoring deafen event for channel ${channelId} because there is no channel tracker.`)
+      }
     })
 
     this._adapter.on('undeafen', async (userId, channelId) => {
       log(`undeafen ${userId} ${channelId}`)
-      this._startListening(userId, channelId)
+      if (this._tracker[channelId] != null) {
+        this._startListening(userId, channelId)
+      } else {
+        logError(`Ignoring undeafen event for channel ${channelId} because there is no channel tracker.`)
+      }
     })
 
     this._weeklyLeaderboard = new Leaderboard(this._userRepository, 'current_session_playtime', this._config.get('leaderboardSize') || 10, 'Weekly Leaderboard')

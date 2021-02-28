@@ -115,6 +115,7 @@ class TokenCollecting {
     this._adapter.on('joinPracticeRoom', async (userId, channelId) => {
       const channel = guild.channels.resolve(channelId)
       const tracker = this._pracman._tracker[channelId]
+      if (tracker == null) return
       if (channel.members.size === 1 && RoomIdentifiers.exclusive.includes(tracker.token)) {
         // latch the first user into an exclusive room so that they can't gift
         // the room to another user.
@@ -125,6 +126,7 @@ class TokenCollecting {
     this._adapter.on('switchPracticeRoom', async (userId, _, newChannelId) => {
       const channel = guild.channels.resolve(newChannelId)
       const tracker = this._pracman._tracker[newChannelId]
+      if (tracker == null) return
       if (channel.members.size === 1 && RoomIdentifiers.exclusive.includes(tracker.token)) {
         // latch the first user into an exclusive room so that they can't gift
         // the room to another user.
