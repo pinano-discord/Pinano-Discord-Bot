@@ -1,4 +1,5 @@
 const EventEmitter = require('events')
+const PeriodicBadges = require('../library/periodic_badges')
 const RoomIdentifiers = require('../library/room_identifiers')
 const util = require('../library/util')
 
@@ -249,7 +250,7 @@ class PolicyEnforcer extends EventEmitter {
         }
 
         // cover Lunar New Year tokens with red pockets
-        const displayToken = this._tokenCollecting._isInLunarNewYearPeriod() && RoomIdentifiers.lunarNewYear.includes(token) ? '🧧' : token
+        const displayToken = PeriodicBadges.lunarNewYear.isHappening(new Date()) && RoomIdentifiers.lunarNewYear.includes(token) ? '🧧' : token
         const channelId = await this._adapter.createChannel(
           token == null ? `Extra ${roomType} Room` : `${roomType} Room ${displayToken}`,
           this._config.get('newChannelPermissions'),

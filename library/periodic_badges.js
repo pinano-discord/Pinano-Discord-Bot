@@ -1,22 +1,22 @@
 const PeriodicBadges = {
   christmas: {
     config: 'collectionBadgeChristmas',
-    isHappening: (current) => (current.getMonth() === 11 && current.getcurrent() >= 20)
+    isHappening: (current) => (current.getMonth() === 11 && current.getDate() >= 20)
   },
   halloween: {
     config: 'collectionBadgeHalloween',
-    isHappening: (current) => (current.getMonth() === 9 && current.getcurrent() > 24)
+    isHappening: (current) => (current.getMonth() === 9 && current.getDate() > 24)
   },
   rickroll: {
     config: 'collectionBadgeRickroll',
-    isHappening: (current) => (current.getMonth() === 3 && current.getcurrent() <= 7)
+    isHappening: (current) => (current.getMonth() === 3 && current.getDate() <= 7)
   },
   valentines: {
     config: 'collectionBadgeValentines',
     isHappening: (current) => (
       current.getMonth() === 1 &&
-      current.getcurrent() >= 13 &&
-      current.getcurrent() < 20
+      current.getDate() >= 13 &&
+      current.getDate() < 20
     )
   },
   lunarNewYear: {
