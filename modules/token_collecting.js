@@ -1,5 +1,6 @@
 const cron = require('node-cron')
 const RoomIdentifiers = require('../library/room_identifiers')
+const PeriodicBadges = require('../library/periodic_badges')
 const util = require('../library/util')
 
 const MODULE_NAME = 'Token Collecting'
@@ -256,20 +257,11 @@ class TokenCollecting {
     // the deleted tokens stack is too old - clear it and we'll start again.
     this._deletedTokens = []
     let tokenPool = []
-    if (this._isInChristmasPeriod()) {
-      tokenPool = tokenPool.concat(RoomIdentifiers.christmas)
-    }
-    if (this._isInHalloweenPeriod()) {
-      tokenPool = tokenPool.concat(RoomIdentifiers.halloween)
-    }
-    if (this._isInRickrollPeriod()) {
-      tokenPool = tokenPool.concat(RoomIdentifiers.rickroll)
-    }
-    if (this._isInValentinesPeriod()) {
-      tokenPool = tokenPool.concat(RoomIdentifiers.valentines)
-    }
-    if (this._isInLunarNewYearPeriod()) {
-      tokenPool = tokenPool.concat(RoomIdentifiers.lunarNewYear)
+
+    for (const period in PeriodicBadges) {
+      if (PeriodicBadges[period].isHappening(current)) {
+        tokenPool = tokenPool.concat(RoomIdentifiers[period])
+      }
     }
 
     if (tokenPool.length > 0) {
@@ -281,67 +273,6 @@ class TokenCollecting {
       }
 
       return util.pickRandomFromList(RoomIdentifiers.onDemand)
-    }
-  }
-
-  _isInChristmasPeriod () {
-    const current = new Date()
-    return current.getMonth() === 11 && current.getDate() >= 20
-  }
-
-  _isInHalloweenPeriod () {
-    const current = new Date()
-    return current.getMonth() === 9 && current.getDate() > 24
-  }
-
-  // April Fool's
-  _isInRickrollPeriod () {
-    const current = new Date()
-    return current.getMonth() === 3 && current.getDate() <= 7
-  }
-
-  _isInValentinesPeriod () {
-    const current = new Date()
-    return current.getMonth() === 1 && current.getDate() >= 13 && current.getDate() < 20
-  }
-
-  // Lunar New Year period is fifteen days.
-  _isInLunarNewYearPeriod () {
-    const current = new Date()
-    switch (current.getFullYear()) {
-      case 2021:
-        // 12 Feb - 26 Feb
-        return current.getMonth() === 1 && current.getDate() >= 12 && current.getDate() <= 26
-      case 2022:
-        // 01 Feb - 15 Feb
-        return current.getMonth() === 1 && current.getDate() >= 1 && current.getDate() <= 15
-      case 2023:
-        // 22 Jan - 5 Feb
-        return (current.getMonth() === 0 && current.getDate() >= 22) || (current.getMonth() === 1 && current.getDate() <= 5)
-      case 2024:
-        // 10 Feb - 24 Feb
-        return current.getMonth() === 1 && current.getDate() >= 10 && current.getDate() <= 24
-      case 2025:
-        // 29 Jan - 12 Feb
-        return (current.getMonth() === 0 && current.getDate() >= 29) || (current.getMonth() === 1 && current.getDate() <= 12)
-      case 2026:
-        // 17 Feb - 3 Mar
-        return (current.getMonth() === 1 && current.getDate() >= 17) || (current.getMonth() === 2 && current.getDate() <= 3)
-      case 2027:
-        // 6 Feb - 20 Feb
-        return current.getMonth() === 1 && current.getDate() >= 6 && current.getDate() <= 20
-      case 2028:
-        // 26 Jan - 9 Feb
-        return (current.getMonth() === 0 && current.getDate() >= 26) || (current.getMonth() === 1 && current.getDate() <= 9)
-      case 2029:
-        // 13 Feb - 27 Feb
-        return current.getMonth() === 1 && current.getDate() >= 13 && current.getDate() <= 27
-      case 2030:
-        // 3 Feb - 17 Feb
-        return current.getMonth() === 1 && current.getDate() >= 3 && current.getDate() <= 17
-      default:
-        // I hope I'm not still coding this thing by then
-        return false
     }
   }
 

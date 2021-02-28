@@ -1,4 +1,5 @@
 const RoomIdentifiers = require('../library/room_identifiers')
+const PeriodicBadges = require('../library/periodic_badges')
 
 const MODULE_NAME = 'Badges'
 
@@ -55,24 +56,10 @@ class Badges {
         badges.push(this._config.get('collectionBadgeRare'))
       }
 
-      if (this._config.get('collectionBadgeChristmas') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.christmas)) {
-        badges.push(this._config.get('collectionBadgeChristmas'))
-      }
-
-      if (this._config.get('collectionBadgeLunarNewYear') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.lunarNewYear)) {
-        badges.push(this._config.get('collectionBadgeLunarNewYear'))
-      }
-
-      if (this._config.get('collectionBadgeValentines') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.valentines)) {
-        badges.push(this._config.get('collectionBadgeValentines'))
-      }
-
-      if (this._config.get('collectionBadgeHalloween') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.halloween)) {
-        badges.push(this._config.get('collectionBadgeHalloween'))
-      }
-
-      if (this._config.get('collectionBadgeRickroll') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.rickroll)) {
-        badges.push(this._config.get('collectionBadgeRickroll'))
+      for (const period in PeriodicBadges) {
+        if (this._config.get(PeriodicBadges[period].config) != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers[period])) {
+          badges.push(this._config.get(PeriodicBadges[period].config))
+        }
       }
 
       if (this._config.get('collectionBadgeTimeBased') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.timeBased)) {
