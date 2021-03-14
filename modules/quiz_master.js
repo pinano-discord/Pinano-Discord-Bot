@@ -253,7 +253,10 @@ class QuizMaster {
       }, nagTimeout * 1000)
     }
 
-    const skipTimeout = this._config.get('skipTimeoutInSeconds') || 0
+    const skipTimeoutForHouseRiddles = this._config.get('autoquizSkipTimeout') || 0
+    const skipTimeout = (quizzerId === this._clientId && skipTimeoutForHouseRiddles > 0)
+      ? skipTimeoutForHouseRiddles : (this._config.get('skipTimeoutInSeconds') || 0)
+
     if (skipTimeout > 0) {
       skipTimeoutHandle = setTimeout(() => {
         if (quizzerId !== this._clientId) {

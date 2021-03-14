@@ -8,15 +8,18 @@ const SettingTypes = {
 // TODO: make more configuration settings modifiable without restart
 const keys = [
   { name: 'alwaysAutoquiz', type: SettingTypes.BOOLEAN },
+  { name: 'autoquizSkipTimeout', type: SettingTypes.INTEGER },
   { name: 'bitrate', type: SettingTypes.INTEGER },
   { name: 'blacklist', type: SettingTypes.ARRAY },
   { name: 'enableAutoquiz', type: SettingTypes.BOOLEAN },
   { name: 'enableExclusiveTokens', type: SettingTypes.BOOLEAN },
   { name: 'maxConcurrentRiddles', type: SettingTypes.INTEGER },
+  { name: 'nagTimeoutInSeconds', type: SettingTypes.INTEGER },
   { name: 'ranks', type: SettingTypes.ARRAY },
   { name: 'rejectedRiddleAction', type: SettingTypes.STRING, values: ['reject', 'ignore'] },
   { name: 'riddleAcceptancePolicy', type: SettingTypes.STRING, values: ['blacklist', 'whitelist'] },
   { name: 'quizSuccessTimeout', type: SettingTypes.INTEGER },
+  { name: 'skipTimeoutInSeconds', type: SettingTypes.INTEGER },
   { name: 'whitelist', type: SettingTypes.ARRAY }
 ]
 
