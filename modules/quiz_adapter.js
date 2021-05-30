@@ -167,6 +167,10 @@ class QuizAdapter {
       'Please mark guesses as correct or incorrect, or consider skipping the riddle if no progress is made.')
   }
 
+  giveHint (hint) {
+    this._channel.send(`Hint: my riddle is by **${hint}**`)
+  }
+
   notifySkip (quizzerId) {
     this._channel.send(`<@${quizzerId}>: the time limit for your riddle has been reached. Advancing...`)
   }

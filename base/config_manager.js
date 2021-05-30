@@ -8,6 +8,7 @@ const SettingTypes = {
 // TODO: make more configuration settings modifiable without restart
 const keys = [
   { name: 'alwaysAutoquiz', type: SettingTypes.BOOLEAN },
+  { name: 'autoquizHintTimeout', type: SettingTypes.INTEGER },
   { name: 'autoquizSkipTimeout', type: SettingTypes.INTEGER },
   { name: 'bitrate', type: SettingTypes.INTEGER },
   { name: 'blacklist', type: SettingTypes.ARRAY },
