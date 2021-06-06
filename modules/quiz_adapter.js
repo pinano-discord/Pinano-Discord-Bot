@@ -44,7 +44,8 @@ class QuizAdapter {
       }
 
       if (message.attachments.size !== 0) {
-        if (message.content.toLowerCase().includes('continuation') || message.content.toLowerCase().includes('noriddle') || message.content.toLowerCase().includes('correction')) {
+        if (message.content.length > 0) {
+          // putting any message on an image in the channel is interpreted as a non-riddle
           return
         }
         log(`Enqueueing ${message.attachments.size} riddle(s) by ${message.author}`)
