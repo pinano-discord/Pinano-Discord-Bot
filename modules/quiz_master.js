@@ -12,6 +12,17 @@ class QuizMaster {
     this._config = moduleManager.getConfig()
     this._moduleManager = moduleManager
     this._priority = 0
+
+    if (this._config.get('enableAutoquiz')) {
+      const hintKeyFile = this._config.get('hintKeyFile')
+      if (hintKeyFile != null) {
+        try {
+          this._hintKey = require(`../data/${hintKeyFile}`)
+        } catch (ex) {
+          util.logError(`Could not open hint key file ${hintKeyFile}: ${ex}`)
+        }
+      }
+    }
   }
 
   async resume () {
@@ -197,7 +208,7 @@ class QuizMaster {
       try {
         const filename = util.pickRandomFromList(fs.readdirSync('../autoquiz/'))
         if (filename != null) {
-          const { nagTimeoutHandle, skipTimeoutHandle } = this._setTimeoutHandles(this._clientId)
+          const { nagTimeoutHandle, skipTimeoutHandle } = this._setTimeoutHandles(this._clientId, filename)
           const houseRiddle = {
             id: 'HOUSE_RIDDLE',
             quizzerId: this._clientId,
@@ -240,17 +251,26 @@ class QuizMaster {
     return this._activeQueue
   }
 
-  _setTimeoutHandles (quizzerId) {
+  _setTimeoutHandles (quizzerId, filename) {
     let nagTimeoutHandle, skipTimeoutHandle
 
-    const nagTimeout = this._config.get('nagTimeoutInSeconds') || 0
-    if (nagTimeout > 0) {
-      nagTimeoutHandle = setTimeout(() => {
-        if (quizzerId !== this._clientId) {
+    if (quizzerId === this._clientId) {
+      const autoquizHintTimeout = this._config.get('autoquizHintTimeout') || 0
+      // we won't be able to give hints for resumed house riddles because we don't have a filename.
+      if (autoquizHintTimeout > 0 && this._hintKey != null && filename != null) {
+        const hint = this._hintKey.getHintForFilename(filename)
+        nagTimeoutHandle = setTimeout(() => {
+          this._adapter.giveHint(hint)
+        }, autoquizHintTimeout * 1000)
+      }
+    } else {
+      const nagTimeout = this._config.get('nagTimeoutInSeconds') || 0
+      if (nagTimeout > 0) {
+        nagTimeoutHandle = setTimeout(() => {
           // don't notify the house about timeout
           this._adapter.nagQuizzer(quizzerId)
-        }
-      }, nagTimeout * 1000)
+        }, nagTimeout * 1000)
+      }
     }
 
     const skipTimeoutForHouseRiddles = this._config.get('autoquizSkipTimeout') || 0
