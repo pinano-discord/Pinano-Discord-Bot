@@ -191,7 +191,7 @@ class QuizAdapter {
 
   endRiddle (quizzerId) {
     let index = this._activeRiddles.findIndex(r => r.quizzerId === quizzerId)
-    while (index != -1) {
+    while (index !== -1) {
       // this should approximately never happen more than once, but sometimes there is more than
       // one pinned message with the same quizzer ID and things get very confusing.
       const riddle = this._activeRiddles.splice(index, 1)[0]
@@ -220,7 +220,7 @@ class QuizAdapter {
       }
 
       index = this._activeRiddles.findIndex(r => r.quizzerId === quizzerId)
-      if (index != -1) {
+      if (index !== -1) {
         util.logError(`Found more than one active riddle with the same quizzer ID. Clearing all of them. Quizzer ID: ${quizzerId}`)
       }
     }
