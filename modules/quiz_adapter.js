@@ -34,6 +34,19 @@ class QuizAdapter {
   resume () {
     this._quizModule = this._moduleManager.getModule('Literature Quiz')
     const dispatcher = this._moduleManager.getDispatcher()
+    dispatcher.on('channelPinsUpdate', this._guild.id, async (channel) => {
+      if (channel.id !== this._channel.id) {
+        return
+      }
+
+      const pinned = await this._channel.messages.fetchPinned()
+      const current = pinned.filter(m => m.author === this._client.user)
+      this._activeRiddles.forEach(riddle => {
+        if (!current.has(riddle.message.id)) {
+          this._quizModule.endRiddle(riddle.quizzerId)
+        }
+      })
+    })
     dispatcher.on('message', this._guild.id, message => {
       if (message.author === this._client.user) {
         return
