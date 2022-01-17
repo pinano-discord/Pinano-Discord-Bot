@@ -42,7 +42,12 @@ class QuizAdapter {
       const pinned = await this._channel.messages.fetchPinned()
       const current = pinned.filter(m => m.author === this._client.user)
       this._activeRiddles.forEach(riddle => {
-        if (!current.has(riddle.message.id)) {
+        if (!current.has(riddle.message.id) && (Date.now() - riddle.message.createdTimestamp) >= 60 * 1000) {
+          // treat channel unpinning as a skip. Note that since we need to manually check the
+          // channel pins, it's hard for us to tell the difference between the case where we just
+          // posted a riddle and we haven't pinned it yet, and we posted a riddle and it got
+          // unpinned by a quiz master. In order to avoid an immediate skip after we post a riddle,
+          // we only treat unpinning as a skip if the riddle is at least a minute old.
           this._quizModule.endRiddle(riddle.quizzerId)
         }
       })
