@@ -78,17 +78,20 @@ class QuizAdapter {
           return
         }
 
+        const quizzer = message.mentions.users.first()
         const lastSuccessfulAnswer = this._lastSuccessfulAnswerMap[message.author.id]
         if (lastSuccessfulAnswer != null && Math.floor(Date.now() / 1000) - lastSuccessfulAnswer < (this._config.get('quizSuccessTimeout') || 0)) {
-          // if the guesser has been recently successful, give somebody else a turn.
-          setTimeout(() => message.delete(), 1000)
-          this._channel.send(`<@${message.author.id}>, you're too good at this! Why don't you give someone else a turn?`).then(m => {
-            setTimeout(() => m.delete(), (this._config.get('resultDeleteTimeInSeconds') || 30) * 1000)
-          })
-          return
+          // if the guesser has been recently successful, give somebody else a turn on new riddles.
+          const riddle = this._activeRiddles.find(r => r.quizzerId === quizzer.id)
+          if (riddle == null || Math.floor(riddle.message.createdTimestamp / 1000) >= lastSuccessfulAnswer) {
+            setTimeout(() => message.delete(), 500)
+            this._channel.send(`<@${message.author.id}>, you're too good at this! Why don't you give someone else a turn?`).then(m => {
+              setTimeout(() => m.delete(), (this._config.get('resultDeleteTimeInSeconds') || 30) * 1000)
+            })
+            return
+          }
         }
 
-        const quizzer = message.mentions.users.first()
         this._handleGuess(message, message.author.id, guesses[0], quizzer)
       }
     })
