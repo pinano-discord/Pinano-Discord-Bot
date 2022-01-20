@@ -82,7 +82,10 @@ class QuizAdapter {
         const lastSuccessfulAnswer = this._lastSuccessfulAnswerMap[message.author.id]
         if (lastSuccessfulAnswer != null && Math.floor(Date.now() / 1000) - lastSuccessfulAnswer < (this._config.get('quizSuccessTimeout') || 0)) {
           // if the guesser has been recently successful, give somebody else a turn on new riddles.
-          const riddle = this._activeRiddles.find(r => r.quizzerId === quizzer.id)
+          let riddle = null
+          if (quizzer != null) {
+            riddle = this._activeRiddles.find(r => r.quizzerId === quizzer.id)
+          }
           if (riddle == null || Math.floor(riddle.message.createdTimestamp / 1000) >= lastSuccessfulAnswer) {
             setTimeout(() => message.delete(), 500)
             this._channel.send(`<@${message.author.id}>, you're too good at this! Why don't you give someone else a turn?`).then(m => {
