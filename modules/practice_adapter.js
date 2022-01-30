@@ -306,12 +306,14 @@ class PracticeAdapter extends EventEmitter {
     const practiceRooms = this._category.children
       .filter(chan => chan.type === 'voice' && chan.name.includes(roomType))
       .sort((a, b) => a.position - b.position)
-    const basePosition = practiceRooms.first().position
-    const emptyRooms = practiceRooms.filter(chan => chan.members.size === 0).sort((a, b) => a.createdTimestamp - b.createdTimestamp)
-    if (emptyRooms.size >= 2 && practiceRooms.size > (this._config.get('minimumRooms') || 4)) {
-      const roomToRemove = this._config.get('preserveOriginalRooms') ? emptyRooms.find(room => room.position >= basePosition + (this._config.get('minimumRooms') || 4)) : emptyRooms.first()
-      if (roomToRemove != null) {
-        return roomToRemove.delete()
+    if (practiceRooms.size > 0) {
+      const basePosition = practiceRooms.first().position
+      const emptyRooms = practiceRooms.filter(chan => chan.members.size === 0).sort((a, b) => a.createdTimestamp - b.createdTimestamp)
+      if (emptyRooms.size >= 2 && practiceRooms.size > (this._config.get('minimumRooms') || 4)) {
+        const roomToRemove = this._config.get('preserveOriginalRooms') ? emptyRooms.find(room => room.position >= basePosition + (this._config.get('minimumRooms') || 4)) : emptyRooms.first()
+        if (roomToRemove != null) {
+          return roomToRemove.delete()
+        }
       }
     }
   }

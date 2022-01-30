@@ -56,12 +56,12 @@ class RoleManager {
         })
 
       let description = 'Please select a rank:\n'
-      ranks.forEach(rank => description += `\n**<@&${rank.id}>**`)
+      ranks.forEach(rank => { description += `\n**<@&${rank.id}>**` })
       const embed = new MessageEmbed()
         .setColor(this._config.get('embedColor') || 'DEFAULT')
         .setTitle(MODULE_NAME)
         .setDescription(description)
-      let menu = new MessageSelectMenu()
+      const menu = new MessageSelectMenu()
         .setCustomId('roleSelect')
         .setPlaceholder('Select a role')
         .addOptions([{
@@ -87,7 +87,7 @@ class RoleManager {
     this._moduleManager.getClient().on('interactionCreate', async interaction => {
       if (!interaction.isSelectMenu()) return
       if (interaction.customId !== 'roleSelect') return
-      
+
       const selection = interaction.values[0]
       const ranks = this._config.get('ranks').filter(id => guild.roles.cache.get(id) != null)
       const existingRole = interaction.member.roles.cache.find(role => ranks.some(r => r.id === role))

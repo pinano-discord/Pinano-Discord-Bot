@@ -1,4 +1,3 @@
-const { MessageActionRow, MessageButton } = require('discord.js')
 const { log } = require('../library/util')
 
 class EventDispatcher {
@@ -60,7 +59,7 @@ class EventDispatcher {
             description: err.message,
             color: config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
-          }],
+          }]
         }, resultDeleteTime)
       }
     })
@@ -87,6 +86,10 @@ class EventDispatcher {
     client.on('voiceStateUpdate', (oldState, newState) => {
       const guildId = newState.guild.id
       this.emit(guildId, 'voiceStateUpdate', oldState, newState)
+    })
+    client.on('channelPinsUpdate', channel => {
+      const guildId = channel.guild.id
+      this.emit(guildId, 'channelPinsUpdate', channel)
     })
   }
 
