@@ -1,5 +1,5 @@
 const HTTPS = require('https')
-const log = require('../library/util').log
+const util = require('../library/util')
 
 const MODULE_NAME = 'Quiz Adapter'
 
@@ -34,6 +34,24 @@ class QuizAdapter {
   resume () {
     this._quizModule = this._moduleManager.getModule('Literature Quiz')
     const dispatcher = this._moduleManager.getDispatcher()
+    dispatcher.on('channelPinsUpdate', this._guild.id, async (channel) => {
+      if (channel.id !== this._channel.id) {
+        return
+      }
+
+      const pinned = await this._channel.messages.fetchPinned()
+      const current = pinned.filter(m => m.author === this._client.user)
+      this._activeRiddles.forEach(riddle => {
+        if (!current.has(riddle.message.id) && (Date.now() - riddle.message.createdTimestamp) >= 60 * 1000) {
+          // treat channel unpinning as a skip. Note that since we need to manually check the
+          // channel pins, it's hard for us to tell the difference between the case where we just
+          // posted a riddle and we haven't pinned it yet, and we posted a riddle and it got
+          // unpinned by a quiz master. In order to avoid an immediate skip after we post a riddle,
+          // we only treat unpinning as a skip if the riddle is at least a minute old.
+          this._quizModule.endRiddle(riddle.quizzerId)
+        }
+      })
+    })
     dispatcher.on('message', this._guild.id, message => {
       if (message.author === this._client.user) {
         return
@@ -48,9 +66,9 @@ class QuizAdapter {
           // putting any message on an image in the channel is interpreted as a non-riddle
           return
         }
-        log(`Enqueueing ${message.attachments.size} riddle(s) by ${message.author}`)
+        util.log(`Enqueueing ${message.attachments.size} riddle(s) by ${message.author}`)
         message.attachments.forEach(attachment => {
-          log(`Attachment URL: ${attachment.url}`)
+          util.log(`Attachment URL: ${attachment.url}`)
         })
 
         this._quizModule.enqueue(message.id, message.author.id, message.attachments.first().url)
@@ -177,30 +195,39 @@ class QuizAdapter {
   }
 
   endRiddle (quizzerId) {
-    const index = this._activeRiddles.findIndex(r => r.quizzerId === quizzerId)
-    const riddle = this._activeRiddles.splice(index, 1)[0]
-    riddle.collector.stop()
+    let index = this._activeRiddles.findIndex(r => r.quizzerId === quizzerId)
+    while (index !== -1) {
+      // this should approximately never happen more than once, but sometimes there is more than
+      // one pinned message with the same quizzer ID and things get very confusing.
+      const riddle = this._activeRiddles.splice(index, 1)[0]
+      riddle.collector.stop()
 
-    try {
-      // the active riddle shouldn't ever be deleted, but just in case...
-      if (!riddle.message.deleted) {
-        riddle.message.reactions.removeAll()
-        riddle.message.unpin()
-      }
-    } catch (error) {
-      log('Failed to clear reactions from the active riddle. Did it get deleted?')
-    }
-
-    try {
-      riddle.guessCollectors.forEach(collector => {
-        collector.stop()
-        if (collector.message != null && !collector.message.deleted) {
-          log(`Clearing guess from message ${collector.message.id}`)
-          collector.message.reactions.removeAll()
+      try {
+        // the active riddle shouldn't ever be deleted, but just in case...
+        if (!riddle.message.deleted) {
+          riddle.message.reactions.removeAll()
+          riddle.message.unpin()
         }
-      })
-    } catch (error) {
-      log('Failed to clear reactions from a guess. Did one get deleted?')
+      } catch (error) {
+        util.log('Failed to clear reactions from the active riddle. Did it get deleted?')
+      }
+
+      try {
+        riddle.guessCollectors.forEach(collector => {
+          collector.stop()
+          if (collector.message != null && !collector.message.deleted) {
+            util.log(`Clearing guess from message ${collector.message.id}`)
+            collector.message.reactions.removeAll()
+          }
+        })
+      } catch (error) {
+        util.log('Failed to clear reactions from a guess. Did one get deleted?')
+      }
+
+      index = this._activeRiddles.findIndex(r => r.quizzerId === quizzerId)
+      if (index !== -1) {
+        util.logError(`Found more than one active riddle with the same quizzer ID. Clearing all of them. Quizzer ID: ${quizzerId}`)
+      }
     }
   }
 
