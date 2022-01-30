@@ -42,12 +42,12 @@ class DailyTime {
         userRepository.setField(authorMember.id, 'daily_reset_hour', null)
         util.log(`Turned off <@${authorMember.id}>'s daily reset hour`)
         return {
-          embed: {
+          embeds: [{
             title: MODULE_NAME,
             description: `Turned off daily time tracking for <@${authorMember.id}>`,
             color: this._config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
-          }
+          }]
         }
       } else {
         const hour = parseInt(tokenized[0])
@@ -57,12 +57,12 @@ class DailyTime {
         userRepository.setField(authorMember.id, 'daily_reset_hour', hour)
         util.log(`Set <@${authorMember.id}>'s daily reset hour to ${hour}`)
         return {
-          embed: {
+          embeds: [{
             title: MODULE_NAME,
             description: `<@${authorMember.id}>'s daily time will reset at 00:00 UTC${(hour >= 12) ? `+${24 - hour}` : ((0 - hour) || '')}`,
             color: this._config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
-          }
+          }]
         }
       }
     })

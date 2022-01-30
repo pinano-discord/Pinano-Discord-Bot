@@ -146,7 +146,7 @@ class Statistics {
             }
           }
 
-          return { embed: embed, reacts: reacts }
+          return { embeds: [embed], reacts: reacts }
         }
       }
     })

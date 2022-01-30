@@ -56,12 +56,12 @@ class Raiding {
       authorMember.voice.setChannel(targetChannel)
 
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `Raiding <@${target.id}> with ${numUsers} users!`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
   }

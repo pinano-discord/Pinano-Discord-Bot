@@ -209,7 +209,7 @@ class PracticeAdapter extends EventEmitter {
     if (message == null) {
       message = await this._informationChannel.send(embed)
     } else {
-      message.edit({ embed: embed })
+      message.edit({ embeds: [embed] })
     }
 
     if (this._informationReactionCollector == null) {
@@ -262,26 +262,26 @@ class PracticeAdapter extends EventEmitter {
   async postLeaderboard (leaderboard) {
     if (this._config.get('postLeaderboardOnReset')) {
       const message = await this._announcementsChannel.send({
-        embed: {
+        embeds: [{
           title: 'Weekly Leaderboard - Results',
           description: this._translateLeaderboard(leaderboard.getPageData()),
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: Date.now()
-        }
+        }]
       })
       message.pin()
     }
   }
 
   muteMember (memberId) {
-    const member = this._guild.member(memberId)
+    const member = this._guild.members.cache.get(memberId)
     member.voice.setMute(true).catch(err => {
       log(`Failed to mute ${memberId}: ${err.message}. This message is safe to ignore.`)
     })
   }
 
   unmuteMember (memberId) {
-    this._guild.member(memberId).voice.setMute(false)
+    this._guild.members.cache.get(memberId).voice.setMute(false)
       .catch(err => {
         log(`Failed to unmute ${memberId}: ${err.message} This message is safe to ignore.`)
       })

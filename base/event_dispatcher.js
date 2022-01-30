@@ -1,3 +1,4 @@
+const { MessageActionRow, MessageButton } = require('discord.js')
 const { log } = require('../library/util')
 
 class EventDispatcher {
@@ -6,7 +7,7 @@ class EventDispatcher {
     this._eventHandlers = {}
     this._client = client
 
-    client.on('message', async (message) => {
+    client.on('messageCreate', async (message) => {
       if (message.guild == null) {
         // TODO: handle DMs
         return
@@ -54,12 +55,12 @@ class EventDispatcher {
         }
       } catch (err) {
         this.cancellableMessage(message, {
-          embed: {
+          embeds: [{
             title: 'Error',
             description: err.message,
             color: config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
-          }
+          }],
         }, resultDeleteTime)
       }
     })
@@ -112,7 +113,8 @@ class EventDispatcher {
     const collector = message.createReactionCollector((r, u) => u !== this._client.user)
     collector.on('collect', async (reaction) => {
       const reactor = reaction.users.cache.find(user => user !== this._client.user)
-      const member = request.guild.member(reactor.id)
+      if (reactor == null) return
+      const member = request.guild.members.cache.get(reactor.id)
       if (reactor !== request.author && !member.hasPermission('MANAGE_MESSAGES')) {
         reaction.users.remove(reactor)
         return

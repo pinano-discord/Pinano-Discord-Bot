@@ -79,25 +79,25 @@ class QuizAdapter {
       const activeQueue = this._quizModule.getActiveQueue()
       if (activeQueue.length === 0) {
         return {
-          embed: {
+          embeds: [{
             title: 'Queue',
             description: 'The queue is currently empty.',
             color: this._config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
-          }
+          }]
         }
       } else {
         const reducer = (msgStr, riddle, index) => {
           return msgStr + `**${index + 1}. <@${riddle.quizzerId}>**` + (riddle.active ? ' (active)\n' : '\n')
         }
         return {
-          embed: {
+          embeds: [{
             title: 'Queue',
             description: activeQueue.reduce(reducer, ''),
             footer: { text: 'Only the first riddle by each user is shown in this list' },
             color: this._config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
-          }
+          }]
         }
       }
     }, 'q')
@@ -345,7 +345,7 @@ class QuizAdapter {
   }
 
   _isQuizMaster (user) {
-    return this._guild.member(user).roles.cache.has(this._role.id)
+    return this._guild.members.cache.get(user).roles.cache.has(this._role.id)
   }
 }
 

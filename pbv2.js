@@ -43,7 +43,7 @@ for (const filename of fs.readdirSync('./modules/custom/')) {
 const moduleManagers = new Map()
 const connect = require('./base/persistence')
 connect(globalConfig).then(persistence => {
-  const client = new Discord.Client({ fetchAllMembers: true })
+  const client = new Discord.Client({ fetchAllMembers: true, intents: [ Discord.Intents.FLAGS.GUILDS, Discord.Intents.FLAGS.GUILD_MESSAGES, Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS ] })
   const dispatcher = new EventDispatcher(client, moduleManagers)
   const configRepository = persistence.getConfigRepository()
 

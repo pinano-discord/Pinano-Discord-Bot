@@ -39,12 +39,12 @@ class UserManagement {
 
       util.log(`addtime ${targetId} ${delta} by ${authorMember.id}`)
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `Added ${delta} second(s) to <@${targetId}>.`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
 
@@ -66,12 +66,12 @@ class UserManagement {
 
       util.log(`deltime ${userId} ${delta} by ${authorMember.id}`)
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `Removed ${delta} second(s) from <@${userId}>.`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
   }

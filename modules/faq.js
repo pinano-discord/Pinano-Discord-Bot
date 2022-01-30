@@ -23,7 +23,7 @@ class FAQ {
         throw new Error(`Could not find an FAQ entry for the keyword \`${tokenized[0]}\`.`)
       }
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `From ${this._config.get('faqSourceLink') || 'the FAQ'}:`,
           fields: [{
@@ -32,7 +32,7 @@ class FAQ {
           }],
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
   }
