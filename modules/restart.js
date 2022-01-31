@@ -33,14 +33,14 @@ class Restart {
       }
 
       return {
-        embed: {
+        embed: [{
           embeds: [{
             title: MODULE_NAME,
             description: 'Press :electric_plug: to restart',
             color: this._config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
           }]
-        },
+        }],
         reacts: {
           '🔌': (message, helpers) => {
             message.edit({
