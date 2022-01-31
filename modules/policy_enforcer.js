@@ -187,7 +187,7 @@ class PolicyEnforcer extends EventEmitter {
     Object.keys(this._pracman._tracker).forEach(async (channelId) => {
       const channel = this._guild.channels.resolve(channelId)
       let lockedBy = null
-      channel.permissionOverwrites.forEach((overwrite, principalId) => {
+      channel.permissionOverwrites.cache.forEach((overwrite, principalId) => {
         if (overwrite.allow.equals(['SPEAK', 'STREAM']) && channel.members.get(principalId) != null) {
           lockedBy = principalId
         }
@@ -196,7 +196,7 @@ class PolicyEnforcer extends EventEmitter {
       if (lockedBy != null) {
         this._pracman.markAsLocked(channelId, lockedBy)
       } else {
-        await channel.overwritePermissions(this._config.get('newChannelPermissions') || [])
+        await channel.permissionOverwrites.set(this._config.get('newChannelPermissions') || [])
       }
     })
   }
@@ -347,7 +347,7 @@ class PolicyEnforcer extends EventEmitter {
         this._exclusiveChat.updateOverwrite(userId, { SEND_MESSAGES: true })
       }
     } else {
-      const existingOverwrite = this._exclusiveChat.permissionOverwrites.get(userId)
+      const existingOverwrite = this._exclusiveChat.permissionOverwrites.cache.get(userId)
       if (existingOverwrite != null) {
         existingOverwrite.delete()
       }

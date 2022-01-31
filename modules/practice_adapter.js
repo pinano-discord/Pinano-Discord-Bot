@@ -63,7 +63,7 @@ class PracticeAdapter extends EventEmitter {
       this.emit('deletePracticeRoom', channel.id)
     })
     dispatcher.on('channelUpdate', this._guild.id, (oldChannel, newChannel) => {
-      if (newChannel.parent !== this._category || newChannel.type !== 'voice') {
+      if (newChannel.parent !== this._category || newChannel.type !== 'GUILD_VOICE') {
         return
       }
 
@@ -151,7 +151,7 @@ class PracticeAdapter extends EventEmitter {
   getCurrentState () {
     const currentTimestamp = Math.floor(Date.now() / 1000)
     const result = {}
-    this._category.children.filter(c => c.type === 'voice').forEach(channel => {
+    this._category.children.filter(c => c.type === 'GUILD_VOICE').forEach(channel => {
       const tokenMatch = channel.name.match(/Room (.*?)$/)
       result[channel.id] = {
         live: channel.members.filter(m => !this.effectiveMute(m.voice, channel)).map(m => {
@@ -288,12 +288,12 @@ class PracticeAdapter extends EventEmitter {
   }
 
   allRoomsOccupied (roomType) {
-    return this._category.children.filter(chan => chan.type === 'voice' && chan.name.includes(roomType)).every(chan => chan.members.size > 0)
+    return this._category.children.filter(chan => chan.type === 'GUILD_VOICE' && chan.name.includes(roomType)).every(chan => chan.members.size > 0)
   }
 
   async createChannel (name, permissions, atFront) {
     const channel = await this._guild.channels.create(name, {
-      type: 'voice',
+      type: 'GUILD_VOICE',
       parent: this._category,
       bitrate: (this._config.get('bitrate') || 96) * 1000,
       position: atFront ? 1 : this._category.children.size,
@@ -304,7 +304,7 @@ class PracticeAdapter extends EventEmitter {
 
   maybeRemoveEmptyRoom (roomType) {
     const practiceRooms = this._category.children
-      .filter(chan => chan.type === 'voice' && chan.name.includes(roomType))
+      .filter(chan => chan.type === 'GUILD_VOICE' && chan.name.includes(roomType))
       .sort((a, b) => a.position - b.position)
     if (practiceRooms.size > 0) {
       const basePosition = practiceRooms.first().position
@@ -319,8 +319,8 @@ class PracticeAdapter extends EventEmitter {
   }
 
   lockPracticeRoom (channel, member) {
-    channel.createOverwrite(member.id, { STREAM: true, SPEAK: true })
-    channel.updateOverwrite(this._guild.roles.everyone, { STREAM: false, SPEAK: false })
+    channel.permissionOverwrites.create(member.id, { STREAM: true, SPEAK: true })
+    channel.permissionOverwrites.edit(this._guild.roles.everyone, { STREAM: false, SPEAK: false })
     channel.members
       .filter(m => m !== member)
       .forEach(m => m.voice.setMute(true)
@@ -337,7 +337,7 @@ class PracticeAdapter extends EventEmitter {
 
   unlockPracticeRoom (channel, permissions) {
     // reset permissions to original
-    channel.overwritePermissions(permissions || [])
+    channel.permissionOverwrites.set(permissions || [])
     // 2020/07/25: after too many instances of people accidentally being
     // unmuted after the occupant left and automatically unlocked, we decided
     // to make it so that users have to rejoin in order to be unmuted in a

@@ -132,7 +132,10 @@ class QuizAdapter {
     if (content._bsontype === 'Binary') {
       bytes = content.buffer
     }
-    const post = await this._channel.send(`New riddle by <@${quizzerId}>:`, { files: [{ attachment: bytes, name: filename }] })
+    const post = await this._channel.send({
+      content: `New riddle by <@${quizzerId}>:`,
+      files: [{ attachment: bytes, name: filename }]
+    })
     post.pin()
     post.react('⏩')
     const collector = post.createReactionCollector((r, u) => u !== this._client.user)

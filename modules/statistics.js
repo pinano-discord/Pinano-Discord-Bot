@@ -104,7 +104,6 @@ class Statistics {
         const badgesPerPage = this._config.get('badgesPerPage') || 12
         if (badgesCollection.length <= badgesPerPage) {
           embed.addField('Badges', badgesCollection.reduce((acc, badge) => `${acc}\n${badge}`, ''))
-          return embed
         } else {
           let page = 1
           const generatePageData = function () {
@@ -149,6 +148,8 @@ class Statistics {
           return { embeds: [embed], reacts: reacts }
         }
       }
+
+      return { embeds: [embed] }
     })
   }
 }
