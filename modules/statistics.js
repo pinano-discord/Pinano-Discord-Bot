@@ -129,7 +129,7 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              interaction.message.update({ embeds: [embed] })
+              interaction.update({ embeds: [embed] })
             },
             '🔽': interaction => {
               ++page
@@ -141,7 +141,7 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              interaction.message.update({ embeds: [embed] })
+              interaction.update({ embeds: [embed] })
             }
           }
 
