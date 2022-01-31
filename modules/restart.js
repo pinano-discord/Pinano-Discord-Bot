@@ -33,25 +33,23 @@ class Restart {
       }
 
       return {
-        embed: [{
-          embeds: [{
-            title: MODULE_NAME,
-            description: 'Press :electric_plug: to restart',
-            color: this._config.get('embedColor') || 'DEFAULT',
-            timestamp: new Date()
-          }]
+        embeds: [{
+          title: MODULE_NAME,
+          description: 'Press :electric_plug: to restart',
+          color: this._config.get('embedColor') || 'DEFAULT',
+          timestamp: new Date()
         }],
         reacts: {
-          '🔌': (message, helpers) => {
-            message.edit({
+          '🔌': (interaction, helpers) => {
+            interaction.update({
               embeds: [{
                 title: MODULE_NAME,
                 description: 'I\'ll be right back.',
                 color: this._config.get('embedColor') || 'DEFAULT',
                 timestamp: new Date()
-              }]
+              }],
+              components: []
             })
-            helpers.done()
             util.log(`Restart initiated by <@${authorMember.id}>`)
             if (pracman != null) {
               pracman.saveAllSessions().then(() => {
