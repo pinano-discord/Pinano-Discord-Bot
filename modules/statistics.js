@@ -118,9 +118,9 @@ class Statistics {
 
           embed.addField('Badges (use 🔼🔽 to scroll)', generatePageData())
           const reacts = {
-            '🔓': (message, helpers) => helpers.lock(),
-            '❌': (message, helpers) => helpers.close(),
-            '🔼': (message) => {
+            '🔓': (_, helpers) => helpers.lock(),
+            '❌': (_, helpers) => helpers.close(),
+            '🔼': interaction => {
               --page
               if (page < 1) {
                 page = 1
@@ -129,9 +129,9 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              message.edit({ embeds: [embed] })
+              interaction.message.update({ embeds: [embed] })
             },
-            '🔽': (message, helpers) => {
+            '🔽': interaction => {
               ++page
               const totalPages = Math.ceil(badgesCollection.length / badgesPerPage)
               if (page > totalPages) {
@@ -141,7 +141,7 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              message.edit({ embeds: [embed] })
+              interaction.message.update({ embeds: [embed] })
             }
           }
 

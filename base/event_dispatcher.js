@@ -133,7 +133,7 @@ class EventDispatcher {
       if (interaction.member.id !== request.author.id && !interaction.member.permissions.has('MANAGE_MESSAGES')) return
 
       if (Object.keys(reacts).includes(interaction.customId)) {
-        reacts[interaction.customId](message, {
+        reacts[interaction.customId](interaction, {
           close: () => {
             deleted = true
             message.delete()
