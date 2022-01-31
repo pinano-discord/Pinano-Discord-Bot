@@ -41,7 +41,7 @@ class RoleManager {
       })
     }
 
-    dispatcher.command('ranks', guild.id, async () => {
+    dispatcher.command('ranks', guild.id, async (authorMember) => {
       if (this._config.get('ranks') == null || this._config.get('ranks').length === 0) {
         throw new Error('No ranks available.')
       }
@@ -80,41 +80,41 @@ class RoleManager {
       return {
         embeds: [embed],
         ephemeral: true,
-        components: [row]
-      }
-    })
+        components: [row],
+        interactionHandler: async interaction => {
+          if (!interaction.isSelectMenu()) return
+          if (interaction.customId !== 'roleSelect') return
+          if (interaction.member !== authorMember) return
 
-    this._moduleManager.getClient().on('interactionCreate', async interaction => {
-      if (!interaction.isSelectMenu()) return
-      if (interaction.customId !== 'roleSelect') return
-
-      const selection = interaction.values[0]
-      const ranks = this._config.get('ranks').filter(id => guild.roles.cache.get(id) != null)
-      const existingRole = interaction.member.roles.cache.find(role => ranks.some(r => r.id === role))
-      if (existingRole != null && existingRole.id !== selection) {
-        interaction.member.roles.remove(existingRole)
-      }
-      if (selection === 'rankless') {
-        const embed = new MessageEmbed()
-          .setColor(this._config.get('embedColor') || 'DEFAULT')
-          .setTitle(MODULE_NAME)
-          .setDescription('Rankless you came into this server, and rankless you shall be once more...')
-        interaction.update({
-          embeds: [embed],
-          components: []
-        })
-      } else {
-        if (existingRole == null || existingRole.id !== selection) {
-          interaction.member.roles.add(selection)
+          const selection = interaction.values[0]
+          const ranks = this._config.get('ranks').filter(id => guild.roles.cache.get(id) != null)
+          const existingRole = interaction.member.roles.cache.find(role => ranks.some(r => r.id === role))
+          if (existingRole != null && existingRole.id !== selection) {
+            interaction.member.roles.remove(existingRole)
+          }
+          if (selection === 'rankless') {
+            const embed = new MessageEmbed()
+              .setColor(this._config.get('embedColor') || 'DEFAULT')
+              .setTitle(MODULE_NAME)
+              .setDescription('Rankless you came into this server, and rankless you shall be once more...')
+            interaction.update({
+              embeds: [embed],
+              components: []
+            })
+          } else {
+            if (existingRole == null || existingRole.id !== selection) {
+              interaction.member.roles.add(selection)
+            }
+            const embed = new MessageEmbed()
+              .setColor(this._config.get('embedColor') || 'DEFAULT')
+              .setTitle(MODULE_NAME)
+              .setDescription(`<@${interaction.member.id}> is now a member of <@&${selection}>.`)
+            interaction.update({
+              embeds: [embed],
+              components: []
+            })
+          }
         }
-        const embed = new MessageEmbed()
-          .setColor(this._config.get('embedColor') || 'DEFAULT')
-          .setTitle(MODULE_NAME)
-          .setDescription(`<@${interaction.member.id}> is now a member of <@&${selection}>.`)
-        interaction.update({
-          embeds: [embed],
-          components: []
-        })
       }
     })
   }

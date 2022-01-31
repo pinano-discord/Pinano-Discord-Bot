@@ -118,7 +118,7 @@ class Statistics {
 
           embed.addField('Badges (use 🔼🔽 to scroll)', generatePageData())
           const reacts = {
-            '🔒': (message, helpers) => helpers.lock(),
+            '🔓': (message, helpers) => helpers.lock(),
             '❌': (message, helpers) => helpers.close(),
             '🔼': (message) => {
               --page
