@@ -104,7 +104,11 @@ class EventDispatcher {
     Object.keys(reacts).forEach(react => {
       row.addComponents(new MessageButton().setCustomId(react).setStyle('PRIMARY').setEmoji(react))
     })
-    response.components = [row]
+    if (response.components == null) {
+      response.components = [row]
+    } else {
+      response.components.push(row)
+    }
     response.ephemeral = true
     const message = await request.channel.send(response)
 
