@@ -344,7 +344,7 @@ class PolicyEnforcer extends EventEmitter {
       // continue to suppress certain muted roles in the exclusive chat, even
       // if they are properly in a practice room.
       if (this._exclusiveChatExceptionRole == null || !this._guild.members.cache.get(userId).roles.cache.has(this._exclusiveChatExceptionRole.id)) {
-        this._exclusiveChat.updateOverwrite(userId, { SEND_MESSAGES: true })
+        this._exclusiveChat.permissionOverwrites.edit(userId, { SEND_MESSAGES: true })
       }
     } else {
       const existingOverwrite = this._exclusiveChat.permissionOverwrites.cache.get(userId)
