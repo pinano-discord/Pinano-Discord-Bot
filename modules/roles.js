@@ -87,11 +87,10 @@ class RoleManager {
           if (interaction.member !== authorMember) return
 
           const selection = interaction.values[0]
-          const ranks = this._config.get('ranks').filter(id => guild.roles.cache.get(id) != null)
-          const existingRole = interaction.member.roles.cache.find(role => ranks.some(r => r.id === role))
-          if (existingRole != null && existingRole.id !== selection) {
-            interaction.member.roles.remove(existingRole)
-          }
+          const existingRoles = interaction.member.roles.cache.filter(role => ranks.some(r => r.id === role.id && r.id !== selection))
+          existingRoles.forEach(role => {
+            interaction.member.roles.remove(role)
+          })
           if (selection === 'rankless') {
             const embed = new MessageEmbed()
               .setColor(this._config.get('embedColor') || 'DEFAULT')
@@ -102,9 +101,7 @@ class RoleManager {
               components: []
             })
           } else {
-            if (existingRole == null || existingRole.id !== selection) {
-              interaction.member.roles.add(selection)
-            }
+            interaction.member.roles.add(selection)
             const embed = new MessageEmbed()
               .setColor(this._config.get('embedColor') || 'DEFAULT')
               .setTitle(MODULE_NAME)
