@@ -213,10 +213,8 @@ class PracticeAdapter extends EventEmitter {
     }
 
     if (this._informationReactionCollector == null) {
-      this._informationReactionCollector = message.createReactionCollector((r, u) => u !== this._client.user)
-      this._informationReactionCollector.on('collect', reaction => {
-        const reactor = reaction.users.cache.find(user => user !== this._client.user)
-        if (reactor == null) return
+      this._informationReactionCollector = message.createReactionCollector({ filter: (r, u) => u !== this._client.user })
+      this._informationReactionCollector.on('collect', (reaction, reactor) => {
         switch (reaction.emoji.name) {
           case '◀':
             leaderboard1.decrementPage()

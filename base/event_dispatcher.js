@@ -44,7 +44,7 @@ class EventDispatcher {
           if (this._commandHandlers[guildId][command] != null) {
             const result = await this._commandHandlers[guildId][command](message.member, tokenized)
             if (result.reacts != null) {
-              this.reactableMessage(message, result.embed, resultDeleteTime, result.reacts)
+              this.reactableMessage(message, { embeds: result.embeds }, resultDeleteTime, result.reacts)
             } else {
               this.cancellableMessage(message, result, resultDeleteTime)
             }
@@ -113,10 +113,8 @@ class EventDispatcher {
       }
     }
     resetTimeoutHandle()
-    const collector = message.createReactionCollector((r, u) => u !== this._client.user)
-    collector.on('collect', async (reaction) => {
-      const reactor = reaction.users.cache.find(user => user !== this._client.user)
-      if (reactor == null) return
+    const collector = message.createReactionCollector({ filter: (r, u) => u !== this._client.user })
+    collector.on('collect', async (reaction, reactor) => {
       const member = request.guild.members.cache.get(reactor.id)
       if (reactor !== request.author && !member.hasPermission('MANAGE_MESSAGES')) {
         reaction.users.remove(reactor)

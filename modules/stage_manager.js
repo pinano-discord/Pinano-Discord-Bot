@@ -82,8 +82,8 @@ class StageManager {
       controlPost.edit(content)
     }
 
-    const reactionCollector = controlPost.createReactionCollector((r, u) => u !== this._client.user)
-    reactionCollector.on('collect', reaction => this._handleReaction(reaction))
+    const reactionCollector = controlPost.createReactionCollector({ filter: (r, u) => u !== this._client.user })
+    reactionCollector.on('collect', (reaction, reactor) => this._handleReaction(reaction, reactor))
 
     controlPost.react('🔒')
     controlPost.react('🔓')
@@ -93,12 +93,7 @@ class StageManager {
     controlPost.react('🍎')
   }
 
-  _handleReaction (reaction) {
-    const reactor = reaction.users.cache.find(user => user !== this._client.user)
-    if (reactor == null) {
-      return
-    }
-
+  _handleReaction (reaction, reactor) {
     if (reaction.emoji.name === '🔒') {
       this._setLockedPreset()
     } else if (reaction.emoji.name === '🔓') {

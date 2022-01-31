@@ -138,7 +138,7 @@ class QuizAdapter {
     })
     post.pin()
     post.react('⏩')
-    const collector = post.createReactionCollector((r, u) => u !== this._client.user)
+    const collector = post.createReactionCollector({ filter: (r, u) => u !== this._client.user })
     const riddle = {
       message: post,
       quizzerId: quizzerId,
@@ -147,20 +147,15 @@ class QuizAdapter {
     }
 
     this._activeRiddles.push(riddle)
-    collector.on('collect', reaction => this._skipReaction(riddle, reaction))
+    collector.on('collect', (reaction, reactor) => this._skipReaction(riddle, reaction, reactor))
   }
 
   async notifyRiddleQueued (authorId, riddleId) {
     const message = await this._channel.send(`Added a riddle by <@${authorId}> onto the queue.`)
     message.react('🚫')
 
-    const deleter = message.createReactionCollector((r, u) => u !== this._client.user)
-    deleter.on('collect', reaction => {
-      const reactor = reaction.users.cache.find(user => user !== this._client.user)
-      if (reactor == null) {
-        return
-      }
-
+    const deleter = message.createReactionCollector({ filter: (r, u) => u !== this._client.user })
+    deleter.on('collect', (reaction, reactor) => {
       if (reaction.emoji.name === '🚫' && (reactor.id === authorId || this._isQuizMaster(reactor))) {
         deleter.stop()
         this._quizModule.deleteRiddle(riddleId)
@@ -245,7 +240,7 @@ class QuizAdapter {
 
     current.forEach(message => {
       message.react('⏩')
-      const collector = message.createReactionCollector((r, u) => u !== this._client.user)
+      const collector = message.createReactionCollector({ filter: (r, u) => u !== this._client.user })
       const user = message.mentions.users.first()
       let quizzerId
       if (user != null) {
@@ -264,7 +259,7 @@ class QuizAdapter {
       }
 
       this._activeRiddles.push(riddle)
-      collector.on('collect', reaction => this._skipReaction(riddle, reaction))
+      collector.on('collect', (reaction, reactor) => this._skipReaction(riddle, reaction, reactor))
     })
 
     return quizzers
@@ -335,9 +330,8 @@ class QuizAdapter {
       }
     }
 
-    const collector = message.createReactionCollector((r, u) => u !== this._client.user)
-    collector.on('collect', reaction => {
-      const reactor = reaction.users.cache.find(user => user !== this._client.user)
+    const collector = message.createReactionCollector({ filter: (r, u) => u !== this._client.user })
+    collector.on('collect', (reaction, reactor) => {
       if (this._controlsQuestion(riddle, reactor)) {
         if (reaction.emoji.name === '✅') {
           collector.stop()
@@ -357,12 +351,7 @@ class QuizAdapter {
     message.react('❎')
   }
 
-  _skipReaction (riddle, reaction) {
-    const reactor = reaction.users.cache.find(user => user !== this._client.user)
-    if (reactor == null) {
-      return
-    }
-
+  _skipReaction (riddle, reaction, reactor) {
     if (reaction.emoji.name === '⏩' && this._controlsQuestion(riddle, reactor)) {
       this._quizModule.endRiddle(riddle.quizzerId)
     } else {
@@ -375,7 +364,7 @@ class QuizAdapter {
   }
 
   _isQuizMaster (user) {
-    return this._guild.members.cache.get(user).roles.cache.has(this._role.id)
+    return this._guild.members.cache.get(user.id).roles.cache.has(this._role.id)
   }
 }
 
