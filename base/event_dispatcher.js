@@ -100,7 +100,7 @@ class EventDispatcher {
   }
 
   async reactableMessage (request, response, timeout, reacts) {
-    let row = new MessageActionRow()
+    const row = new MessageActionRow()
     Object.keys(reacts).forEach(react => {
       row.addComponents(new MessageButton().setCustomId(react).setStyle('PRIMARY').setEmoji(react))
     })
