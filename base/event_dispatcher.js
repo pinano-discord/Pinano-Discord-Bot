@@ -116,7 +116,7 @@ class EventDispatcher {
     const collector = message.createReactionCollector({ filter: (r, u) => u !== this._client.user })
     collector.on('collect', async (reaction, reactor) => {
       const member = request.guild.members.cache.get(reactor.id)
-      if (reactor !== request.author && !member.hasPermission('MANAGE_MESSAGES')) {
+      if (reactor !== request.author && !member.permissions.has('MANAGE_MESSAGES')) {
         reaction.users.remove(reactor)
         return
       }

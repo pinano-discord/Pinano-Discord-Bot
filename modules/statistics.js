@@ -129,7 +129,7 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              message.edit(embed)
+              message.edit({ embeds: embed })
             },
             '🔽': (message, helpers) => {
               ++page
@@ -141,7 +141,7 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              message.edit(embed)
+              message.edit({ embeds: embed })
             }
           }
 
