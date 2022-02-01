@@ -257,6 +257,9 @@ class PracticeAdapter extends EventEmitter {
             leaderboard3.incrementPage()
             this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
+          default:
+            interaction.deferUpdate()
+            break
         }
       })
     }
