@@ -195,7 +195,7 @@ class PracticeAdapter extends EventEmitter {
     return (data === '') ? '\u200B' : data
   }
 
-  async updateInformation (leaderboard1, leaderboard2, leaderboard3) {
+  async updateInformation (leaderboard1, leaderboard2, leaderboard3, interaction) {
     const embed = new MessageEmbed()
       .setTitle('Information')
       .setColor(this._config.get('embedColor') || 'DEFAULT')
@@ -218,10 +218,14 @@ class PracticeAdapter extends EventEmitter {
       .addComponents(new MessageButton().setCustomId('lb3label').setStyle('DANGER').setLabel('Listeners'))
       .addComponents(new MessageButton().setCustomId('lb3next').setStyle('DANGER').setEmoji('▶'))
     let message = messages.find(m => m.author === this._client.user)
-    if (message == null) {
-      message = await this._informationChannel.send({ embeds: [embed], components: [row1, row2, row3] })
+    if (interaction != null) {
+      interaction.update({ embeds: [embed], components: [row1, row2, row3] })
     } else {
-      message.edit({ embeds: [embed], components: [row1, row2, row3] })
+      if (message == null) {
+        message = await this._informationChannel.send({ embeds: [embed], components: [row1, row2, row3] })
+      } else {
+        message.edit({ embeds: [embed], components: [row1, row2, row3] })
+      }
     }
 
     if (this._informationInteractionCollector == null) {
@@ -231,30 +235,29 @@ class PracticeAdapter extends EventEmitter {
         switch (interaction.customId) {
           case 'lb1prev':
             leaderboard1.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
           case 'lb1next':
             leaderboard1.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
           case 'lb2prev':
             leaderboard2.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
           case 'lb2next':
             leaderboard2.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
           case 'lb3prev':
             leaderboard3.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
           case 'lb3next':
             leaderboard3.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
         }
-        interaction.deferUpdate()
       })
     }
   }
