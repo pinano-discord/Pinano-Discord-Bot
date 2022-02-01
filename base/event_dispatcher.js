@@ -135,7 +135,7 @@ class EventDispatcher {
     collector.on('collect', async interaction => {
       if (!interaction.isButton()) return
       if (interaction.member.id !== request.author.id && !interaction.member.permissions.has('MANAGE_MESSAGES')) {
-        interaction.update()
+        interaction.deferUpdate()
         return
       }
 
