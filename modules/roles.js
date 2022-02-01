@@ -84,7 +84,10 @@ class RoleManager {
         interactionHandler: async interaction => {
           if (!interaction.isSelectMenu()) return
           if (interaction.customId !== 'roleSelect') return
-          if (interaction.member !== authorMember) return
+          if (interaction.member !== authorMember) {
+            interaction.deferUpdate()
+            return
+          }
 
           const selection = interaction.values[0]
           const existingRoles = interaction.member.roles.cache.filter(role => ranks.some(r => r.id === role.id && r.id !== selection))

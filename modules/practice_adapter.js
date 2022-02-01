@@ -1,4 +1,4 @@
-const Discord = require('discord.js')
+const { InteractionCollector, MessageActionRow, MessageButton, MessageEmbed } = require('discord.js')
 const EventEmitter = require('events')
 const log = require('../library/util').log
 
@@ -196,7 +196,7 @@ class PracticeAdapter extends EventEmitter {
   }
 
   async updateInformation (leaderboard1, leaderboard2, leaderboard3) {
-    const embed = new Discord.MessageEmbed()
+    const embed = new MessageEmbed()
       .setTitle('Information')
       .setColor(this._config.get('embedColor') || 'DEFAULT')
       .addField(leaderboard1.title, this._translateLeaderboard(leaderboard1.getPageData()), true)
@@ -205,56 +205,57 @@ class PracticeAdapter extends EventEmitter {
       .setTimestamp(Date.now())
 
     const messages = await this._informationChannel.messages.fetch()
+    const row1 = new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('lb1prev').setStyle('PRIMARY').setEmoji('◀'))
+      .addComponents(new MessageButton().setCustomId('lb1label').setStyle('PRIMARY').setLabel('Weekly'))
+      .addComponents(new MessageButton().setCustomId('lb1next').setStyle('PRIMARY').setEmoji('▶'))
+    const row2 = new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('lb2prev').setStyle('SUCCESS').setEmoji('◀'))
+      .addComponents(new MessageButton().setCustomId('lb2label').setStyle('SUCCESS').setLabel('Overall'))
+      .addComponents(new MessageButton().setCustomId('lb2next').setStyle('SUCCESS').setEmoji('▶'))
+    const row3 = new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('lb3prev').setStyle('DANGER').setEmoji('◀'))
+      .addComponents(new MessageButton().setCustomId('lb3label').setStyle('DANGER').setLabel('Listeners'))
+      .addComponents(new MessageButton().setCustomId('lb3next').setStyle('DANGER').setEmoji('▶'))
     let message = messages.find(m => m.author === this._client.user)
     if (message == null) {
-      message = await this._informationChannel.send(embed)
+      message = await this._informationChannel.send({ embeds: [embed], components: [row1, row2, row3] })
     } else {
-      message.edit({ embeds: [embed] })
+      message.edit({ embeds: [embed], components: [row1, row2, row3] })
     }
 
-    if (this._informationReactionCollector == null) {
-      this._informationReactionCollector = message.createReactionCollector({ filter: (r, u) => u !== this._client.user })
-      this._informationReactionCollector.on('collect', (reaction, reactor) => {
-        switch (reaction.emoji.name) {
-          case '◀':
+    if (this._informationInteractionCollector == null) {
+      this._informationInteractionCollector = new InteractionCollector(this._client, { message: message })
+      this._informationInteractionCollector.on('collect', interaction => {
+        if (!interaction.isButton()) return
+        switch (interaction.customId) {
+          case 'lb1prev':
             leaderboard1.decrementPage()
             this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
             break
-          case '▶':
+          case 'lb1next':
             leaderboard1.incrementPage()
             this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
             break
-          case '⬅':
+          case 'lb2prev':
             leaderboard2.decrementPage()
             this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
             break
-          case '➡':
+          case 'lb2next':
             leaderboard2.incrementPage()
             this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
             break
-          case '🔼':
+          case 'lb3prev':
             leaderboard3.decrementPage()
             this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
             break
-          case '🔽':
+          case 'lb3next':
             leaderboard3.incrementPage()
             this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
             break
         }
-
-        reaction.users.remove(reactor)
+        interaction.deferUpdate()
       })
-
-      message.reactions.removeAll()
-      message.react('◀')
-      message.react('🇼')
-      message.react('▶')
-      message.react('⬅')
-      message.react('🇴')
-      message.react('➡')
-      message.react('🔼')
-      message.react('🇱')
-      message.react('🔽')
     }
   }
 

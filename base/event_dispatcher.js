@@ -134,7 +134,10 @@ class EventDispatcher {
     const collector = new InteractionCollector(this._client, { message: message })
     collector.on('collect', async interaction => {
       if (!interaction.isButton()) return
-      if (interaction.member.id !== request.author.id && !interaction.member.permissions.has('MANAGE_MESSAGES')) return
+      if (interaction.member.id !== request.author.id && !interaction.member.permissions.has('MANAGE_MESSAGES')) {
+        interaction.deferUpdate()
+        return
+      }
 
       if (Object.keys(reacts).includes(interaction.customId)) {
         reacts[interaction.customId](interaction, {
