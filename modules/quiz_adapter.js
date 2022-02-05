@@ -294,9 +294,9 @@ class QuizAdapter {
       // user mentioned in the bot's message (which may be itself).
       const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
       return repliedMessage.mentions.users.first()
-    } else if (message.repliedUser != null) {
+    } else if (message.mentions.repliedUser != null) {
       // this is a reply to some other user - use that user as the quizzer.
-      return message.repliedUser
+      return message.mentions.repliedUser
     } else {
       return message.mentions.users.first()
     }
