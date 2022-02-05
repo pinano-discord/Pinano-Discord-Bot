@@ -88,7 +88,7 @@ class QuizAdapter {
           return
         }
 
-        const quizzer = message.mentions.users.first()
+        const quizzer = this._getQuizzerFromMessage(message)
         this._handleGuess(message, message.author.id, guesses[0], quizzer)
       }
     })
@@ -286,6 +286,20 @@ class QuizAdapter {
         })
       })
     })
+  }
+
+  _getQuizzerFromMessage (message) {
+    if (message.mentions.repliedUser === this._client.user) {
+      // this is a reply to a bot message, i.e. the riddle message itself. The quizzer is the first
+      // user mentioned in the bot's message (which may be itself).
+      const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
+      return repliedMessage.mentions.users.first()
+    } else if (message.repliedUser != null) {
+      // this is a reply to some other user - use that user as the quizzer.
+      return message.repliedUser
+    } else {
+      return message.mentions.users.first()
+    }
   }
 
   _handleGuess (message, guesserId, guess, quizzer) {
