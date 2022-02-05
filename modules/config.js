@@ -40,12 +40,12 @@ class ConfigManagement {
           util.log(`Configuration modified by ${authorMember.id}: set ${key} ${value}`)
           this._config.set(key, value)
           return {
-            embed: {
+            embeds: [{
               title: MODULE_NAME,
               description: `Set configuration key \`${key}\` to \`${value}\`.`,
               color: this._config.get('embedColor') || 'DEFAULT',
               timestamp: new Date()
-            }
+            }]
           }
         }
         case 'unset': {
@@ -56,12 +56,12 @@ class ConfigManagement {
           util.log(`Configuration modified by ${authorMember.id}: unset ${key}`)
           this._config.unset(key)
           return {
-            embed: {
+            embeds: [{
               title: MODULE_NAME,
               description: `Unset configuration key \`${key}\`.`,
               color: this._config.get('embedColor') || 'DEFAULT',
               timestamp: new Date()
-            }
+            }]
           }
         }
         case 'add': {
@@ -73,12 +73,12 @@ class ConfigManagement {
           util.log(`Configuration modified by ${authorMember.id}: add ${key} ${value}`)
           this._config.add(key, value)
           return {
-            embed: {
+            embeds: [{
               title: MODULE_NAME,
               description: `Added \`${value}\` to configuration key \`${key}\`.`,
               color: this._config.get('embedColor') || 'DEFAULT',
               timestamp: new Date()
-            }
+            }]
           }
         }
         case 'remove': {
@@ -90,12 +90,12 @@ class ConfigManagement {
           util.log(`Configuration modified by ${authorMember.id}: remove ${key} ${value}`)
           this._config.remove(key, value)
           return {
-            embed: {
+            embeds: [{
               title: MODULE_NAME,
               description: `Removed \`${value}\` from configuration key \`${key}\`.`,
               color: this._config.get('embedColor') || 'DEFAULT',
               timestamp: new Date()
-            }
+            }]
           }
         }
         default:

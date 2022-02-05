@@ -58,7 +58,7 @@ class ListeningGraph {
       }
 
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `Statistics for <@${targetId}>:`,
           color: this._config.get('embedColor') || 'DEFAULT',
@@ -67,7 +67,7 @@ class ListeningGraph {
             { name: 'Top Listeners', value: listenersField, inline: true },
             { name: 'Top Listened To', value: prackersField, inline: true }
           ]
-        }
+        }]
       }
     })
 

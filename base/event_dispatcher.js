@@ -1,3 +1,4 @@
+const { InteractionCollector, MessageActionRow, MessageButton } = require('discord.js')
 const { log } = require('../library/util')
 
 class EventDispatcher {
@@ -6,7 +7,7 @@ class EventDispatcher {
     this._eventHandlers = {}
     this._client = client
 
-    client.on('message', async (message) => {
+    client.on('messageCreate', async (message) => {
       if (message.guild == null) {
         // TODO: handle DMs
         return
@@ -43,10 +44,15 @@ class EventDispatcher {
         if (this._commandHandlers[guildId] != null) {
           if (this._commandHandlers[guildId][command] != null) {
             const result = await this._commandHandlers[guildId][command](message.member, tokenized)
+            let response
             if (result.reacts != null) {
-              this.reactableMessage(message, result.embed, resultDeleteTime, result.reacts)
+              response = await this.reactableMessage(message, { embeds: result.embeds }, resultDeleteTime, result.reacts)
             } else {
-              this.cancellableMessage(message, result, resultDeleteTime)
+              response = await this.cancellableMessage(message, result, resultDeleteTime)
+            }
+            if (result.interactionHandler != null) {
+              const collector = new InteractionCollector(client, { message: response })
+              collector.on('collect', result.interactionHandler)
             }
           } else {
             throw new Error(`Unknown command: ${command}`)
@@ -54,12 +60,12 @@ class EventDispatcher {
         }
       } catch (err) {
         this.cancellableMessage(message, {
-          embed: {
+          embeds: [{
             title: 'Error',
             description: err.message,
             color: config.get('embedColor') || 'DEFAULT',
             timestamp: new Date()
-          }
+          }]
         }, resultDeleteTime)
       }
     })
@@ -94,7 +100,18 @@ class EventDispatcher {
   }
 
   async reactableMessage (request, response, timeout, reacts) {
+    const row = new MessageActionRow()
+    Object.keys(reacts).forEach(react => {
+      row.addComponents(new MessageButton().setCustomId(react).setStyle('PRIMARY').setEmoji(react))
+    })
+    if (response.components == null) {
+      response.components = [row]
+    } else {
+      response.components.push(row)
+    }
+    response.ephemeral = true
     const message = await request.channel.send(response)
+
     let deleted = false
     let timeoutHandle
     let timeoutCleared = false
@@ -113,51 +130,39 @@ class EventDispatcher {
       }
     }
     resetTimeoutHandle()
-    const collector = message.createReactionCollector((r, u) => u !== this._client.user)
-    collector.on('collect', async (reaction) => {
-      const reactor = reaction.users.cache.find(user => user !== this._client.user)
-      const member = request.guild.member(reactor.id)
-      if (reactor !== request.author && !member.hasPermission('MANAGE_MESSAGES')) {
-        reaction.users.remove(reactor)
+
+    const collector = new InteractionCollector(this._client, { message: message })
+    collector.on('collect', async interaction => {
+      if (!interaction.isButton()) return
+      if (interaction.member.id !== request.author.id && !interaction.member.permissions.has('MANAGE_MESSAGES')) {
+        interaction.deferUpdate()
         return
       }
 
-      let shouldClear = true
-      if (Object.keys(reacts).includes(reaction.emoji.name)) {
-        reacts[reaction.emoji.name](message, {
+      if (Object.keys(reacts).includes(interaction.customId)) {
+        reacts[interaction.customId](interaction, {
           close: () => {
             deleted = true
             message.delete()
-            shouldClear = false
-          },
-          done: () => {
-            collector.stop()
-            message.reactions.removeAll()
-            shouldClear = false
           },
           lock: () => {
             clearTimeout(timeoutHandle)
             timeoutCleared = true
-            shouldClear = false
+            // HACK HACK HACK HACK HACK find a better way to replace the lock icon
+            // This depends on the lock icon being the first button!
+            row.spliceComponents(0, 1, new MessageButton().setCustomId('🔒').setDisabled(true).setStyle('PRIMARY').setEmoji('🔒'))
+            interaction.update({ components: [row] })
           }
         })
       }
-      if (shouldClear) {
-        reaction.users.remove(reactor)
-      }
       resetTimeoutHandle()
     })
-
-    Object.keys(reacts).forEach(react => {
-      message.react(react).catch(() => {
-        log(`Could not react to message ${message.id}; the message was probably deleted.`)
-      })
-    })
+    return message
   }
 
   cancellableMessage (request, response, timeout) {
-    this.reactableMessage(request, response, timeout, {
-      '🔒': (message, helpers) => helpers.lock(),
+    return this.reactableMessage(request, response, timeout, {
+      '🔓': (message, helpers) => helpers.lock(),
       '❌': (message, helpers) => helpers.close()
     })
   }

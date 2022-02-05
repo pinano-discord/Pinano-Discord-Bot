@@ -139,12 +139,12 @@ class PolicyEnforcer extends EventEmitter {
 
       this._lockPracticeRoom(channel, target)
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `<@${authorMember.id}>, locked <#${channel.id}>.`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
 
@@ -175,19 +175,19 @@ class PolicyEnforcer extends EventEmitter {
       this._unlockPracticeRoom(channel)
       this._adapter.adjustChannelName(channel.id, /* isLocked= */false, tracker.isFeedback, tracker.token)
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `<@${authorMember.id}>, unlocked <#${channel.id}>.`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
 
     Object.keys(this._pracman._tracker).forEach(async (channelId) => {
       const channel = this._guild.channels.resolve(channelId)
       let lockedBy = null
-      channel.permissionOverwrites.forEach((overwrite, principalId) => {
+      channel.permissionOverwrites.cache.forEach((overwrite, principalId) => {
         if (overwrite.allow.equals(['SPEAK', 'STREAM']) && channel.members.get(principalId) != null) {
           lockedBy = principalId
         }
@@ -196,7 +196,7 @@ class PolicyEnforcer extends EventEmitter {
       if (lockedBy != null) {
         this._pracman.markAsLocked(channelId, lockedBy)
       } else {
-        await channel.overwritePermissions(this._config.get('newChannelPermissions') || [])
+        await channel.permissionOverwrites.set(this._config.get('newChannelPermissions') || [])
       }
     })
   }
@@ -343,11 +343,11 @@ class PolicyEnforcer extends EventEmitter {
     if (!isMuted || !isDeaf) {
       // continue to suppress certain muted roles in the exclusive chat, even
       // if they are properly in a practice room.
-      if (this._exclusiveChatExceptionRole == null || !this._guild.member(userId).roles.cache.has(this._exclusiveChatExceptionRole.id)) {
-        this._exclusiveChat.updateOverwrite(userId, { SEND_MESSAGES: true })
+      if (this._exclusiveChatExceptionRole == null || !this._guild.members.cache.get(userId).roles.cache.has(this._exclusiveChatExceptionRole.id)) {
+        this._exclusiveChat.permissionOverwrites.edit(userId, { SEND_MESSAGES: true })
       }
     } else {
-      const existingOverwrite = this._exclusiveChat.permissionOverwrites.get(userId)
+      const existingOverwrite = this._exclusiveChat.permissionOverwrites.cache.get(userId)
       if (existingOverwrite != null) {
         existingOverwrite.delete()
       }

@@ -104,7 +104,6 @@ class Statistics {
         const badgesPerPage = this._config.get('badgesPerPage') || 12
         if (badgesCollection.length <= badgesPerPage) {
           embed.addField('Badges', badgesCollection.reduce((acc, badge) => `${acc}\n${badge}`, ''))
-          return embed
         } else {
           let page = 1
           const generatePageData = function () {
@@ -119,9 +118,9 @@ class Statistics {
 
           embed.addField('Badges (use 🔼🔽 to scroll)', generatePageData())
           const reacts = {
-            '🔒': (message, helpers) => helpers.lock(),
-            '❌': (message, helpers) => helpers.close(),
-            '🔼': (message) => {
+            '🔓': (_, helpers) => helpers.lock(),
+            '❌': (_, helpers) => helpers.close(),
+            '🔼': interaction => {
               --page
               if (page < 1) {
                 page = 1
@@ -130,9 +129,9 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              message.edit(embed)
+              interaction.update({ embeds: [embed] })
             },
-            '🔽': (message, helpers) => {
+            '🔽': interaction => {
               ++page
               const totalPages = Math.ceil(badgesCollection.length / badgesPerPage)
               if (page > totalPages) {
@@ -142,13 +141,15 @@ class Statistics {
                 name: 'Badges (use 🔼🔽 to scroll)',
                 value: generatePageData()
               })
-              message.edit(embed)
+              interaction.update({ embeds: [embed] })
             }
           }
 
-          return { embed: embed, reacts: reacts }
+          return { embeds: [embed], reacts: reacts }
         }
       }
+
+      return { embeds: [embed] }
     })
   }
 }

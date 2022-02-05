@@ -79,12 +79,12 @@ class Help {
       })
 
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: 'Sent you a DM with the command list.',
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
   }

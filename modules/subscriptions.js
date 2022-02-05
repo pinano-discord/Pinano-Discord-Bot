@@ -30,7 +30,7 @@ class Subscriptions {
       }
 
       for (const id of user.subscribers) {
-        const subscriber = guild.member(id)
+        const subscriber = guild.members.cache.get(id)
         if (subscriber != null) {
           subscriber.send(`${name} just started practicing! Use the \`${this._config.get('commandPrefix') || 'p!'}unsubscribe\` command to stop receiving these notifications.`)
             .catch(err => {
@@ -62,12 +62,12 @@ class Subscriptions {
       // TODO: check if the subscriber is DM-able before agreeing to DM them
       userRepository.addToSet(member.id, 'subscribers', authorMember.id)
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `Subscribed to <@${member.id}>.`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
 
@@ -78,12 +78,12 @@ class Subscriptions {
       util.log(`${authorMember.id} unsubscribing from ${member.id}`)
       userRepository.removeFromSet(member.id, 'subscribers', authorMember.id)
       return {
-        embed: {
+        embeds: [{
           title: MODULE_NAME,
           description: `Unsubscribed from <@${member.id}>.`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
-        }
+        }]
       }
     })
 
@@ -94,32 +94,32 @@ class Subscriptions {
         case 'on':
           userRepository.setField(authorMember.id, 'subscription_status', 'on')
           return {
-            embed: {
+            embeds: [{
               title: MODULE_NAME,
               description: `Subscriptions are enabled for <@${authorMember.id}>.`,
               color: this._config.get('embedColor') || 'DEFAULT',
               timestamp: new Date()
-            }
+            }]
           }
         case 'off':
           userRepository.setField(authorMember.id, 'subscription_status', 'off')
           return {
-            embed: {
+            embeds: [{
               title: MODULE_NAME,
               description: `Subscriptions are disabled for <@${authorMember.id}>.`,
               color: this._config.get('embedColor') || 'DEFAULT',
               timestamp: new Date()
-            }
+            }]
           }
         case 'silent':
           userRepository.setField(authorMember.id, 'subscription_status', 'silent')
           return {
-            embed: {
+            embeds: [{
               title: MODULE_NAME,
               description: `<@${authorMember.id}>'s subscribers will not be notified.`,
               color: this._config.get('embedColor') || 'DEFAULT',
               timestamp: new Date()
-            }
+            }]
           }
         default:
           throw new Error(`Usage: \`${USAGE}\``)

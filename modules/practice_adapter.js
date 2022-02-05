@@ -1,4 +1,4 @@
-const Discord = require('discord.js')
+const { InteractionCollector, MessageActionRow, MessageButton, MessageEmbed } = require('discord.js')
 const EventEmitter = require('events')
 const log = require('../library/util').log
 
@@ -63,7 +63,7 @@ class PracticeAdapter extends EventEmitter {
       this.emit('deletePracticeRoom', channel.id)
     })
     dispatcher.on('channelUpdate', this._guild.id, (oldChannel, newChannel) => {
-      if (newChannel.parent !== this._category || newChannel.type !== 'voice') {
+      if (newChannel.parent !== this._category || newChannel.type !== 'GUILD_VOICE') {
         return
       }
 
@@ -151,7 +151,7 @@ class PracticeAdapter extends EventEmitter {
   getCurrentState () {
     const currentTimestamp = Math.floor(Date.now() / 1000)
     const result = {}
-    this._category.children.filter(c => c.type === 'voice').forEach(channel => {
+    this._category.children.filter(c => c.type === 'GUILD_VOICE').forEach(channel => {
       const tokenMatch = channel.name.match(/Room (.*?)$/)
       result[channel.id] = {
         live: channel.members.filter(m => !this.effectiveMute(m.voice, channel)).map(m => {
@@ -195,8 +195,8 @@ class PracticeAdapter extends EventEmitter {
     return (data === '') ? '\u200B' : data
   }
 
-  async updateInformation (leaderboard1, leaderboard2, leaderboard3) {
-    const embed = new Discord.MessageEmbed()
+  async updateInformation (leaderboard1, leaderboard2, leaderboard3, interaction) {
+    const embed = new MessageEmbed()
       .setTitle('Information')
       .setColor(this._config.get('embedColor') || 'DEFAULT')
       .addField(leaderboard1.title, this._translateLeaderboard(leaderboard1.getPageData()), true)
@@ -205,95 +205,101 @@ class PracticeAdapter extends EventEmitter {
       .setTimestamp(Date.now())
 
     const messages = await this._informationChannel.messages.fetch()
+    const row1 = new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('lb1prev').setStyle('PRIMARY').setEmoji('◀'))
+      .addComponents(new MessageButton().setCustomId('lb1label').setStyle('PRIMARY').setLabel('Weekly'))
+      .addComponents(new MessageButton().setCustomId('lb1next').setStyle('PRIMARY').setEmoji('▶'))
+    const row2 = new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('lb2prev').setStyle('SUCCESS').setEmoji('◀'))
+      .addComponents(new MessageButton().setCustomId('lb2label').setStyle('SUCCESS').setLabel('Overall'))
+      .addComponents(new MessageButton().setCustomId('lb2next').setStyle('SUCCESS').setEmoji('▶'))
+    const row3 = new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('lb3prev').setStyle('DANGER').setEmoji('◀'))
+      .addComponents(new MessageButton().setCustomId('lb3label').setStyle('DANGER').setLabel('Listeners'))
+      .addComponents(new MessageButton().setCustomId('lb3next').setStyle('DANGER').setEmoji('▶'))
     let message = messages.find(m => m.author === this._client.user)
-    if (message == null) {
-      message = await this._informationChannel.send(embed)
+    if (interaction != null) {
+      interaction.update({ embeds: [embed], components: [row1, row2, row3] })
     } else {
-      message.edit({ embed: embed })
+      if (message == null) {
+        message = await this._informationChannel.send({ embeds: [embed], components: [row1, row2, row3] })
+      } else {
+        message.edit({ embeds: [embed], components: [row1, row2, row3] })
+      }
     }
 
-    if (this._informationReactionCollector == null) {
-      this._informationReactionCollector = message.createReactionCollector((r, u) => u !== this._client.user)
-      this._informationReactionCollector.on('collect', reaction => {
-        const reactor = reaction.users.cache.find(user => user !== this._client.user)
-        switch (reaction.emoji.name) {
-          case '◀':
+    if (this._informationInteractionCollector == null) {
+      this._informationInteractionCollector = new InteractionCollector(this._client, { message: message })
+      this._informationInteractionCollector.on('collect', interaction => {
+        if (!interaction.isButton()) return
+        switch (interaction.customId) {
+          case 'lb1prev':
             leaderboard1.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
-          case '▶':
+          case 'lb1next':
             leaderboard1.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
-          case '⬅':
+          case 'lb2prev':
             leaderboard2.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
-          case '➡':
+          case 'lb2next':
             leaderboard2.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
-          case '🔼':
+          case 'lb3prev':
             leaderboard3.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
             break
-          case '🔽':
+          case 'lb3next':
             leaderboard3.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3)
+            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
+            break
+          default:
+            interaction.deferUpdate()
             break
         }
-
-        reaction.users.remove(reactor)
       })
-
-      message.reactions.removeAll()
-      message.react('◀')
-      message.react('🇼')
-      message.react('▶')
-      message.react('⬅')
-      message.react('🇴')
-      message.react('➡')
-      message.react('🔼')
-      message.react('🇱')
-      message.react('🔽')
     }
   }
 
   async postLeaderboard (leaderboard) {
     if (this._config.get('postLeaderboardOnReset')) {
       const message = await this._announcementsChannel.send({
-        embed: {
+        embeds: [{
           title: 'Weekly Leaderboard - Results',
           description: this._translateLeaderboard(leaderboard.getPageData()),
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: Date.now()
-        }
+        }]
       })
       message.pin()
     }
   }
 
   muteMember (memberId) {
-    const member = this._guild.member(memberId)
+    const member = this._guild.members.cache.get(memberId)
     member.voice.setMute(true).catch(err => {
       log(`Failed to mute ${memberId}: ${err.message}. This message is safe to ignore.`)
     })
   }
 
   unmuteMember (memberId) {
-    this._guild.member(memberId).voice.setMute(false)
+    this._guild.members.cache.get(memberId).voice.setMute(false)
       .catch(err => {
         log(`Failed to unmute ${memberId}: ${err.message} This message is safe to ignore.`)
       })
   }
 
   allRoomsOccupied (roomType) {
-    return this._category.children.filter(chan => chan.type === 'voice' && chan.name.includes(roomType)).every(chan => chan.members.size > 0)
+    return this._category.children.filter(chan => chan.type === 'GUILD_VOICE' && chan.name.includes(roomType)).every(chan => chan.members.size > 0)
   }
 
   async createChannel (name, permissions, atFront) {
     const channel = await this._guild.channels.create(name, {
-      type: 'voice',
+      type: 'GUILD_VOICE',
       parent: this._category,
       bitrate: (this._config.get('bitrate') || 96) * 1000,
       position: atFront ? 1 : this._category.children.size,
@@ -304,7 +310,7 @@ class PracticeAdapter extends EventEmitter {
 
   maybeRemoveEmptyRoom (roomType) {
     const practiceRooms = this._category.children
-      .filter(chan => chan.type === 'voice' && chan.name.includes(roomType))
+      .filter(chan => chan.type === 'GUILD_VOICE' && chan.name.includes(roomType))
       .sort((a, b) => a.position - b.position)
     if (practiceRooms.size > 0) {
       const basePosition = practiceRooms.first().position
@@ -319,8 +325,8 @@ class PracticeAdapter extends EventEmitter {
   }
 
   lockPracticeRoom (channel, member) {
-    channel.createOverwrite(member.id, { STREAM: true, SPEAK: true })
-    channel.updateOverwrite(this._guild.roles.everyone, { STREAM: false, SPEAK: false })
+    channel.permissionOverwrites.create(member.id, { STREAM: true, SPEAK: true })
+    channel.permissionOverwrites.edit(this._guild.roles.everyone, { STREAM: false, SPEAK: false })
     channel.members
       .filter(m => m !== member)
       .forEach(m => m.voice.setMute(true)
@@ -337,7 +343,7 @@ class PracticeAdapter extends EventEmitter {
 
   unlockPracticeRoom (channel, permissions) {
     // reset permissions to original
-    channel.overwritePermissions(permissions || [])
+    channel.permissionOverwrites.set(permissions || [])
     // 2020/07/25: after too many instances of people accidentally being
     // unmuted after the occupant left and automatically unlocked, we decided
     // to make it so that users have to rejoin in order to be unmuted in a
