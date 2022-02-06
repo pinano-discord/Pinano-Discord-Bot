@@ -2,6 +2,7 @@ const QuizMaster = require('./quiz_master')
 
 class MockUserRepository {
   incrementField (id, field) { return { [field]: 42 } }
+  loadPositive () { return [] }
 }
 
 class MockQuizRepository {

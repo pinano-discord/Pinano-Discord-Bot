@@ -178,84 +178,117 @@ class PracticeAdapter extends EventEmitter {
   }
 
   _translateLeaderboard (page) {
-    const reducer = (msgStr, row, index) => {
-      let seconds = row.time
-      let minutes = Math.floor(seconds / 60)
-      const hours = Math.floor(minutes / 60)
-      seconds %= 60
-      minutes %= 60
-      seconds = ('00' + seconds).slice(-2)
-      minutes = ('00' + minutes).slice(-2)
+    let reducer
+    if (page.formatAsTime) {
+      reducer = (msgStr, row, index) => {
+        let seconds = row.time
+        let minutes = Math.floor(seconds / 60)
+        const hours = Math.floor(minutes / 60)
+        seconds %= 60
+        minutes %= 60
+        seconds = ('00' + seconds).slice(-2)
+        minutes = ('00' + minutes).slice(-2)
 
-      const timeStr = `${hours}:${minutes}:${seconds}`
-      return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\n \`${timeStr}\`\n`
+        const timeStr = `${hours}:${minutes}:${seconds}`
+        return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\n \`${timeStr}\`\n`
+      }
+    } else {
+      reducer = (msgStr, row, index) => {
+        return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\n \`${row.time}\`\n`
+      }
     }
 
     const data = page.data.reduce(reducer, '')
     return (data === '') ? '\u200B' : data
   }
 
-  async updateInformation (leaderboard1, leaderboard2, leaderboard3, interaction) {
+  // Update the leaderboards. This doesn't strictly have to be done in the practice adapter, but
+  // for historical reasons (namely, the first leaderboards were all for stats measured by the
+  // practice manager) the updating is done in this module.
+  async updateInformation (interaction) {
+    const practiceManager = this._moduleManager.getModule('Practice Manager')
+    const literatureQuiz = this._moduleManager.getModule('Literature Quiz')
+
+    const leaderboards = []
+    const actionRows = []
+    const leaderboardConfig = this._config.get('leaderboards')
+    if (leaderboardConfig == null) return
+    leaderboardConfig.forEach(leaderboard => {
+      switch (leaderboard) {
+        case 'WEEKLY':
+          if (practiceManager != null) {
+            leaderboards.push(practiceManager._weeklyLeaderboard)
+          }
+          break
+        case 'OVERALL':
+          if (practiceManager != null) {
+            leaderboards.push(practiceManager._overallLeaderboard)
+          }
+          break
+        case 'LISTENER':
+          if (practiceManager != null) {
+            leaderboards.push(practiceManager._topListeners)
+          }
+          break
+        case 'LITQUIZ':
+          if (literatureQuiz != null) {
+            leaderboards.push(literatureQuiz._leaderboard)
+          }
+          break
+      }
+    })
+
     const embed = new MessageEmbed()
       .setTitle('Information')
       .setColor(this._config.get('embedColor') || 'DEFAULT')
-      .addField(leaderboard1.title, this._translateLeaderboard(leaderboard1.getPageData()), true)
-      .addField(leaderboard2.title, this._translateLeaderboard(leaderboard2.getPageData()), true)
-      .addField(leaderboard3.title, this._translateLeaderboard(leaderboard3.getPageData()), true)
       .setTimestamp(Date.now())
+    leaderboards.forEach((leaderboard, index) => {
+      embed.addField(leaderboard.title, this._translateLeaderboard(leaderboard.getPageData()), true)
+      // Force two columns per row and space between rows.
+      if (index < leaderboards.length - 1) {
+        embed.addField('\u200B', '\u200B', index % 2 === 0)
+      }
+      actionRows.push(new MessageActionRow()
+        .addComponents(new MessageButton().setCustomId(`${index}r`).setStyle('PRIMARY').setEmoji('⏪'))
+        .addComponents(new MessageButton().setCustomId(`${index}p`).setStyle('PRIMARY').setEmoji('◀'))
+        .addComponents(new MessageButton().setCustomId(`${index}l`).setStyle('SECONDARY').setLabel(leaderboard.title))
+        .addComponents(new MessageButton().setCustomId(`${index}n`).setStyle('PRIMARY').setEmoji('▶'))
+        .addComponents(new MessageButton().setCustomId(`${index}f`).setStyle('PRIMARY').setEmoji('⏩')))
+    })
 
     const messages = await this._informationChannel.messages.fetch()
-    const row1 = new MessageActionRow()
-      .addComponents(new MessageButton().setCustomId('lb1prev').setStyle('PRIMARY').setEmoji('◀'))
-      .addComponents(new MessageButton().setCustomId('lb1label').setStyle('PRIMARY').setLabel('Weekly'))
-      .addComponents(new MessageButton().setCustomId('lb1next').setStyle('PRIMARY').setEmoji('▶'))
-    const row2 = new MessageActionRow()
-      .addComponents(new MessageButton().setCustomId('lb2prev').setStyle('SUCCESS').setEmoji('◀'))
-      .addComponents(new MessageButton().setCustomId('lb2label').setStyle('SUCCESS').setLabel('Overall'))
-      .addComponents(new MessageButton().setCustomId('lb2next').setStyle('SUCCESS').setEmoji('▶'))
-    const row3 = new MessageActionRow()
-      .addComponents(new MessageButton().setCustomId('lb3prev').setStyle('DANGER').setEmoji('◀'))
-      .addComponents(new MessageButton().setCustomId('lb3label').setStyle('DANGER').setLabel('Listeners'))
-      .addComponents(new MessageButton().setCustomId('lb3next').setStyle('DANGER').setEmoji('▶'))
     let message = messages.find(m => m.author === this._client.user)
     if (interaction != null) {
-      interaction.update({ embeds: [embed], components: [row1, row2, row3] })
+      interaction.update({ embeds: [embed], components: actionRows })
+    } else if (message == null) {
+      message = await this._informationChannel.send({ embeds: [embed], components: actionRows })
     } else {
-      if (message == null) {
-        message = await this._informationChannel.send({ embeds: [embed], components: [row1, row2, row3] })
-      } else {
-        message.edit({ embeds: [embed], components: [row1, row2, row3] })
-      }
+      message.edit({ embeds: [embed], components: actionRows })
     }
 
     if (this._informationInteractionCollector == null) {
       this._informationInteractionCollector = new InteractionCollector(this._client, { message: message })
       this._informationInteractionCollector.on('collect', interaction => {
         if (!interaction.isButton()) return
-        switch (interaction.customId) {
-          case 'lb1prev':
-            leaderboard1.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
+        // there can be a maximum of five leaderboards, so grabbing the first digit is safe.
+        const lbIndex = interaction.customId[0]
+        const command = interaction.customId[1]
+        switch (command) {
+          case 'r':
+            leaderboards[lbIndex].resetPage()
+            this.updateInformation(interaction)
             break
-          case 'lb1next':
-            leaderboard1.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
+          case 'p':
+            leaderboards[lbIndex].decrementPage()
+            this.updateInformation(interaction)
             break
-          case 'lb2prev':
-            leaderboard2.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
+          case 'n':
+            leaderboards[lbIndex].incrementPage()
+            this.updateInformation(interaction)
             break
-          case 'lb2next':
-            leaderboard2.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
-            break
-          case 'lb3prev':
-            leaderboard3.decrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
-            break
-          case 'lb3next':
-            leaderboard3.incrementPage()
-            this.updateInformation(leaderboard1, leaderboard2, leaderboard3, interaction)
+          case 'f':
+            leaderboards[lbIndex].endPage()
+            this.updateInformation(interaction)
             break
           default:
             interaction.deferUpdate()
