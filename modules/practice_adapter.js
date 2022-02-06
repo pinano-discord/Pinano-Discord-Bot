@@ -202,6 +202,9 @@ class PracticeAdapter extends EventEmitter {
     return (data === '') ? '\u200B' : data
   }
 
+  // Update the leaderboards. This doesn't strictly have to be done in the practice adapter, but
+  // for historical reasons (namely, the first leaderboards were all for stats measured by the
+  // practice manager) the updating is done in this module.
   async updateInformation (interaction) {
     const practiceManager = this._moduleManager.getModule('Practice Manager')
     const literatureQuiz = this._moduleManager.getModule('Literature Quiz')
