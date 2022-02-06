@@ -241,9 +241,7 @@ class PracticeAdapter extends EventEmitter {
       .setTimestamp(Date.now())
     leaderboards.forEach((leaderboard, index) => {
       embed.addField(leaderboard.title, this._translateLeaderboard(leaderboard.getPageData()), true)
-      if (index % 2 === 0) {
-        embed.addField('\u200B', '\u200B', true)
-      }
+      embed.addField('\u200B', '\u200B', index % 2 === 0)
       actionRows.push(new MessageActionRow()
         .addComponents(new MessageButton().setCustomId(`${index}r`).setStyle('PRIMARY').setEmoji('⏪'))
         .addComponents(new MessageButton().setCustomId(`${index}p`).setStyle('PRIMARY').setEmoji('◀'))
