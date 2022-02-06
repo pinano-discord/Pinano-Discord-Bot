@@ -251,7 +251,7 @@ class PracticeAdapter extends EventEmitter {
       actionRows.push(new MessageActionRow()
         .addComponents(new MessageButton().setCustomId(`${index}r`).setStyle('PRIMARY').setEmoji('⏪'))
         .addComponents(new MessageButton().setCustomId(`${index}p`).setStyle('PRIMARY').setEmoji('◀'))
-        .addComponents(new MessageButton().setCustomId(`${index}l`).setStyle('PRIMARY').setLabel(leaderboard.title))
+        .addComponents(new MessageButton().setCustomId(`${index}l`).setStyle('SECONDARY').setLabel(leaderboard.title))
         .addComponents(new MessageButton().setCustomId(`${index}n`).setStyle('PRIMARY').setEmoji('▶'))
         .addComponents(new MessageButton().setCustomId(`${index}f`).setStyle('PRIMARY').setEmoji('⏩')))
     })
