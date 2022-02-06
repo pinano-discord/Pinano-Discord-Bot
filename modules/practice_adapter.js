@@ -203,11 +203,11 @@ class PracticeAdapter extends EventEmitter {
   }
 
   async updateInformation (interaction) {
-    const practiceManager =this._moduleManager.getModule('Practice Manager')
+    const practiceManager = this._moduleManager.getModule('Practice Manager')
     const literatureQuiz = this._moduleManager.getModule('Literature Quiz')
 
-    let leaderboards = []
-    let actionRows = []
+    const leaderboards = []
+    const actionRows = []
     const leaderboardConfig = this._config.get('leaderboards')
     if (leaderboardConfig == null) return
     leaderboardConfig.forEach(leaderboard => {
