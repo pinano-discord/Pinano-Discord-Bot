@@ -88,9 +88,9 @@ class StageManager {
       .addComponents(new MessageButton().setCustomId('lecture').setStyle('PRIMARY').setEmoji('🍎').setLabel('LECTURE')))
     let controlPost = messages.find(m => m.author === this._client.user)
     if (controlPost == null) {
-      controlPost = await this._controlChannel.send({ content: content, components: [actionRows] })
+      controlPost = await this._controlChannel.send({ content: content, components: actionRows })
     } else {
-      controlPost.edit({ content: content, components: [actionRows] })
+      controlPost.edit({ content: content, components: actionRows })
     }
 
     const interactionCollector = new InteractionCollector(this._client, { message: controlPost })
