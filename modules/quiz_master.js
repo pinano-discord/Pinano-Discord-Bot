@@ -1,4 +1,5 @@
 const fs = require('fs')
+const Leaderboard = require('../library/leaderboard')
 const util = require('../library/util')
 
 const MODULE_NAME = 'Literature Quiz'
@@ -29,6 +30,7 @@ class QuizMaster {
     this._adapter = this._moduleManager.getModule('Quiz Adapter')
     this._clientId = this._moduleManager.getClient().user.id
 
+    this._leaderboard = new Leaderboard(this._userRepository, 'quiz_score', this._config.get('leaderboardSize') || 10, 'Literature Quiz', false)
     this._activeQueue = await this._quizRepository.getActiveQueue()
     if (this._activeQueue.length > 0) {
       this._priority = this._activeQueue.map(r => r.priority).reduce((a, b) => Math.max(a, b))
@@ -141,6 +143,7 @@ class QuizMaster {
     const newRecord = await this._userRepository.incrementField(guesserId, 'quiz_score')
     this._userRepository.incrementField(quizzerId, 'riddles_solved')
     this._adapter.notifyCorrectAnswer(guesserId, guess, reactorId, newRecord.quiz_score)
+    this._leaderboard.refresh()
     await this.endRiddle(quizzerId)
   }
 

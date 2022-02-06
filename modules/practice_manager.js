@@ -135,9 +135,9 @@ class PracticeManager extends EventEmitter {
       }
     })
 
-    this._weeklyLeaderboard = new Leaderboard(this._userRepository, 'current_session_playtime', this._config.get('leaderboardSize') || 10, 'Weekly Leaderboard')
-    this._overallLeaderboard = new Leaderboard(this._userRepository, 'overall_session_playtime', this._config.get('leaderboardSize') || 10, 'Top Prackers')
-    this._topListeners = new Leaderboard(this._userRepository, 'listening_time', this._config.get('leaderboardSize') || 10, 'Top Listeners')
+    this._weeklyLeaderboard = new Leaderboard(this._userRepository, 'current_session_playtime', this._config.get('leaderboardSize') || 10, 'Weekly Leaderboard', true)
+    this._overallLeaderboard = new Leaderboard(this._userRepository, 'overall_session_playtime', this._config.get('leaderboardSize') || 10, 'Top Prackers', true)
+    this._topListeners = new Leaderboard(this._userRepository, 'listening_time', this._config.get('leaderboardSize') || 10, 'Top Listeners', true)
     if (this._config.get('enableLeaderboardDisplay')) {
       const updateCronSpec = this._config.get('updateLeaderboardCronSpec') || '*/15 * * * * *'
       cron.schedule(updateCronSpec, async () => {
@@ -164,7 +164,7 @@ class PracticeManager extends EventEmitter {
         }
 
         await this._topListeners.refresh(liveListenData)
-        this._adapter.updateInformation(this._weeklyLeaderboard, this._overallLeaderboard, this._topListeners)
+        this._adapter.updateInformation()
       })
     }
 

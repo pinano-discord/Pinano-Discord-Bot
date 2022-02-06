@@ -1,10 +1,11 @@
 class Leaderboard {
-  constructor (repository, key, pageLength, title) {
+  constructor (repository, key, pageLength, title, timeTracked) {
     this.title = title
 
     this._repository = repository
     this._key = key
     this._pageLength = pageLength
+    this._timeTracked = timeTracked
     this.resetPage()
     this.refresh()
   }
@@ -51,7 +52,11 @@ class Leaderboard {
   getPageData () {
     const begin = this._pageLength * (this._page - 1)
     const end = this._pageLength * this._page
-    return { startRank: begin + 1, data: this._cache.slice(begin, end) }
+    return { startRank: begin + 1, data: this._cache.slice(begin, end), formatAsTime: this._timeTracked }
+  }
+
+  endPage () {
+    this._page = Math.ceil(this._cache.length / this._pageLength)
   }
 
   _checkPageOutOfRange () {
