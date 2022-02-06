@@ -1,3 +1,5 @@
+const { InteractionCollector, MessageActionRow, MessageButton } = require('discord.js')
+
 const MODULE_NAME = 'Stage Manager'
 
 class StageManager {
@@ -75,40 +77,49 @@ class StageManager {
       ':notebook_with_decorative_cover: `PROGRAMME DISPLAY` Programme channel **visible to Performers**, all other channels hidden\n\n' +
       ':apple: `LECTURE` Lecture Hall **open**, chat channel **open**, programme channel **hidden**\n_ _'
     const messages = await this._controlChannel.messages.fetch()
+    const actionRows = []
+    actionRows.push(new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('lock').setStyle('PRIMARY').setEmoji('🔒').setLabel('LOCKED'))
+      .addComponents(new MessageButton().setCustomId('unlock').setStyle('PRIMARY').setEmoji('🔓').setLabel('UNLOCKED'))
+      .addComponents(new MessageButton().setCustomId('performance').setStyle('PRIMARY').setEmoji('🎵').setLabel('PERFORMANCE')))
+    actionRows.push(new MessageActionRow()
+      .addComponents(new MessageButton().setCustomId('edit').setStyle('PRIMARY').setEmoji('📝').setLabel('PROGRAMME EDIT'))
+      .addComponents(new MessageButton().setCustomId('display').setStyle('PRIMARY').setEmoji('📔').setLabel('PROGRAMME DISPLAY'))
+      .addComponents(new MessageButton().setCustomId('lecture').setStyle('PRIMARY').setEmoji('🍎').setLabel('LECTURE')))
     let controlPost = messages.find(m => m.author === this._client.user)
     if (controlPost == null) {
-      controlPost = await this._controlChannel.send(content)
+      controlPost = await this._controlChannel.send({ content: content, components: [actionRows] })
     } else {
-      controlPost.edit(content)
+      controlPost.edit({ content: content, components: [actionRows] })
     }
 
-    const reactionCollector = controlPost.createReactionCollector({ filter: (r, u) => u !== this._client.user })
-    reactionCollector.on('collect', (reaction, reactor) => this._handleReaction(reaction, reactor))
-
-    controlPost.react('🔒')
-    controlPost.react('🔓')
-    controlPost.react('🎵')
-    controlPost.react('📝')
-    controlPost.react('📔')
-    controlPost.react('🍎')
+    const interactionCollector = new InteractionCollector(this._client, { message: controlPost })
+    interactionCollector.on('collect', interaction => this._handleInteraction(interaction))
   }
 
-  _handleReaction (reaction, reactor) {
-    if (reaction.emoji.name === '🔒') {
-      this._setLockedPreset()
-    } else if (reaction.emoji.name === '🔓') {
-      this._setUnlockedPreset()
-    } else if (reaction.emoji.name === '🎵') {
-      this._setPerformancePreset()
-    } else if (reaction.emoji.name === '📝') {
-      this._setProgrammeEditPreset()
-    } else if (reaction.emoji.name === '📔') {
-      this._setProgrammeDisplayPreset()
-    } else if (reaction.emoji.name === '🍎') {
-      this._setLecturePreset()
+  _handleInteraction (interaction) {
+    if (!interaction.isButton()) return
+    switch (interaction.customId) {
+      case 'lock':
+        this._setLockedPreset()
+        break
+      case 'unlock':
+        this._setUnlockedPreset()
+        break
+      case 'performance':
+        this._setPerformancePreset()
+        break
+      case 'edit':
+        this._setProgrammeEditPreset()
+        break
+      case 'display':
+        this._setProgrammeDisplayPreset()
+        break
+      case 'lecture':
+        this._setLecturePreset()
+        break
     }
-
-    reaction.users.remove(reactor)
+    interaction.deferUpdate()
   }
 
   _setLockedPreset () {
