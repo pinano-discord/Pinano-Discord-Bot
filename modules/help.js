@@ -74,7 +74,7 @@ class Help {
       }
       response.setColor(this._config.get('embedColor') || 'DEFAULT')
       response.setTimestamp()
-      authorMember.user.send(response).catch(() => {
+      authorMember.user.send({ embeds: [response] }).catch(() => {
         log(`Failed to DM ${authorMember.id} the help file. This message is safe to ignore.`)
       })
 
