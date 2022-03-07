@@ -385,12 +385,12 @@ class QuizAdapter {
         if (reaction.emoji.name === '✅') {
           collector.stop()
           this._quizModule.onCorrectAnswer(guesserId, guess, reactor.id, riddle.quizzerId)
-          this._appendToNotes(riddle.message, `||${guess}|| **marked as correct**`)
+          this._appendToNotes(riddle.message, `${guess} **marked as correct**`)
         } else if (reaction.emoji.name === '❎') {
           collector.stop()
           message.reactions.removeAll()
           riddle.guessCollectors.splice(riddle.guessCollectors.indexOf(collector), 1)
-          this._appendToNotes(riddle.message, `||${guess}|| marked as incorrect`)
+          this._appendToNotes(riddle.message, `${guess} marked as incorrect`)
         }
       } else {
         reaction.users.remove(reactor)
