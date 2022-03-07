@@ -1,3 +1,4 @@
+const { MessageEmbed } = require('discord.js')
 const HTTPS = require('https')
 const util = require('../library/util')
 
@@ -66,7 +67,7 @@ class QuizAdapter {
           // hint given by quizzer in the form of a continuation.
           const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
           if (this._isHint(message, repliedMessage)) {
-            this._appendToNotes(repliedMessage, `Image attachment: https://discord.com/channels/${this._guild.id}/${this._channel.id}/${message.id}`)
+            this._appendToNotes(repliedMessage, `[Image attachment](https://discord.com/channels/${this._guild.id}/${this._channel.id}/${message.id})`)
           }
           return
         }
@@ -330,10 +331,23 @@ class QuizAdapter {
   }
 
   _appendToNotes (message, content) {
-    if (message.content.includes('Notes')) {
-      message.edit({ content: `${message.content}\n${content}`})
+    if (message.embeds.length === 0) {
+      message.edit({ embeds: [
+        new MessageEmbed()
+          .setTitle('Notes')
+          .setColor(this._config.get('embedColor') || 'DEFAULT')
+          .setTimestamp(message.createdTimestamp)
+          .setDescription(content)
+      ]})
     } else {
-      message.edit({ content: `${message.content}\n\n**Notes:**\n${content}`})
+      const embed = message.embeds[0]
+      message.edit({ embeds: [
+        new MessageEmbed()
+          .setTitle('Notes')
+          .setColor(this._config.get('embedColor') || 'DEFAULT')
+          .setTimestamp(message.createdTimestamp)
+          .setDescription(`${embed.description}\n${content}`)
+      ]})
     }
   }
 
