@@ -62,8 +62,17 @@ class QuizAdapter {
       }
 
       if (message.attachments.size !== 0) {
+        if (message.mentions.repliedUser === this._client.user) {
+          // hint given by quizzer in the form of a continuation.
+          const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
+          if (this._isHint(message, repliedMessage)) {
+            this._appendToNotes(repliedMessage, `Image attachment: https://discord.com/channels/${this._guild.id}/${this._channel.id}/${message.id}`)
+          }
+          return
+        }
+
         if (message.content.length > 0) {
-          // putting any message on an image in the channel is interpreted as a non-riddle
+          // otherwise, putting any message on an image in the channel is interpreted as a non-riddle
           return
         }
         util.log(`Enqueueing ${message.attachments.size} riddle(s) by ${message.author}`)
@@ -73,6 +82,13 @@ class QuizAdapter {
 
         this._quizModule.enqueue(message.id, message.author.id, message.attachments.first().url)
       } else {
+        if (message.mentions.repliedUser === this._client.user) {
+          const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
+          if (this._isHint(message, repliedMessage)) {
+            this._appendToNotes(repliedMessage, message.content)
+          }
+        }
+
         const guesses = message.content.match(/\|\|(.*?)\|\|/g)
         if (guesses == null) {
           return
@@ -302,6 +318,25 @@ class QuizAdapter {
     }
   }
 
+  _isHint (message, repliedMessage) {
+    if (repliedMessage.mentions.users.first() === message.author) {
+      const riddle = this._activeRiddles.find(r => r.quizzerId === message.author.id)
+      if (riddle != null && riddle.message === repliedMessage) {
+        // quizzer gave a reply to their own active riddle. Treat as hint and append to notes.
+        return true
+      }
+    }
+    return false
+  }
+
+  _appendToNotes (message, content) {
+    if (message.content.includes('Notes')) {
+      message.edit({ content: `${message.content}\n${content}`})
+    } else {
+      message.edit({ content: `${message.content}\n\n**Notes:**\n${content}`})
+    }
+  }
+
   _handleGuess (message, guesserId, guess, quizzer) {
     if (this._activeRiddles.length === 0) {
       // don't handle guesses when there are no riddles
@@ -350,10 +385,12 @@ class QuizAdapter {
         if (reaction.emoji.name === '✅') {
           collector.stop()
           this._quizModule.onCorrectAnswer(guesserId, guess, reactor.id, riddle.quizzerId)
+          this._appendToNotes(riddle.message, `||${guess}|| **marked as correct**`)
         } else if (reaction.emoji.name === '❎') {
           collector.stop()
           message.reactions.removeAll()
           riddle.guessCollectors.splice(riddle.guessCollectors.indexOf(collector), 1)
+          this._appendToNotes(riddle.message, `||${guess}|| marked as incorrect`)
         }
       } else {
         reaction.users.remove(reactor)
