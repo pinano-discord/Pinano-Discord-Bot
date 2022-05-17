@@ -91,7 +91,7 @@ class UserManagement {
       }
 
       util.log(`addpoint to ${userId} by ${authorMember.id}`)
-      
+
       const pts = result.quiz_score
       return {
         embeds: [{
@@ -138,4 +138,4 @@ function makeModule (moduleManager) {
   return new UserManagement(moduleManager)
 }
 
-module.exports = { name: MODULE_NAME, makeModule: makeModule }
+module.exports = { name: MODULE_NAME, makeModule }
