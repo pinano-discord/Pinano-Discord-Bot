@@ -76,7 +76,7 @@ class UserManagement {
     })
 
     // Add a single literature quiz point to a user.
-    dispatcher.command('addpoint', this._guild.id, (authorMember, tokenized) => {
+    dispatcher.command('addpoint', this._guild.id, async (authorMember, tokenized) => {
       util.requireRole(authorMember, this._managementRole)
 
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}addpoint @user`
@@ -85,14 +85,26 @@ class UserManagement {
 
       const userId = tokenized[0].replace(/[<@!>]/g, '')
 
+      const result = await userRepository.incrementField(userId, 'quiz_score')
+      if (result == null) {
+        throw new Error(`No existing record for user ${userId}`)
+      }
+
       util.log(`addpoint to ${userId} by ${authorMember.id}`)
       
-      // Call a helper method that conducts the increment and produces the output embed
-      return this._addLitQuizPoint(userId, userRepository, tokenized[0])
+      const pts = result.quiz_score
+      return {
+        embeds: [{
+          title: MODULE_NAME,
+          description: `${tokenized[0]} now has ${pts} point${pts === 1 ? '.' : 's.'}`,
+          color: this._config.get('embedColor') || 'DEFAULT',
+          timestamp: new Date()
+        }]
+      }
     })
 
     // Remove a single literature quiz point from a user.
-    dispatcher.command('delpoint', this._guild.id, (authorMember, tokenized) => {
+    dispatcher.command('delpoint', this._guild.id, async (authorMember, tokenized) => {
       util.requireRole(authorMember, this._managementRole)
 
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}delpoint @user`
@@ -101,47 +113,23 @@ class UserManagement {
 
       const userId = tokenized[0].replace(/[<@!>]/g, '')
 
+      const result = await userRepository.incrementField(userId, 'quiz_score', -1)
+      if (result == null) {
+        throw new Error(`No existing record for user ${userId}`)
+      }
+
       util.log(`delpoint from ${userId} by ${authorMember.id}`)
 
-      // Call a helper method that conducts the decrement and produces the output embed
-      return this._removeLitQuizPoint(userId, userRepository, tokenized[0])
+      const pts = result.quiz_score
+      return {
+        embeds: [{
+          title: MODULE_NAME,
+          description: `${tokenized[0]} now has ${pts} point${pts === 1 ? '.' : 's.'}`,
+          color: this._config.get('embedColor') || 'DEFAULT',
+          timestamp: new Date()
+        }]
+      }
     })
-  }
-
-  // Helper method for the 'addpoint' dispatcher callback
-  // Returns an embed that displays the number of points of the target user after the increment
-  async _addLitQuizPoint (id, userRepository, userHandle) {
-
-    const result = await userRepository.incrementField(id, 'quiz_score')
-    if (result == null) {
-      throw new Error(`No existing record for user ${id}`)
-    }
-    return {
-      embeds: [{
-        title: MODULE_NAME,
-        description: `Added 1 point to ${userHandle} (now ${result.quiz_score}).`,
-        color: this._config.get('embedColor') || 'DEFAULT',
-        timestamp: new Date()
-      }]
-    }
-  }
-
-  // Helper method for the 'delpoint' dispatcher callback
-  // Returns an embed that displays the number of points of the target user after the decrement
-  async _removeLitQuizPoint (id, userRepository, userHandle) {
-
-    const result = await userRepository.incrementField(id, 'quiz_score', -1)
-    if (result == null) {
-      throw new Error(`No existing record for user ${id}`)
-    }
-    return {
-      embeds: [{
-        title: MODULE_NAME,
-        description: `Removed 1 point from ${userHandle} (now ${result.quiz_score}).`,
-        color: this._config.get('embedColor') || 'DEFAULT',
-        timestamp: new Date()
-      }]
-    }
   }
 }
 
