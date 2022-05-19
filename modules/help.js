@@ -68,6 +68,8 @@ class Help {
       if (this._config.get('enableUserManagement') && isPrivileged) {
         response.addField(`\`${prefix}addtime @user TIME_IN_SECONDS\``, 'Add practice time to @user\'s record')
         response.addField(`\`${prefix}deltime @user TIME_IN_SECONDS\``, 'Remove practice time from @user\'s record')
+        response.addField(`\`${prefix}addpoint @user\``, 'Add one literature quiz point to @user\'s record')
+        response.addField(`\`${prefix}delpoint @user\``, 'Remove one literature quiz point from @user\'s record')
       }
       if (this._config.get('enableRestart') && isPrivileged) {
         response.addField(`\`${prefix}restart [ forced ]\``, `Restarts <@${client.user.id}> (if forced, live sessions will not be saved)`)
