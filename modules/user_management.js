@@ -74,6 +74,62 @@ class UserManagement {
         }]
       }
     })
+
+    // Add a single literature quiz point to a user.
+    dispatcher.command('addpoint', this._guild.id, async (authorMember, tokenized) => {
+      util.requireRole(authorMember, this._managementRole)
+
+      const USAGE = `${this._config.get('commandPrefix') || 'p!'}addpoint @user`
+      util.requireParameterCount(tokenized, 1, USAGE)
+      util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@') && arg.endsWith('>'), USAGE)
+
+      const userId = tokenized[0].replace(/[<@!>]/g, '')
+
+      const result = await userRepository.incrementField(userId, 'quiz_score')
+      if (result == null) {
+        throw new Error(`No existing record for user ${userId}`)
+      }
+
+      util.log(`addpoint to ${userId} by ${authorMember.id}`)
+
+      const pts = result.quiz_score
+      return {
+        embeds: [{
+          title: MODULE_NAME,
+          description: `${tokenized[0]} now has ${pts} point${pts === 1 ? '.' : 's.'}`,
+          color: this._config.get('embedColor') || 'DEFAULT',
+          timestamp: new Date()
+        }]
+      }
+    })
+
+    // Remove a single literature quiz point from a user.
+    dispatcher.command('delpoint', this._guild.id, async (authorMember, tokenized) => {
+      util.requireRole(authorMember, this._managementRole)
+
+      const USAGE = `${this._config.get('commandPrefix') || 'p!'}delpoint @user`
+      util.requireParameterCount(tokenized, 1, USAGE)
+      util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@') && arg.endsWith('>'), USAGE)
+
+      const userId = tokenized[0].replace(/[<@!>]/g, '')
+
+      const result = await userRepository.incrementField(userId, 'quiz_score', -1)
+      if (result == null) {
+        throw new Error(`No existing record for user ${userId}`)
+      }
+
+      util.log(`delpoint from ${userId} by ${authorMember.id}`)
+
+      const pts = result.quiz_score
+      return {
+        embeds: [{
+          title: MODULE_NAME,
+          description: `${tokenized[0]} now has ${pts} point${pts === 1 ? '.' : 's.'}`,
+          color: this._config.get('embedColor') || 'DEFAULT',
+          timestamp: new Date()
+        }]
+      }
+    })
   }
 }
 
@@ -82,4 +138,4 @@ function makeModule (moduleManager) {
   return new UserManagement(moduleManager)
 }
 
-module.exports = { name: MODULE_NAME, makeModule: makeModule }
+module.exports = { name: MODULE_NAME, makeModule }
