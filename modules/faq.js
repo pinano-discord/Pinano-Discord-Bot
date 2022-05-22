@@ -22,14 +22,31 @@ class FAQ {
       if (entry == null) {
         throw new Error(`Could not find an FAQ entry for the keyword \`${tokenized[0]}\`.`)
       }
+      let fields = []
+      if (entry.answer.length > 1024) {
+        // Split up the answer into different fields
+        const paragraphs = entry.answer.split('\n\n')
+        fields.push({
+          name: entry.question,
+          value: paragraphs[0]
+        })
+        for (let i = 1; i < paragraphs.length; ++i) {
+          fields.push({
+            name: '\u200B',
+            value: paragraphs[i]
+          })
+        }
+      } else {
+        fields.push({
+          name: entry.question,
+          value: entry.answer
+        })
+      }
       return {
         embeds: [{
           title: MODULE_NAME,
           description: `From ${this._config.get('faqSourceLink') || 'the FAQ'}:`,
-          fields: [{
-            name: entry.question,
-            value: entry.answer
-          }],
+          fields: fields,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
         }]
