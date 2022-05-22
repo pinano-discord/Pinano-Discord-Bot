@@ -332,22 +332,26 @@ class QuizAdapter {
 
   _appendToNotes (message, content) {
     if (message.embeds.length === 0) {
-      message.edit({ embeds: [
-        new MessageEmbed()
-          .setTitle('Notes')
-          .setColor(this._config.get('embedColor') || 'DEFAULT')
-          .setTimestamp(message.createdTimestamp)
-          .setDescription(content)
-      ]})
+      message.edit({
+        embeds: [
+          new MessageEmbed()
+            .setTitle('Notes')
+            .setColor(this._config.get('embedColor') || 'DEFAULT')
+            .setTimestamp(message.createdTimestamp)
+            .setDescription(content)
+        ]
+      })
     } else {
       const embed = message.embeds[0]
-      message.edit({ embeds: [
-        new MessageEmbed()
-          .setTitle('Notes')
-          .setColor(this._config.get('embedColor') || 'DEFAULT')
-          .setTimestamp(message.createdTimestamp)
-          .setDescription(`${embed.description}\n${content}`)
-      ]})
+      message.edit({
+        embeds: [
+          new MessageEmbed()
+            .setTitle('Notes')
+            .setColor(this._config.get('embedColor') || 'DEFAULT')
+            .setTimestamp(message.createdTimestamp)
+            .setDescription(`${embed.description}\n${content}`)
+        ]
+      })
     }
   }
 
