@@ -22,7 +22,7 @@ class FAQ {
       if (entry == null) {
         throw new Error(`Could not find an FAQ entry for the keyword \`${tokenized[0]}\`.`)
       }
-      let fields = []
+      const fields = []
       if (entry.answer.length > 1024) {
         // Split up the answer into different fields
         const paragraphs = entry.answer.split('\n\n')
