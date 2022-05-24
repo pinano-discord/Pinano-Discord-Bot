@@ -303,8 +303,8 @@ class PracticeAdapter extends EventEmitter {
       // First unpin any old leaderboards
       // Assume that all pinned messages in the announcementChannel by the bot are leaderboards
       this._announcementsChannel.messages.fetchPinned()
-        .then(pinned => pinned.filter(msg => msg.author === this._client.user))
-        .then(pinned => pinned.forEach(msg => msg.unpin()))
+        .then(pinned => pinned.filter(msg => msg.author === this._client.user)
+          .forEach(msg => msg.unpin()))
 
       // Post the new leaderboard
       const message = await this._announcementsChannel.send({
