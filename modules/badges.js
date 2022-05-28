@@ -39,6 +39,8 @@ class Badges {
 
   badgesForUser (userRecord, member, liveDelta) {
     const badges = []
+    const nowMs = Date.now()
+    const now = Math.floor(nowMs / 1000)
     if (this._config.get('virusBadge') != null && now >= userRecord.virus_visible_at && (userRecord.rooms_practice == null || !userRecord.rooms_practiced.includes('💉'))) {
       badges.push(this._config.get('virusBadge'))
       return badges
@@ -89,9 +91,6 @@ class Badges {
     if (this._config.get('nitroBadge') != null && member.roles.cache.has(this._config.get('nitroRoleId'))) {
       badges.push(this._config.get('nitroBadge'))
     }
-
-    const nowMs = Date.now()
-    const now = Math.floor(nowMs / 1000)
     if (this._config.get('recencyWeekBadge') != null) {
       if (liveDelta >= this._config.get('minimumSessionTimeToEarnToken') || now - userRecord.last_practiced_time < 7 * 86400) {
         badges.push(this._config.get('recencyWeekBadge'))
