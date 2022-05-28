@@ -39,6 +39,11 @@ class Badges {
 
   badgesForUser (userRecord, member, liveDelta) {
     const badges = []
+    if (this._config.get('virusBadge') != null && now >= userRecord.virus_visible_at && (userRecord.rooms_practice == null || !userRecord.rooms_practiced.includes('💉'))) {
+      badges.push(this._config.get('virusBadge'))
+      return badges
+    }
+
     if (userRecord.rooms_practiced != null) {
       if (includesAll(userRecord.rooms_practiced, RoomIdentifiers.original)) {
         if (this._config.get('collectionBadgeAll') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.firstGen)) {
@@ -98,10 +103,6 @@ class Badges {
     const currentStreak = (userRecord.daily_streak || 0) + ((liveDelta >= this._config.get('minimumSessionTimeToEarnToken') || userRecord.practiced_today) ? 1 : 0)
     if (this._config.get('streakBadgeIcon') != null && (currentStreak >= 5 || userRecord.max_daily_streak >= 5)) {
       badges.push(`${this._config.get('streakBadgeIcon')} I practiced for ${Math.max(currentStreak, userRecord.max_daily_streak)} days in a row`)
-    }
-
-    if (this._config.get('virusBadge') != null && now >= userRecord.virus_visible_at && (userRecord.rooms_practice == null || !userRecord.rooms_practiced.includes('💉'))) {
-      badges.push(this._config.get('virusBadge'))
     }
 
     if (userRecord.badges != null) {
