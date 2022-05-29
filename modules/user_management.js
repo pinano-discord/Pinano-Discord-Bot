@@ -130,6 +130,46 @@ class UserManagement {
         }]
       }
     })
+    
+    // p!recordrecital <recitalRole>
+    dispatcher.command('recordrecital', this._guild.id, async (authorMember, tokenized) => {
+      util.requireRole(authorMember, this._managementRole)
+
+      const USAGE = `${this._config.get('commandPrefix') || 'p!'}recordrecital @recitalRole`
+      util.requireParameterCount(tokenized, 1, USAGE)
+      util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@') && arg.endsWith('>'), USAGE)
+
+      // 1. Set the name of <recitalRole> as the recital ID
+      const recitalRole = tokenized[0]
+      const recitalId = recitalRole.name
+
+      // 2. Classify the recital as a numbered or event recital, based on its ID format
+
+      // any role name that fails this pattern is assumed to be an event recital.
+      // NOTE: no protection against non-recital roles
+      const pattern = /^\d+[st|nd|rd|th] Recital$/
+      let field = 'event_recitals'
+      if (pattern.test(recitalId)) {
+        // this is a numbered recital
+        field = 'numbered_recitals'
+      }
+
+      // 3. Add the recital to every participant user's record, added to the set in the appropriate field
+      // addToSet
+      recitalRole.members.forEach(member => {
+        await userRepository.addToSet(member.id, field, recitalId)
+      })
+
+      // 4. Produce an output embed
+      return {
+        embeds: [{
+          title: MODULE_NAME,
+          description: `Recorded ${tokenized[0]}.`,
+          color: this._config.get('embedColor') || 'DEFAULT',
+          timestamp: new Date()
+        }]
+      }
+    })
   }
 }
 
