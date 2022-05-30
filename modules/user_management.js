@@ -131,36 +131,33 @@ class UserManagement {
       }
     })
     
-    // p!recordrecital <recitalRole>
+    // Add a recital ID (role name) to the record of all participants
     dispatcher.command('recordrecital', this._guild.id, async (authorMember, tokenized) => {
       util.requireRole(authorMember, this._managementRole)
-
+      
+      // p!recordrecital <roleName>
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}recordrecital @recitalRole`
       util.requireParameterCount(tokenized, 1, USAGE)
-      util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@') && arg.endsWith('>'), USAGE)
+      util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@&') && arg.endsWith('>'), USAGE)
 
-      // 1. Set the name of <recitalRole> as the recital ID
-      const recitalRole = tokenized[0]
+      // Set the name of <recitalRole> as the recital ID
+      const recitalRole = await this._guild.roles.fetch(tokenized[0].replace(/[<@&>]/g, ''))
       const recitalId = recitalRole.name
 
-      // 2. Classify the recital as a numbered or event recital, based on its ID format
-
+      // Classify the recital as a numbered or event recital, based on its ID format
       // any role name that fails this pattern is assumed to be an event recital.
-      // NOTE: no protection against non-recital roles
-      const pattern = /^\d+[st|nd|rd|th] Recital$/
+      // NOTE: no protection against non-recital roles or misspelled numbered recitals
+      const pattern = /^\d+(st|nd|rd|th) Recital$/
       let field = 'event_recitals'
       if (pattern.test(recitalId)) {
-        // this is a numbered recital
         field = 'numbered_recitals'
       }
 
-      // 3. Add the recital to every participant user's record, added to the set in the appropriate field
-      // addToSet
+      // Add the recital to every participant user's record, added to the set in the appropriate field
       recitalRole.members.forEach(member => {
-        await userRepository.addToSet(member.id, field, recitalId)
+        userRepository.addToSet(member.id, field, recitalId)
       })
 
-      // 4. Produce an output embed
       return {
         embeds: [{
           title: MODULE_NAME,
