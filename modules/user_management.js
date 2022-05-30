@@ -130,11 +130,11 @@ class UserManagement {
         }]
       }
     })
-    
+
     // Add a recital ID (role name) to the record of all participants
     dispatcher.command('recordrecital', this._guild.id, async (authorMember, tokenized) => {
       util.requireRole(authorMember, this._managementRole)
-      
+
       // p!recordrecital <roleName>
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}recordrecital @recitalRole`
       util.requireParameterCount(tokenized, 1, USAGE)
