@@ -17,6 +17,8 @@ const keys = [
   { name: 'maxConcurrentRiddles', type: SettingTypes.INTEGER },
   { name: 'nagTimeoutInSeconds', type: SettingTypes.INTEGER },
   { name: 'ranks', type: SettingTypes.ARRAY },
+  { name: 'recitalUpperBoundId', type: SettingTypes.STRING},
+  { name: 'recitalLowerBoundId', type: SettingTypes.STRING},
   { name: 'rejectedRiddleAction', type: SettingTypes.STRING, values: ['reject', 'ignore'] },
   { name: 'riddleAcceptancePolicy', type: SettingTypes.STRING, values: ['blacklist', 'whitelist'] },
   { name: 'quizSuccessTimeout', type: SettingTypes.INTEGER },

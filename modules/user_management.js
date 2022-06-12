@@ -135,18 +135,27 @@ class UserManagement {
     dispatcher.command('recordrecital', this._guild.id, async (authorMember, tokenized) => {
       util.requireRole(authorMember, this._managementRole)
 
-      // p!recordrecital <roleName>
+      // p!recordrecital @role
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}recordrecital @recitalRole`
       util.requireParameterCount(tokenized, 1, USAGE)
       util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@&') && arg.endsWith('>'), USAGE)
 
-      // Set the name of <recitalRole> as the recital ID
       const recitalRole = await this._guild.roles.fetch(tokenized[0].replace(/[<@&>]/g, ''))
+
+      // Check that input role is a recital role
+      // Recital roles must be below config.recitalUpperBound and above config.recitalLowerBound
+      const upperBound = await this._guild.roles.fetch(this._config.get('recitalUpperBoundId'))
+      const lowerBound = await this._guild.roles.fetch(this._config.get('recitalLowerBoundId'))
+      if ((upperBound !== undefined && recitalRole.comparePositionTo(upperBound) >= 0) || 
+        (lowerBound !== undefined && recitalRole.comparePositionTo(lowerBound) <= 0)) {
+        throw new Error(`${tokenized[0]} is outside the range of valid recital roles.`)
+      }
+
+      // Set the name of recitalRole as the recital ID
       const recitalId = recitalRole.name
 
       // Classify the recital as a numbered or event recital, based on its ID format
       // any role name that fails this pattern is assumed to be an event recital.
-      // NOTE: no protection against non-recital roles or misspelled numbered recitals
       const pattern = /^\d+(st|nd|rd|th) Recital$/
       let field = 'event_recitals'
       if (pattern.test(recitalId)) {
