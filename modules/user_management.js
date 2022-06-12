@@ -146,7 +146,7 @@ class UserManagement {
       // Recital roles must be below config.recitalUpperBound and above config.recitalLowerBound
       const upperBound = await this._guild.roles.fetch(this._config.get('recitalUpperBoundId'))
       const lowerBound = await this._guild.roles.fetch(this._config.get('recitalLowerBoundId'))
-      if ((upperBound !== undefined && recitalRole.comparePositionTo(upperBound) >= 0) || 
+      if ((upperBound !== undefined && recitalRole.comparePositionTo(upperBound) >= 0) ||
         (lowerBound !== undefined && recitalRole.comparePositionTo(lowerBound) <= 0)) {
         throw new Error(`${tokenized[0]} is outside the range of valid recital roles.`)
       }
