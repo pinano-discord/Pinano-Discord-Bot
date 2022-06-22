@@ -18,7 +18,7 @@ class StageManager {
 
     this._recital_manager = this._guild.roles.resolve(this._config.get('recitalManagerRoleId'))
     if (this._recital_manager == null) {
-      throw new Error('enableStageManager does not refer to a valid role.')
+      throw new Error('recitalManagerRoleId does not refer to a valid role.')
     }
 
     if (this._config.get('performerRoleId') == null) {
@@ -77,15 +77,19 @@ class StageManager {
       ':notebook_with_decorative_cover: `PROGRAMME DISPLAY` Programme channel **visible to Performers**, all other channels hidden\n\n' +
       ':apple: `LECTURE` Lecture Hall **open**, chat channel **open**, programme channel **hidden**\n_ _'
     const messages = await this._controlChannel.messages.fetch()
+
+    const buttons = []
+    buttons.push(new MessageButton().setCustomId('lock').setStyle('SECONDARY').setEmoji('🔒').setLabel('LOCKED'))
+    buttons.push(new MessageButton().setCustomId('unlock').setStyle('SECONDARY').setEmoji('🔓').setLabel('UNLOCKED'))
+    buttons.push(new MessageButton().setCustomId('performance').setStyle('SECONDARY').setEmoji('🎵').setLabel('PERFORMANCE'))
+    buttons.push(new MessageButton().setCustomId('edit').setStyle('SECONDARY').setEmoji('📝').setLabel('PROGRAMME EDIT'))
+    buttons.push(new MessageButton().setCustomId('display').setStyle('SECONDARY').setEmoji('📔').setLabel('PROGRAMME DISPLAY'))
+    buttons.push(new MessageButton().setCustomId('lecture').setStyle('SECONDARY').setEmoji('🍎').setLabel('LECTURE'))
+
     const actionRows = []
-    actionRows.push(new MessageActionRow()
-      .addComponents(new MessageButton().setCustomId('lock').setStyle('PRIMARY').setEmoji('🔒').setLabel('LOCKED'))
-      .addComponents(new MessageButton().setCustomId('unlock').setStyle('PRIMARY').setEmoji('🔓').setLabel('UNLOCKED'))
-      .addComponents(new MessageButton().setCustomId('performance').setStyle('PRIMARY').setEmoji('🎵').setLabel('PERFORMANCE')))
-    actionRows.push(new MessageActionRow()
-      .addComponents(new MessageButton().setCustomId('edit').setStyle('PRIMARY').setEmoji('📝').setLabel('PROGRAMME EDIT'))
-      .addComponents(new MessageButton().setCustomId('display').setStyle('PRIMARY').setEmoji('📔').setLabel('PROGRAMME DISPLAY'))
-      .addComponents(new MessageButton().setCustomId('lecture').setStyle('PRIMARY').setEmoji('🍎').setLabel('LECTURE')))
+    actionRows.push(new MessageActionRow().addComponents(buttons[0]).addComponents(buttons[1]).addComponents(buttons[2]))
+    actionRows.push(new MessageActionRow().addComponents(buttons[3]).addComponents(buttons[4]).addComponents(buttons[5]))
+
     let controlPost = messages.find(m => m.author === this._client.user)
     if (controlPost == null) {
       controlPost = await this._controlChannel.send({ content: content, components: actionRows })
@@ -94,32 +98,37 @@ class StageManager {
     }
 
     const interactionCollector = new InteractionCollector(this._client, { message: controlPost })
-    interactionCollector.on('collect', interaction => this._handleInteraction(interaction))
-  }
-
-  _handleInteraction (interaction) {
-    if (!interaction.isButton()) return
-    switch (interaction.customId) {
-      case 'lock':
-        this._setLockedPreset()
-        break
-      case 'unlock':
-        this._setUnlockedPreset()
-        break
-      case 'performance':
-        this._setPerformancePreset()
-        break
-      case 'edit':
-        this._setProgrammeEditPreset()
-        break
-      case 'display':
-        this._setProgrammeDisplayPreset()
-        break
-      case 'lecture':
-        this._setLecturePreset()
-        break
-    }
-    interaction.deferUpdate()
+    interactionCollector.on('collect', interaction => {
+      if (!interaction.isButton()) return
+      buttons.forEach(button => button.setStyle('SECONDARY'))
+      switch (interaction.customId) {
+        case 'lock':
+          this._setLockedPreset()
+          buttons[0].setStyle('PRIMARY')
+          break
+        case 'unlock':
+          this._setUnlockedPreset()
+          buttons[1].setStyle('PRIMARY')
+          break
+        case 'performance':
+          this._setPerformancePreset()
+          buttons[2].setStyle('PRIMARY')
+          break
+        case 'edit':
+          this._setProgrammeEditPreset()
+          buttons[3].setStyle('PRIMARY')
+          break
+        case 'display':
+          this._setProgrammeDisplayPreset()
+          buttons[4].setStyle('PRIMARY')
+          break
+        case 'lecture':
+          this._setLecturePreset()
+          buttons[5].setStyle('PRIMARY')
+          break
+      }
+      interaction.update({ content: content, components: actionRows })
+    })
   }
 
   _setLockedPreset () {
