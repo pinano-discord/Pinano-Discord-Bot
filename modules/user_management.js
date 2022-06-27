@@ -132,11 +132,11 @@ class UserManagement {
     })
 
     // Add a recital ID (role name) to the record of all participants
-    dispatcher.command('recordrecital', this._guild.id, async (authorMember, tokenized) => {
+    dispatcher.command('record', this._guild.id, async (authorMember, tokenized) => {
       util.requireRole(authorMember, this._managementRole)
 
-      // p!recordrecital @role
-      const USAGE = `${this._config.get('commandPrefix') || 'p!'}recordrecital @recitalRole`
+      // p!record @role
+      const USAGE = `${this._config.get('commandPrefix') || 'p!'}record @role`
       util.requireParameterCount(tokenized, 1, USAGE)
       util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@&') && arg.endsWith('>'), USAGE)
 
@@ -154,12 +154,12 @@ class UserManagement {
       // Set the name of recitalRole as the recital ID
       const recitalId = recitalRole.name
 
-      // Classify the recital as a numbered or event recital, based on its ID format
-      // any role name that fails this pattern is assumed to be an event recital.
-      const pattern = /^\d+(st|nd|rd|th) Recital$/
-      let field = 'event_recitals'
+      // Some roles may in fact be better classified as server "Events" if they do not contain the word "Recital"
+      // e.g. "Sonata Marathoner", "2021 Composer Festival"
+      const pattern = /Recital/
+      let field = 'events'
       if (pattern.test(recitalId)) {
-        field = 'numbered_recitals'
+        field = 'recitals'
       }
 
       // Add the recital to every participant user's record, added to the set in the appropriate field
