@@ -141,19 +141,28 @@ class UserManagement {
       util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@&') && arg.endsWith('>'), USAGE)
 
       const recitalRole = await this._guild.roles.fetch(tokenized[0].replace(/[<@&>]/g, ''))
+      if (recitalRole == null) {
+        throw new Error(`${tokenized[0]} is not a valid role.`)
+      }
 
       // Check that input role is a recital role
       // Recital roles must be below config.recitalUpperBound and above config.recitalLowerBound
       const upperId = this._config.get('recitalUpperBoundId')
-      if (upperId === undefined) {
+      if (upperId == null) {
         throw new Error('Config key `recitalUpperBoundId` not set.')
       }
       const lowerId = this._config.get('recitalLowerBoundId')
-      if (lowerId === undefined) {
+      if (lowerId == null) {
         throw new Error('Config key `recitalLowerBoundId` not set.')
       }
       const upperBound = await this._guild.roles.fetch(upperId)
+      if (upperBound == null) {
+        throw new Error('Config key `recitalUpperBoundId` not valid.')
+      }
       const lowerBound = await this._guild.roles.fetch(lowerId)
+      if (lowerBound == null) {
+        throw new Error('Config key `recitalLowerBoundId` not valid.')
+      }
       if (recitalRole.comparePositionTo(upperBound) >= 0 || recitalRole.comparePositionTo(lowerBound) <= 0) {
         throw new Error(`${tokenized[0]} must be below ${upperBound.toString()} and above ${lowerBound.toString()}.`)
       }
