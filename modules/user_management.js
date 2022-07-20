@@ -144,23 +144,23 @@ class UserManagement {
 
       // Check that input role is a recital role
       // Recital roles must be below config.recitalUpperBound and above config.recitalLowerBound
-      const upperBound = await this._guild.roles.fetch(this._config.get('recitalUpperBoundId'))
-      const lowerBound = await this._guild.roles.fetch(this._config.get('recitalLowerBoundId'))
-      if ((upperBound !== undefined && recitalRole.comparePositionTo(upperBound) >= 0) ||
-        (lowerBound !== undefined && recitalRole.comparePositionTo(lowerBound) <= 0)) {
-        throw new Error(`${tokenized[0]} is outside the range of valid recital roles.`)
+      const upperId = this._config.get('recitalUpperBoundId')
+      if (upperId === undefined) {
+        throw new Error('Config key `recitalUpperBoundId` not set.')
+      }
+      const lowerId = this._config.get('recitalLowerBoundId')
+      if (lowerId === undefined) {
+        throw new Error('Config key `recitalLowerBoundId` not set.')
+      }
+      const upperBound = await this._guild.roles.fetch(upperId)
+      const lowerBound = await this._guild.roles.fetch(lowerId)
+      if (recitalRole.comparePositionTo(upperBound) >= 0 || recitalRole.comparePositionTo(lowerBound) <= 0) {
+        throw new Error(`${tokenized[0]} must be below ${upperBound.toString()} and above ${lowerBound.toString()}.`)
       }
 
       // Set the name of recitalRole as the recital ID
       const recitalId = recitalRole.name
-
-      // Some roles may in fact be better classified as server "Events" if they do not contain the word "Recital"
-      // e.g. "Sonata Marathoner", "2021 Composer Festival"
-      const pattern = /Recital/
-      let field = 'events'
-      if (pattern.test(recitalId)) {
-        field = 'recitals'
-      }
+      const field = 'recitals'
 
       // Add the recital to every participant user's record, added to the set in the appropriate field
       recitalRole.members.forEach(member => {
