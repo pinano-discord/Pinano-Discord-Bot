@@ -161,27 +161,46 @@ class Statistics {
 // Text body for Performed Recitals field
 // Given a user record, return a string denoting all performed recitals
 // TODO: possible name restructuring
+// TODO: better sorting for events
 // TODO: solo recitals
 function _collectRecitals (userRecord) {
   const result = []
   const recitals = userRecord.recitals
 
+  if (recitals == null) {
+    return 'Sign up for future recitals to fill up this field!'
+  }
+
   const numbered = _buildString(recitals, /^\d+(st|nd|rd|th) Recital$/)
-  result.push(`:trophy: ${numbered}`)
+  if (numbered.length > 0) {
+    result.push(`:trophy: ${numbered}`)
+  }
 
   const events = _buildString(recitals, /(Halloween|Christmas|End of)/)
-  result.push(`:calendar: ${events}`)
+  if (events.length > 0) {
+    result.push(`:calendar: ${events}`)
+  }
 
   const marathoner = _buildString(recitals, /Marathoner/)
-  result.push(`:beethoven: ${marathoner}`)
+  if (marathoner.length > 0) {
+    result.push(`:beethoven: ${marathoner}`)
+  }
 
   const female = _buildString(recitals, /Female Composer/)
-  result.push(`:female_sign: ${female}`)
+  if (female.length > 0) {
+    result.push(`:female_sign: ${female}`)
+  }
 
   const composer = _buildString(recitals, /Composer Festival/)
-  result.push(`:pencil: ${composer}`)
+  if (composer.length > 0) {
+    result.push(`:pencil: ${composer}`)
+  }
 
-  return result.reduce((acc, curr) => `${acc}\n${curr}`, '')
+  if (result.length > 0) {
+    return result.reduce((acc, curr) => `${acc}\n${curr}`, '')
+  } else {
+    return 'Sign up for future recitals to fill up this field!'
+  }
 }
 
 // Helper function for _collectRecitals. Given an array of recital strings:
@@ -189,7 +208,7 @@ function _collectRecitals (userRecord) {
 // - replace all 'Recital' with a space, then trim, sort, and join with commas
 function _buildString (recitalArr, pattern) {
   const result = recitalArr.filter(r => pattern.test(r))
-    .map(r => r.replace(/( ?)Recital( ?)/, ' ')).trim().sort().join(', ')
+    .map(r => r.replace(/( ?)Recital( ?)/, ' ').trim()).sort().join(', ')
   return result
 }
 
