@@ -98,7 +98,7 @@ class Statistics {
       embed.addField(this._config.get('statsAnniversaryLabel') || 'Pinanoversary', isAnniversary ? `${joinDate} 🎂` : joinDate, true)
       embed.addField('Tokens Earned', roomsSeen.join(''))
       embed.setThumbnail(target.user.displayAvatarURL())
-      
+
       // Performed recitals
       const performedRecitals = _collectRecitals(userRecord)
       embed.addField('Performed Recitals', performedRecitals)
@@ -162,10 +162,10 @@ class Statistics {
 // Given a user record, return a string denoting all performed recitals
 // TODO: possible name restructuring
 // TODO: solo recitals
-function _collectRecitals(userRecord) {
+function _collectRecitals (userRecord) {
   const result = []
   const recitals = userRecord.recitals
-  
+
   const numbered = _buildString(recitals, /^\d+(st|nd|rd|th) Recital$/)
   result.push(`:trophy: ${numbered}`)
 
@@ -187,7 +187,7 @@ function _collectRecitals(userRecord) {
 // Helper function for _collectRecitals. Given an array of recital strings:
 // - filter by a matching pattern
 // - replace all 'Recital' with a space, then trim, sort, and join with commas
-function _buildString(recitalArr, pattern) {
+function _buildString (recitalArr, pattern) {
   const result = recitalArr.filter(r => pattern.test(r))
     .map(r => r.replace(/( ?)Recital( ?)/, ' ')).trim().sort().join(', ')
   return result
