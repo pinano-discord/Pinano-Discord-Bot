@@ -130,6 +130,61 @@ class UserManagement {
         }]
       }
     })
+
+    // Add a recital ID (role name) to the record of all participants
+    dispatcher.command('record', this._guild.id, async (authorMember, tokenized) => {
+      util.requireRole(authorMember, this._managementRole)
+
+      // p!record @role
+      const USAGE = `${this._config.get('commandPrefix') || 'p!'}record @role`
+      util.requireParameterCount(tokenized, 1, USAGE)
+      util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<@&') && arg.endsWith('>'), USAGE)
+
+      const recitalRole = await this._guild.roles.fetch(tokenized[0].replace(/[<@&>]/g, ''))
+      if (recitalRole == null) {
+        throw new Error(`${tokenized[0]} is not a valid role.`)
+      }
+
+      // Check that input role is a recital role
+      // Recital roles must be below config.recitalUpperBound and above config.recitalLowerBound
+      const upperId = this._config.get('recitalUpperBoundId')
+      if (upperId == null) {
+        throw new Error('Config key `recitalUpperBoundId` not set.')
+      }
+      const lowerId = this._config.get('recitalLowerBoundId')
+      if (lowerId == null) {
+        throw new Error('Config key `recitalLowerBoundId` not set.')
+      }
+      const upperBound = await this._guild.roles.fetch(upperId)
+      if (upperBound == null) {
+        throw new Error('Config key `recitalUpperBoundId` not valid.')
+      }
+      const lowerBound = await this._guild.roles.fetch(lowerId)
+      if (lowerBound == null) {
+        throw new Error('Config key `recitalLowerBoundId` not valid.')
+      }
+      if (recitalRole.comparePositionTo(upperBound) >= 0 || recitalRole.comparePositionTo(lowerBound) <= 0) {
+        throw new Error(`${tokenized[0]} must be below ${upperBound.toString()} and above ${lowerBound.toString()}.`)
+      }
+
+      // Set the name of recitalRole as the recital ID
+      const recitalId = recitalRole.name
+      const field = 'recitals'
+
+      // Add the recital to every participant user's record, added to the set in the appropriate field
+      recitalRole.members.forEach(member => {
+        userRepository.addToSet(member.id, field, recitalId)
+      })
+
+      return {
+        embeds: [{
+          title: MODULE_NAME,
+          description: `Recorded ${tokenized[0]}.`,
+          color: this._config.get('embedColor') || 'DEFAULT',
+          timestamp: new Date()
+        }]
+      }
+    })
   }
 }
 
