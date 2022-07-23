@@ -98,6 +98,10 @@ class Statistics {
       embed.addField(this._config.get('statsAnniversaryLabel') || 'Pinanoversary', isAnniversary ? `${joinDate} 🎂` : joinDate, true)
       embed.addField('Tokens Earned', roomsSeen.join(''))
       embed.setThumbnail(target.user.displayAvatarURL())
+      
+      // Performed recitals
+      const performedRecitals = _collectRecitals(userRecord)
+      embed.addField('Performed Recitals', performedRecitals)
 
       if (badges != null) {
         const badgesCollection = badges.badgesForUser(userRecord, target, livePraccDelta)
@@ -152,6 +156,41 @@ class Statistics {
       return { embeds: [embed] }
     })
   }
+}
+
+// Text body for Performed Recitals field
+// Given a user record, return a string denoting all performed recitals
+// TODO: possible name restructuring
+// TODO: solo recitals
+function _collectRecitals(userRecord) {
+  const result = []
+  const recitals = userRecord.recitals
+  
+  const numbered = _buildString(recitals, /^\d+(st|nd|rd|th) Recital$/)
+  result.push(`:trophy: ${numbered}`)
+
+  const events = _buildString(recitals, /(Halloween|Christmas|End of)/)
+  result.push(`:calendar: ${events}`)
+
+  const marathoner = _buildString(recitals, /Marathoner/)
+  result.push(`:beethoven: ${marathoner}`)
+
+  const female = _buildString(recitals, /Female Composer/)
+  result.push(`:female_sign: ${female}`)
+
+  const composer = _buildString(recitals, /Composer Festival/)
+  result.push(`:pencil: ${composer}`)
+
+  return result.reduce((acc, curr) => `${acc}\n${curr}`, '')
+}
+
+// Helper function for _collectRecitals. Given an array of recital strings:
+// - filter by a matching pattern
+// - replace all 'Recital' with a space, then trim, sort, and join with commas
+function _buildString(recitalArr, pattern) {
+  const result = recitalArr.filter(r => pattern.test(r))
+    .map(r => r.replace(/( ?)Recital( ?)/, ' ')).trim().sort().join(', ')
+  return result
 }
 
 function makeModule (moduleManager) {
