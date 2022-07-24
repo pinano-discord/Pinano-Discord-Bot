@@ -172,14 +172,16 @@ class UserManagement {
       const field = 'recitals'
 
       // Add the recital to every participant user's record, added to the set in the appropriate field
+      const userArr = []
       recitalRole.members.forEach(member => {
         userRepository.addToSet(member.id, field, recitalId)
+        userArr.push(member.toString())
       })
 
       return {
         embeds: [{
           title: MODULE_NAME,
-          description: `Recorded ${tokenized[0]}.`,
+          description: `Recorded ${tokenized[0]} for ${userArr.length} users: ${userArr.join(', ')}.`,
           color: this._config.get('embedColor') || 'DEFAULT',
           timestamp: new Date()
         }]
