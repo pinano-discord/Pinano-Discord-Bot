@@ -160,8 +160,6 @@ class Statistics {
 
 // Text body for Performed Recitals field
 // Given a user record, return a string denoting all performed recitals
-// TODO: possible name restructuring
-// TODO: better sorting for events
 // TODO: solo recitals
 function _collectRecitals (userRecord) {
   const result = []
@@ -172,13 +170,14 @@ function _collectRecitals (userRecord) {
   }
 
   const numbered = _buildString(recitals, /^\d+(st|nd|rd|th) Recital$/)
+  numbered.sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]))
   if (numbered.length > 0) {
     result.push(`:trophy: ${numbered}`)
   }
 
-  const events = _buildString(recitals, /(Halloween|Christmas|End of)/)
-  if (events.length > 0) {
-    result.push(`:calendar: ${events}`)
+  const holiday = _buildString(recitals, /(Christmas|Halloween)/)
+  if (holiday.length > 0) {
+    result.push(`:calendar_spiral: ${holiday}`)
   }
 
   const marathoner = _buildString(recitals, /Marathoner/)
@@ -196,6 +195,11 @@ function _collectRecitals (userRecord) {
     result.push(`:pencil: ${composer}`)
   }
 
+  const endofyear = _buildString(recitals, /End of/)
+  if (endofyear.length > 0) {
+    result.push(`:fireworks: ${endofyear}`)
+  }
+
   if (result.length > 0) {
     return result.reduce((acc, curr) => `${acc}\n${curr}`, '')
   } else {
@@ -205,10 +209,17 @@ function _collectRecitals (userRecord) {
 
 // Helper function for _collectRecitals. Given an array of recital strings:
 // - filter by a matching pattern
-// - replace all 'Recital' with a space, then trim, sort, and join with commas
+// - replace all 'Recital' with a space, then trim, and join with commas
+// - name restructuring, e.g. 2020 Christmas -> Christmas 2020
 function _buildString (recitalArr, pattern) {
   const result = recitalArr.filter(r => pattern.test(r))
-    .map(r => r.replace(/( ?)Recital( ?)/, ' ').trim()).sort().join(', ')
+    .map(r => {
+      let trimmed = r.replace(/( ?)Recital( ?)/, ' ').trim()
+      if (/^\d{4} /.test(trimmed)) {
+        trimmed = trimmed.slice(5) + ' ' + trimmed.slice(0, 4)
+      }
+      return trimmed
+    }).sort().join(', ')
   return result
 }
 
