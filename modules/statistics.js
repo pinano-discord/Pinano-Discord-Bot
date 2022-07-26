@@ -169,35 +169,35 @@ function _collectRecitals (userRecord) {
     return 'Sign up for future recitals to fill up this field!'
   }
 
-  const numbered = _buildString(recitals, /^\d+(st|nd|rd|th) Recital$/)
+  const numbered = _buildRecord(recitals, /^\d+(st|nd|rd|th) Recital$/)
   numbered.sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]))
   if (numbered.length > 0) {
-    result.push(`:trophy: ${numbered}`)
+    result.push(`:trophy: ${numbered.join(', ')}`)
   }
 
-  const holiday = _buildString(recitals, /(Christmas|Halloween)/)
+  const holiday = _buildRecord(recitals, /(Christmas|Halloween)/)
   if (holiday.length > 0) {
-    result.push(`:calendar_spiral: ${holiday}`)
+    result.push(`:calendar_spiral: ${holiday.join(', ')}`)
   }
 
-  const marathoner = _buildString(recitals, /Marathoner/)
+  const marathoner = _buildRecord(recitals, /Marathoner/)
   if (marathoner.length > 0) {
-    result.push(`:beethoven: ${marathoner}`)
+    result.push(`:beethoven: ${marathoner.join(', ')}`)
   }
 
-  const female = _buildString(recitals, /Female Composer/)
+  const female = _buildRecord(recitals, /Female Composer/)
   if (female.length > 0) {
-    result.push(`:female_sign: ${female}`)
+    result.push(`:female_sign: ${female.join(', ')}`)
   }
 
-  const composer = _buildString(recitals, /Composer Festival/)
+  const composer = _buildRecord(recitals, /Composer Festival/)
   if (composer.length > 0) {
-    result.push(`:pencil: ${composer}`)
+    result.push(`:pencil: ${composer.join(', ')}`)
   }
 
-  const endofyear = _buildString(recitals, /End of/)
+  const endofyear = _buildRecord(recitals, /End of/)
   if (endofyear.length > 0) {
-    result.push(`:fireworks: ${endofyear}`)
+    result.push(`:fireworks: ${endofyear.join(', ')}`)
   }
 
   if (result.length > 0) {
@@ -211,7 +211,7 @@ function _collectRecitals (userRecord) {
 // - filter by a matching pattern
 // - replace all 'Recital' with a space, then trim, and join with commas
 // - name restructuring, e.g. 2020 Christmas -> Christmas 2020
-function _buildString (recitalArr, pattern) {
+function _buildRecord (recitalArr, pattern) {
   const result = recitalArr.filter(r => pattern.test(r))
     .map(r => {
       let trimmed = r.replace(/( ?)Recital( ?)/, ' ').trim()
@@ -219,7 +219,7 @@ function _buildString (recitalArr, pattern) {
         trimmed = trimmed.slice(5) + ' ' + trimmed.slice(0, 4)
       }
       return trimmed
-    }).sort().join(', ')
+    })
   return result
 }
 
