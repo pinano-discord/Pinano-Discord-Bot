@@ -94,7 +94,7 @@ connect(globalConfig).then(persistence => {
 
       // For each guild, cache members on startup
       guild.members.fetch()
-      
+
       moduleManager.completeInitialization()
     })
   })
