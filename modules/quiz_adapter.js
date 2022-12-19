@@ -41,7 +41,7 @@ class QuizAdapter {
       }
 
       const pinned = await this._channel.messages.fetchPinned()
-      const current = pinned.filter(m => m.author === this._client.user)
+      const current = pinned.filter(m => m.author === this._client.user && !m.content.includes('DAILY CHALLENGE'))
       this._activeRiddles.forEach(riddle => {
         if (!current.has(riddle.message.id) && (Date.now() - riddle.message.createdTimestamp) >= 60 * 1000) {
           // treat channel unpinning as a skip. Note that since we need to manually check the
@@ -55,6 +55,12 @@ class QuizAdapter {
     })
     dispatcher.on('message', this._guild.id, message => {
       if (message.author === this._client.user) {
+        const directive = message.content.match(`<@${this._client.user.id}> addpoint (.*)`)
+        if (directive != null && directive.length > 1) {
+          this._quizModule.addpoint(directive[1], points => {
+            message.edit({ content: message.content.replace(`<@${this._client.user.id}> addpoint ${directive[1]}`, `<@${directive[1]}> now has ${points} point${points > 1 ? 's.' : '.'}`) })
+          })
+        }
         return
       }
 
@@ -83,6 +89,9 @@ class QuizAdapter {
 
         this._quizModule.enqueue(message.id, message.author.id, message.attachments.first().url)
       } else {
+        if (message.content.includes('DAILY CHALLENGE')) {
+          return
+        }
         if (message.mentions.repliedUser === this._client.user) {
           const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
           if (this._isHint(message, repliedMessage)) {

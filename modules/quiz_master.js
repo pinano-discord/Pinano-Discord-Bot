@@ -291,6 +291,11 @@ class QuizMaster {
 
     return { nagTimeoutHandle, skipTimeoutHandle }
   }
+
+  async addpoint (id, callback) {
+    const newRecord = await this._userRepository.incrementField(id, 'quiz_score')
+    callback(newRecord.quiz_score)
+  }
 }
 
 function makeModule (moduleManager) {
