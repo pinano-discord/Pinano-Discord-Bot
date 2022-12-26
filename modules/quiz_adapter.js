@@ -261,7 +261,7 @@ class QuizAdapter {
 
   async continueExistingRiddles () {
     const pinned = await this._channel.messages.fetchPinned()
-    const current = pinned.filter(m => m.author === this._client.user)
+    const current = pinned.filter(m => m.author === this._client.user && !m.content.includes('DAILY CHALLENGE'))
     const quizzers = []
 
     current.forEach(message => {
