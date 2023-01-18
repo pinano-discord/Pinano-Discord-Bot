@@ -53,7 +53,7 @@ class QuizAdapter {
         }
       })
     })
-    dispatcher.on('message', this._guild.id, message => {
+    dispatcher.on('message', this._guild.id, async message => {
       if (message.author === this._client.user) {
         const directive = message.content.match(`<@${this._client.user.id}> addpoint (.*)`)
         if (directive != null && directive.length > 1) {
@@ -93,9 +93,14 @@ class QuizAdapter {
           return
         }
         if (message.mentions.repliedUser === this._client.user) {
-          const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
-          if (this._isHint(message, repliedMessage)) {
-            this._appendToNotes(repliedMessage, message.content)
+          const repliedMessage = await this._channel.messages.fetch(message.reference.messageId)
+          if (repliedMessage != null) {
+            if (repliedMessage.content.includes('DAILY CHALLENGE')) {
+              return
+            }
+            if (this._isHint(message, repliedMessage)) {
+              this._appendToNotes(repliedMessage, message.content)
+            }
           }
         }
 
