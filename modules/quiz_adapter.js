@@ -212,7 +212,7 @@ class QuizAdapter {
 
   nagQuizzer (quizzerId) {
     this._channel.send(`<@${quizzerId}>: your riddle has been active for a while.\n\n` +
-      'The riddle may be skipped if no progress is made.')
+      'Please mark guesses as correct or incorrect, or consider skipping the riddle if no progress is made.')
   }
 
   giveHint (hint) {
@@ -435,7 +435,7 @@ class QuizAdapter {
   }
 
   _skipReaction (riddle, reaction, reactor) {
-    if (reaction.emoji.name === '⏩' && this._isQuizMaster(reactor)) {
+    if (reaction.emoji.name === '⏩' && this._controlsQuestion(riddle, reactor)) {
       this._quizModule.endRiddle(riddle.quizzerId)
     } else {
       reaction.users.remove(reactor)
