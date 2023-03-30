@@ -26,56 +26,60 @@ class Help {
         isPrivileged = authorMember.roles.cache.has(this._managementRole.id)
       }
 
-      const response = new Discord.MessageEmbed()
+      const response = new Discord.EmbedBuilder()
       const prefix = this._config.get('commandPrefix') || 'p!'
       response.setTitle(MODULE_NAME)
-      response.addField(`\`${prefix}help\``, 'Displays this help message')
+      response.addFields({ name: `\`${prefix}help\``, value: 'Displays this help message' })
       if (this._config.get('enableDailyTime')) {
-        response.addField(`\`${prefix}setdailyreset [ HOUR | off ]\``, `Daily time tracking will reset at the specified hour in UTC (current hour is ${(new Date()).getUTCHours()}); \`HOUR\` must be between 0 and 23`)
+        response.addFields({ name: `\`${prefix}setdailyreset [ HOUR | off ]\``, value: `Daily time tracking will reset at the specified hour in UTC (current hour is ${(new Date()).getUTCHours()}); \`HOUR\` must be between 0 and 23` })
       }
       if (this._config.get('enablePStats')) {
-        response.addField(`\`${prefix}stats [ USERNAME#DISCRIMINATOR ]\``, 'Display statistics for @user (default: calling user)')
+        response.addFields({ name: `\`${prefix}stats [ USERNAME#DISCRIMINATOR ]\``, value: 'Display statistics for @user (default: calling user)' })
       }
       if (this._config.get('enableListeningGraph')) {
-        response.addField(`\`${prefix}top [ USERNAME#DISCRIMINATOR ]\``, 'Display top listeners and top listened to for @user (default: calling user)')
+        response.addFields({ name: `\`${prefix}top [ USERNAME#DISCRIMINATOR ]\``, value: 'Display top listeners and top listened to for @user (default: calling user)' })
       }
       if (this._config.get('enablePolicyManager')) {
         if (isPrivileged) {
-          response.addField(`\`${prefix}lock\` [ <#CHANNEL_ID> USERNAME#DISCRIMINATOR ]`, 'Lock the specified room for exclusive use by @user (default: currently occupied room)')
-          response.addField(`\`${prefix}unlock [ <#CHANNEL_ID> ]\``, 'Unlock the specified room for shared use (default: currently occupied room)')
+          response.addFields({ name: `\`${prefix}lock\` [ <#CHANNEL_ID> USERNAME#DISCRIMINATOR ]`, value: 'Lock the specified room for exclusive use by @user (default: currently occupied room)' },
+            { name: `\`${prefix}unlock [ <#CHANNEL_ID> ]\``, value: 'Unlock the specified room for shared use (default: currently occupied room)' })
         } else {
-          response.addField(`\`${prefix}lock\``, 'Lock the currently occupied room for exclusive use')
-          response.addField(`\`${prefix}unlock\``, 'Unlocks the currently occupied room for shared use')
+          response.addFields({ name: `\`${prefix}lock\``, value: 'Lock the currently occupied room for exclusive use' },
+            { name: `\`${prefix}unlock\``, value: 'Unlocks the currently occupied room for shared use' })
         }
       }
       if (this._config.get('enableChannelRaiding')) {
-        response.addField(`\`${prefix}raid USERNAME#DISCRIMINATOR\``, 'Transfer all users from locked room to @user\'s locked room')
+        response.addFields({ name: `\`${prefix}raid USERNAME#DISCRIMINATOR\``, value: 'Transfer all users from locked room to @user\'s locked room' })
       }
       if (this._config.get('enableSubscriptions')) {
-        response.addField(`\`${prefix}subscribe USERNAME#DISCRIMINATOR\``, 'Get a DM when @user starts practicing')
-        response.addField(`\`${prefix}unsubscribe USERNAME#DISCRIMINATOR\``, 'Stop getting a DM when @user starts practicing')
-        response.addField(`\`${prefix}subscribers [ on | off | silent ]\``, 'Enable/disable subscription to self, or disables notifications')
+        response.addFields(
+          { name: `\`${prefix}subscribe USERNAME#DISCRIMINATOR\``, value: 'Get a DM when @user starts practicing' },
+          { name: `\`${prefix}unsubscribe USERNAME#DISCRIMINATOR\``, value: 'Stop getting a DM when @user starts practicing' },
+          { name: `\`${prefix}subscribers [ on | off | silent ]\``, value: 'Enable/disable subscription to self, or disables notifications' }
+        )
       }
       if (this._config.get('enableLiteratureQuiz')) {
-        response.addField(`\`${prefix}queue\``, 'Display the active riddle queue in Literature Quiz')
+        response.addFields({ name: `\`${prefix}queue\``, value: 'Display the active riddle queue in Literature Quiz' })
       }
       if (this._config.get('enableFaq')) {
-        response.addField(`\`${prefix}faq KEYWORD\``, 'Display the FAQ entry for `KEYWORD`')
+        response.addFields({ name: `\`${prefix}faq KEYWORD\``, value: 'Display the FAQ entry for `KEYWORD`' })
       }
       if (this._config.get('enableRoles')) {
-        response.addField(`\`${prefix}ranks\``, 'Change ranks')
+        response.addFields({ name: `\`${prefix}ranks\``, value: 'Change ranks' })
       }
       if (this._config.get('enableUserManagement') && isPrivileged) {
-        response.addField(`\`${prefix}addtime @user TIME_IN_SECONDS\``, 'Add practice time to @user\'s record')
-        response.addField(`\`${prefix}deltime @user TIME_IN_SECONDS\``, 'Remove practice time from @user\'s record')
-        response.addField(`\`${prefix}addpoint @user\``, 'Add one literature quiz point to @user\'s record')
-        response.addField(`\`${prefix}delpoint @user\``, 'Remove one literature quiz point from @user\'s record')
-        response.addField(`\`${prefix}record @role\``, 'Add a recital/event to the record of all participants')
+        response.addFields(
+          { name: `\`${prefix}addtime @user TIME_IN_SECONDS\``, value: 'Add practice time to @user\'s record' },
+          { name: `\`${prefix}deltime @user TIME_IN_SECONDS\``, value: 'Remove practice time from @user\'s record' },
+          { name: `\`${prefix}addpoint @user\``, value: 'Add one literature quiz point to @user\'s record' },
+          { name: `\`${prefix}delpoint @user\``, value: 'Remove one literature quiz point from @user\'s record' },
+          { name: `\`${prefix}record @role\``, value: 'Add a recital/event to the record of all participants' }
+        )
       }
       if (this._config.get('enableRestart') && isPrivileged) {
-        response.addField(`\`${prefix}restart [ forced ]\``, `Restarts <@${client.user.id}> (if forced, live sessions will not be saved)`)
+        response.addFields({ name: `\`${prefix}restart [ forced ]\``, value: `Restarts <@${client.user.id}> (if forced, live sessions will not be saved)` })
       }
-      response.setColor(this._config.get('embedColor') || 'DEFAULT')
+      response.setColor(this._config.get('embedColor') || 'Default')
       response.setTimestamp()
       authorMember.user.send({ embeds: [response] }).catch(() => {
         log(`Failed to DM ${authorMember.id} the help file. This message is safe to ignore.`)

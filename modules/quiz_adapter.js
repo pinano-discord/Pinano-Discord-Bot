@@ -1,4 +1,4 @@
-const { MessageEmbed } = require('discord.js')
+const { EmbedBuilder } = require('discord.js')
 const HTTPS = require('https')
 const util = require('../library/util')
 
@@ -71,7 +71,7 @@ class QuizAdapter {
       if (message.attachments.size !== 0) {
         if (message.mentions.repliedUser === this._client.user) {
           // hint given by quizzer in the form of a continuation.
-          const repliedMessage = this._channel.messages.resolve(message.reference.messageId)
+          const repliedMessage = await message.fetchReference()
           if (this._isHint(message, repliedMessage)) {
             this._appendToNotes(repliedMessage, `[Image attachment](https://discord.com/channels/${this._guild.id}/${this._channel.id}/${message.id})`)
           }
@@ -93,7 +93,7 @@ class QuizAdapter {
           return
         }
         if (message.mentions.repliedUser === this._client.user) {
-          const repliedMessage = await this._channel.messages.fetch(message.reference.messageId)
+          const repliedMessage = await message.fetchReference()
           if (repliedMessage != null) {
             if (repliedMessage.content.includes('DAILY CHALLENGE')) {
               return
@@ -348,9 +348,9 @@ class QuizAdapter {
     if (message.embeds.length === 0) {
       message.edit({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setTitle('Notes')
-            .setColor(this._config.get('embedColor') || 'DEFAULT')
+            .setColor(this._config.get('embedColor') || 'Default')
             .setTimestamp(message.createdTimestamp)
             .setDescription(content)
         ]
@@ -359,9 +359,9 @@ class QuizAdapter {
       const embed = message.embeds[0]
       message.edit({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setTitle('Notes')
-            .setColor(this._config.get('embedColor') || 'DEFAULT')
+            .setColor(this._config.get('embedColor') || 'Default')
             .setTimestamp(message.createdTimestamp)
             .setDescription(`${embed.description}\n${content}`)
         ]
@@ -424,14 +424,18 @@ class QuizAdapter {
           riddle.guessCollectors.splice(riddle.guessCollectors.indexOf(collector), 1)
           this._appendToNotes(riddle.message, `${guess} *marked as incorrect*`)
         }
-      } else {
+      } else if (reaction.emoji.name !== '⏳') {
         reaction.users.remove(reactor)
       }
     })
 
     riddle.guessCollectors.push(collector)
-    message.react('✅')
-    message.react('❎')
+    message.react('⏳')
+    setTimeout(async () => {
+      await message.reactions.removeAll()
+      message.react('✅')
+      message.react('❎')
+    }, 30000)
   }
 
   _skipReaction (riddle, reaction, reactor) {

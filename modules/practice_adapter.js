@@ -1,4 +1,4 @@
-const { InteractionCollector, MessageActionRow, MessageButton, MessageEmbed } = require('discord.js')
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, InteractionCollector, PermissionFlagsBits } = require('discord.js')
 const EventEmitter = require('events')
 const log = require('../library/util').log
 
@@ -63,7 +63,7 @@ class PracticeAdapter extends EventEmitter {
       this.emit('deletePracticeRoom', channel.id)
     })
     dispatcher.on('channelUpdate', this._guild.id, (oldChannel, newChannel) => {
-      if (newChannel.parent !== this._category || newChannel.type !== 'GUILD_VOICE') {
+      if (newChannel.parent !== this._category || newChannel.type !== ChannelType.GuildVoice) {
         return
       }
 
@@ -151,7 +151,7 @@ class PracticeAdapter extends EventEmitter {
   getCurrentState () {
     const currentTimestamp = Math.floor(Date.now() / 1000)
     const result = {}
-    this._category.children.filter(c => c.type === 'GUILD_VOICE').forEach(channel => {
+    this._category.children.cache.filter(c => c.type === ChannelType.GuildVoice).forEach(channel => {
       const tokenMatch = channel.name.match(/Room (.*?)$/)
       result[channel.id] = {
         live: channel.members.filter(m => !this.effectiveMute(m.voice, channel)).map(m => {
@@ -160,7 +160,7 @@ class PracticeAdapter extends EventEmitter {
             since: currentTimestamp
           }
         }),
-        listening: channel.members.filter(m => this.effectiveMute(m.voice, channel) && !m.voice.deaf).map(m => {
+        listening: channel.members.cache.filter(m => this.effectiveMute(m.voice, channel) && !m.voice.deaf).map(m => {
           return {
             id: m.id,
             since: currentTimestamp
@@ -174,7 +174,7 @@ class PracticeAdapter extends EventEmitter {
   }
 
   effectiveMute (voiceState, channel) {
-    return voiceState.mute || !channel.permissionsFor(voiceState.member).has('SPEAK')
+    return voiceState.mute || !channel.permissionsFor(voiceState.member).has(PermissionFlagsBits.Speak)
   }
 
   _translateLeaderboard (page) {
@@ -238,22 +238,22 @@ class PracticeAdapter extends EventEmitter {
       }
     })
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle('Information')
-      .setColor(this._config.get('embedColor') || 'DEFAULT')
+      .setColor(this._config.get('embedColor') || 'Default')
       .setTimestamp(Date.now())
     leaderboards.forEach((leaderboard, index) => {
-      embed.addField(leaderboard.title, this._translateLeaderboard(leaderboard.getPageData()), true)
+      embed.addFields({ name: leaderboard.title, value: this._translateLeaderboard(leaderboard.getPageData()), inline: true })
       // Force two columns per row and space between rows.
       if (index < leaderboards.length - 1) {
-        embed.addField('\u200B', '\u200B', index % 2 === 0)
+        embed.addFields({ name: '\u200B', value: '\u200B', inline: index % 2 === 0 })
       }
-      actionRows.push(new MessageActionRow()
-        .addComponents(new MessageButton().setCustomId(`${index}r`).setStyle('PRIMARY').setEmoji('⏪'))
-        .addComponents(new MessageButton().setCustomId(`${index}p`).setStyle('PRIMARY').setEmoji('◀'))
-        .addComponents(new MessageButton().setCustomId(`${index}l`).setStyle('SECONDARY').setLabel(leaderboard.title))
-        .addComponents(new MessageButton().setCustomId(`${index}n`).setStyle('PRIMARY').setEmoji('▶'))
-        .addComponents(new MessageButton().setCustomId(`${index}f`).setStyle('PRIMARY').setEmoji('⏩')))
+      actionRows.push(new ActionRowBuilder()
+        .addComponents(new ButtonBuilder().setCustomId(`${index}r`).setStyle(ButtonStyle.Primary).setEmoji('⏪'))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}p`).setStyle(ButtonStyle.Primary).setEmoji('◀'))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}l`).setStyle(ButtonStyle.Secondary).setLabel(leaderboard.title))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}n`).setStyle(ButtonStyle.Primary).setEmoji('▶'))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}f`).setStyle(ButtonStyle.Primary).setEmoji('⏩')))
     })
 
     const messages = await this._informationChannel.messages.fetch()
@@ -334,23 +334,24 @@ class PracticeAdapter extends EventEmitter {
   }
 
   allRoomsOccupied (roomType) {
-    return this._category.children.filter(chan => chan.type === 'GUILD_VOICE' && chan.name.includes(roomType)).every(chan => chan.members.size > 0)
+    return this._category.children.cache.filter(chan => chan.type === ChannelType.GuildVoice && chan.name.includes(roomType)).every(chan => chan.members.size > 0)
   }
 
   async createChannel (name, permissions, atFront) {
-    const channel = await this._guild.channels.create(name, {
-      type: 'GUILD_VOICE',
+    const channel = await this._guild.channels.create({
+      name: name,
+      type: ChannelType.GuildVoice,
       parent: this._category,
       bitrate: (this._config.get('bitrate') || 96) * 1000,
-      position: atFront ? 1 : this._category.children.size,
+      position: atFront ? 1 : this._category.children.cache.size,
       permissionOverwrites: permissions || []
     })
     return channel.id
   }
 
   maybeRemoveEmptyRoom (roomType) {
-    const practiceRooms = this._category.children
-      .filter(chan => chan.type === 'GUILD_VOICE' && chan.name.includes(roomType))
+    const practiceRooms = this._category.children.cache
+      .filter(chan => chan.type === ChannelType.GuildVoice && chan.name.includes(roomType))
       .sort((a, b) => a.position - b.position)
     if (practiceRooms.size > 0) {
       const basePosition = practiceRooms.first().position
@@ -365,8 +366,8 @@ class PracticeAdapter extends EventEmitter {
   }
 
   lockPracticeRoom (channel, member) {
-    channel.permissionOverwrites.create(member.id, { STREAM: true, SPEAK: true })
-    channel.permissionOverwrites.edit(this._guild.roles.everyone, { STREAM: false, SPEAK: false })
+    channel.permissionOverwrites.create(member.id, { Stream: true, Speak: true })
+    channel.permissionOverwrites.edit(this._guild.roles.everyone, { Stream: false, Speak: false })
     channel.members
       .filter(m => m !== member)
       .forEach(m => m.voice.setMute(true)

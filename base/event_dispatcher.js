@@ -1,4 +1,4 @@
-const { InteractionCollector, MessageActionRow, MessageButton } = require('discord.js')
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionCollector, PermissionFlagsBits } = require('discord.js')
 const { log } = require('../library/util')
 
 class EventDispatcher {
@@ -100,9 +100,9 @@ class EventDispatcher {
   }
 
   async reactableMessage (request, response, timeout, reacts) {
-    const row = new MessageActionRow()
+    const row = new ActionRowBuilder()
     Object.keys(reacts).forEach(react => {
-      row.addComponents(new MessageButton().setCustomId(react).setStyle('PRIMARY').setEmoji(react))
+      row.addComponents(new ButtonBuilder().setCustomId(react).setStyle(ButtonStyle.Primary).setEmoji(react))
     })
     if (response.components == null) {
       response.components = [row]
@@ -134,7 +134,7 @@ class EventDispatcher {
     const collector = new InteractionCollector(this._client, { message: message })
     collector.on('collect', async interaction => {
       if (!interaction.isButton()) return
-      if (interaction.member.id !== request.author.id && !interaction.member.permissions.has('MANAGE_MESSAGES')) {
+      if (interaction.member.id !== request.author.id && !interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
         interaction.deferUpdate()
         return
       }
@@ -150,7 +150,7 @@ class EventDispatcher {
             timeoutCleared = true
             // HACK HACK HACK HACK HACK find a better way to replace the lock icon
             // This depends on the lock icon being the first button!
-            row.spliceComponents(0, 1, new MessageButton().setCustomId('🔒').setDisabled(true).setStyle('PRIMARY').setEmoji('🔒'))
+            row.spliceComponents(0, 1, new ButtonBuilder().setCustomId('🔒').setDisabled(true).setStyle(ButtonStyle.Primary).setEmoji('🔒'))
             interaction.update({ components: [row] })
           }
         })
