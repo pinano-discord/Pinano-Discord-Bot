@@ -132,11 +132,11 @@ class StageManager {
   }
 
   _setLockedPreset () {
-    this._textChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false, SEND_MESSAGES: false })
-    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false })
-    this._programChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false })
-    this._programChannel.permissionOverwrites.edit(this._recital_manager, { VIEW_CHANNEL: null })
-    this._programChannel.permissionOverwrites.edit(this._performer, { VIEW_CHANNEL: null })
+    this._textChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false, SendMessages: false })
+    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false })
+    this._programChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false })
+    this._programChannel.permissionOverwrites.edit(this._recital_manager, { ViewChannel: null })
+    this._programChannel.permissionOverwrites.edit(this._performer, { ViewChannel: null })
 
     this._setPerformanceChannelNames()
   }
@@ -144,51 +144,51 @@ class StageManager {
   _setUnlockedPreset () {
     this._setPerformanceChannelNames()
 
-    this._textChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true, SEND_MESSAGES: false })
-    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true })
-    this._programChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true })
-    this._programChannel.permissionOverwrites.edit(this._recital_manager, { VIEW_CHANNEL: null })
-    this._programChannel.permissionOverwrites.edit(this._performer, { VIEW_CHANNEL: null })
+    this._textChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true, SendMessages: false })
+    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true })
+    this._programChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true })
+    this._programChannel.permissionOverwrites.edit(this._recital_manager, { ViewChannel: null })
+    this._programChannel.permissionOverwrites.edit(this._performer, { ViewChannel: null })
   }
 
   _setPerformancePreset () {
     this._setPerformanceChannelNames()
 
-    this._textChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true, SEND_MESSAGES: true })
-    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true })
-    this._programChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true })
-    this._programChannel.permissionOverwrites.edit(this._recital_manager, { VIEW_CHANNEL: null })
-    this._programChannel.permissionOverwrites.edit(this._performer, { VIEW_CHANNEL: null })
+    this._textChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true, SendMessages: true })
+    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true })
+    this._programChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true })
+    this._programChannel.permissionOverwrites.edit(this._recital_manager, { ViewChannel: null })
+    this._programChannel.permissionOverwrites.edit(this._performer, { ViewChannel: null })
   }
 
   _setProgrammeEditPreset () {
     this._setPerformanceChannelNames()
 
-    this._textChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false, SEND_MESSAGES: false })
-    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false })
-    this._programChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false })
-    this._programChannel.permissionOverwrites.edit(this._recital_manager, { VIEW_CHANNEL: true })
-    this._programChannel.permissionOverwrites.edit(this._performer, { VIEW_CHANNEL: null })
+    this._textChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false, SendMessages: false })
+    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false })
+    this._programChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false })
+    this._programChannel.permissionOverwrites.edit(this._recital_manager, { ViewChannel: true })
+    this._programChannel.permissionOverwrites.edit(this._performer, { ViewChannel: null })
   }
 
   _setProgrammeDisplayPreset () {
     this._setPerformanceChannelNames()
 
-    this._textChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false, SEND_MESSAGES: false })
-    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false })
-    this._programChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false })
-    this._programChannel.permissionOverwrites.edit(this._recital_manager, { VIEW_CHANNEL: true })
-    this._programChannel.permissionOverwrites.edit(this._performer, { VIEW_CHANNEL: true })
+    this._textChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false, SendMessages: false })
+    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false })
+    this._programChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false })
+    this._programChannel.permissionOverwrites.edit(this._recital_manager, { ViewChannel: true })
+    this._programChannel.permissionOverwrites.edit(this._performer, { ViewChannel: true })
   }
 
   _setLecturePreset () {
     this._setLectureChannelNames()
 
-    this._textChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true, SEND_MESSAGES: true })
-    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: true })
-    this._programChannel.permissionOverwrites.edit(this._guild.id, { VIEW_CHANNEL: false })
-    this._programChannel.permissionOverwrites.edit(this._recital_manager, { VIEW_CHANNEL: null })
-    this._programChannel.permissionOverwrites.edit(this._performer, { VIEW_CHANNEL: null })
+    this._textChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true, SendMessages: true })
+    this._voiceChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: true })
+    this._programChannel.permissionOverwrites.edit(this._guild.id, { ViewChannel: false })
+    this._programChannel.permissionOverwrites.edit(this._recital_manager, { ViewChannel: null })
+    this._programChannel.permissionOverwrites.edit(this._performer, { ViewChannel: null })
   }
 
   _setPerformanceChannelNames () {

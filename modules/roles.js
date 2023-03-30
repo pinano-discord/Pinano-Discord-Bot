@@ -58,7 +58,7 @@ class RoleManager {
       let description = 'Please select a rank:\n'
       ranks.forEach(rank => { description += `\n**<@&${rank.id}>**` })
       const embed = new EmbedBuilder()
-        .setColor(this._config.get('embedColor') || 'DEFAULT')
+        .setColor(this._config.get('embedColor') || 'Default')
         .setTitle(MODULE_NAME)
         .setDescription(description)
       const menu = new MessageSelectMenu()
@@ -96,7 +96,7 @@ class RoleManager {
           })
           if (selection === 'rankless') {
             const embed = new EmbedBuilder()
-              .setColor(this._config.get('embedColor') || 'DEFAULT')
+              .setColor(this._config.get('embedColor') || 'Default')
               .setTitle(MODULE_NAME)
               .setDescription('Rankless you came into this server, and rankless you shall be once more...')
             interaction.update({
@@ -106,7 +106,7 @@ class RoleManager {
           } else {
             interaction.member.roles.add(selection)
             const embed = new EmbedBuilder()
-              .setColor(this._config.get('embedColor') || 'DEFAULT')
+              .setColor(this._config.get('embedColor') || 'Default')
               .setTitle(MODULE_NAME)
               .setDescription(`<@${interaction.member.id}> is now a member of <@&${selection}>.`)
             interaction.update({

@@ -37,7 +37,7 @@ class Statistics {
       const now = new Date()
       const embed = new Discord.EmbedBuilder()
         .setTitle(`${target.user.username}#${target.user.discriminator}`)
-        .setColor(this._config.get('embedColor') || 'DEFAULT')
+        .setColor(this._config.get('embedColor') || 'Default')
         .setTimestamp(now)
 
       const userRecord = await userRepository.get(target.id) || {}
