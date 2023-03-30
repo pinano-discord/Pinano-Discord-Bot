@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, InteractionCollector, PermissionsFlagsBits } = require('discord.js')
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, InteractionCollector, PermissionFlagsBits } = require('discord.js')
 const EventEmitter = require('events')
 const log = require('../library/util').log
 
@@ -174,7 +174,7 @@ class PracticeAdapter extends EventEmitter {
   }
 
   effectiveMute (voiceState, channel) {
-    return voiceState.mute || !channel.permissionsFor(voiceState.member).has(PermissionsFlagsBits.Speak)
+    return voiceState.mute || !channel.permissionsFor(voiceState.member).has(PermissionFlagsBits.Speak)
   }
 
   _translateLeaderboard (page) {
