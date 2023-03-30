@@ -1,4 +1,4 @@
-const { MessageActionRow, MessageEmbed, MessageSelectMenu } = require('discord.js')
+const { ActionRowBuilder, EmbedBuilder, MessageSelectMenu } = require('discord.js')
 
 const MODULE_NAME = 'Roles'
 
@@ -57,7 +57,7 @@ class RoleManager {
 
       let description = 'Please select a rank:\n'
       ranks.forEach(rank => { description += `\n**<@&${rank.id}>**` })
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(this._config.get('embedColor') || 'DEFAULT')
         .setTitle(MODULE_NAME)
         .setDescription(description)
@@ -76,7 +76,7 @@ class RoleManager {
           value: rank.id
         }])
       })
-      const row = new MessageActionRow().addComponents(menu)
+      const row = new ActionRowBuilder().addComponents(menu)
       return {
         embeds: [embed],
         ephemeral: true,
@@ -95,7 +95,7 @@ class RoleManager {
             interaction.member.roles.remove(role)
           })
           if (selection === 'rankless') {
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
               .setColor(this._config.get('embedColor') || 'DEFAULT')
               .setTitle(MODULE_NAME)
               .setDescription('Rankless you came into this server, and rankless you shall be once more...')
@@ -105,7 +105,7 @@ class RoleManager {
             })
           } else {
             interaction.member.roles.add(selection)
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
               .setColor(this._config.get('embedColor') || 'DEFAULT')
               .setTitle(MODULE_NAME)
               .setDescription(`<@${interaction.member.id}> is now a member of <@&${selection}>.`)
