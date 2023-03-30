@@ -46,11 +46,12 @@ connect(globalConfig).then(persistence => {
   const client = new Discord.Client({
     fetchAllMembers: true,
     intents: [
-      Discord.Intents.FLAGS.GUILDS,
-      Discord.Intents.FLAGS.GUILD_MEMBERS,
-      Discord.Intents.FLAGS.GUILD_MESSAGES,
-      Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-      Discord.Intents.FLAGS.GUILD_VOICE_STATES
+      Discord.IntentsBitField.Flags.Guilds,
+      Discord.IntentsBitField.Flags.GuildMembers,
+      Discord.IntentsBitField.Flags.GuildMessages,
+      Discord.IntentsBitField.Flags.GuildMessageReactions,
+      Discord.IntentsBitField.Flags.GuildVoiceStates,
+      Discord.IntentsBitField.Flags.MessageContent
     ]
   })
   const dispatcher = new EventDispatcher(client, moduleManagers)

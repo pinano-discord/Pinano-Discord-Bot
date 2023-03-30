@@ -1,4 +1,4 @@
-const { InteractionCollector, MessageActionRow, MessageButton, MessageEmbed } = require('discord.js')
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, InteractionCollector } = require('discord.js')
 const EventEmitter = require('events')
 const log = require('../library/util').log
 
@@ -238,22 +238,22 @@ class PracticeAdapter extends EventEmitter {
       }
     })
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle('Information')
       .setColor(this._config.get('embedColor') || 'DEFAULT')
       .setTimestamp(Date.now())
     leaderboards.forEach((leaderboard, index) => {
-      embed.addField(leaderboard.title, this._translateLeaderboard(leaderboard.getPageData()), true)
+      embed.addFields({ name: leaderboard.title, value: this._translateLeaderboard(leaderboard.getPageData()), inline: true })
       // Force two columns per row and space between rows.
       if (index < leaderboards.length - 1) {
-        embed.addField('\u200B', '\u200B', index % 2 === 0)
+        embed.addFields({ name: '\u200B', value: '\u200B', inline: index % 2 === 0 })
       }
-      actionRows.push(new MessageActionRow()
-        .addComponents(new MessageButton().setCustomId(`${index}r`).setStyle('PRIMARY').setEmoji('⏪'))
-        .addComponents(new MessageButton().setCustomId(`${index}p`).setStyle('PRIMARY').setEmoji('◀'))
-        .addComponents(new MessageButton().setCustomId(`${index}l`).setStyle('SECONDARY').setLabel(leaderboard.title))
-        .addComponents(new MessageButton().setCustomId(`${index}n`).setStyle('PRIMARY').setEmoji('▶'))
-        .addComponents(new MessageButton().setCustomId(`${index}f`).setStyle('PRIMARY').setEmoji('⏩')))
+      actionRows.push(new ActionRowBuilder()
+        .addComponents(new ButtonBuilder().setCustomId(`${index}r`).setStyle(ButtonStyle.Primary).setEmoji('⏪'))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}p`).setStyle(ButtonStyle.Primary).setEmoji('◀'))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}l`).setStyle(ButtonStyle.Secondary).setLabel(leaderboard.title))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}n`).setStyle(ButtonStyle.Primary).setEmoji('▶'))
+        .addComponents(new ButtonBuilder().setCustomId(`${index}f`).setStyle(ButtonStyle.Primary).setEmoji('⏩')))
     })
 
     const messages = await this._informationChannel.messages.fetch()

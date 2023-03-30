@@ -1,4 +1,4 @@
-const { InteractionCollector, MessageActionRow, MessageButton } = require('discord.js')
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionCollector } = require('discord.js')
 
 const MODULE_NAME = 'Stage Manager'
 
@@ -79,16 +79,16 @@ class StageManager {
     const messages = await this._controlChannel.messages.fetch()
 
     const buttons = []
-    buttons.push(new MessageButton().setCustomId('lock').setStyle('SECONDARY').setEmoji('🔒').setLabel('LOCKED'))
-    buttons.push(new MessageButton().setCustomId('unlock').setStyle('SECONDARY').setEmoji('🔓').setLabel('UNLOCKED'))
-    buttons.push(new MessageButton().setCustomId('performance').setStyle('SECONDARY').setEmoji('🎵').setLabel('PERFORMANCE'))
-    buttons.push(new MessageButton().setCustomId('edit').setStyle('SECONDARY').setEmoji('📝').setLabel('PROGRAMME EDIT'))
-    buttons.push(new MessageButton().setCustomId('display').setStyle('SECONDARY').setEmoji('📔').setLabel('PROGRAMME DISPLAY'))
-    buttons.push(new MessageButton().setCustomId('lecture').setStyle('SECONDARY').setEmoji('🍎').setLabel('LECTURE'))
+    buttons.push(new ButtonBuilder().setCustomId('lock').setStyle(ButtonStyle.Secondary).setEmoji('🔒').setLabel('LOCKED'))
+    buttons.push(new ButtonBuilder().setCustomId('unlock').setStyle(ButtonStyle.Secondary).setEmoji('🔓').setLabel('UNLOCKED'))
+    buttons.push(new ButtonBuilder().setCustomId('performance').setStyle(ButtonStyle.Secondary).setEmoji('🎵').setLabel('PERFORMANCE'))
+    buttons.push(new ButtonBuilder().setCustomId('edit').setStyle(ButtonStyle.Secondary).setEmoji('📝').setLabel('PROGRAMME EDIT'))
+    buttons.push(new ButtonBuilder().setCustomId('display').setStyle(ButtonStyle.Secondary).setEmoji('📔').setLabel('PROGRAMME DISPLAY'))
+    buttons.push(new ButtonBuilder().setCustomId('lecture').setStyle(ButtonStyle.Secondary).setEmoji('🍎').setLabel('LECTURE'))
 
     const actionRows = []
-    actionRows.push(new MessageActionRow().addComponents(buttons[0]).addComponents(buttons[1]).addComponents(buttons[2]))
-    actionRows.push(new MessageActionRow().addComponents(buttons[3]).addComponents(buttons[4]).addComponents(buttons[5]))
+    actionRows.push(new ActionRowBuilder().addComponents(buttons[0]).addComponents(buttons[1]).addComponents(buttons[2]))
+    actionRows.push(new ActionRowBuilder().addComponents(buttons[3]).addComponents(buttons[4]).addComponents(buttons[5]))
 
     let controlPost = messages.find(m => m.author === this._client.user)
     if (controlPost == null) {
@@ -100,31 +100,31 @@ class StageManager {
     const interactionCollector = new InteractionCollector(this._client, { message: controlPost })
     interactionCollector.on('collect', interaction => {
       if (!interaction.isButton()) return
-      buttons.forEach(button => button.setStyle('SECONDARY'))
+      buttons.forEach(button => button.setStyle(ButtonStyle.Secondary))
       switch (interaction.customId) {
         case 'lock':
           this._setLockedPreset()
-          buttons[0].setStyle('PRIMARY')
+          buttons[0].setStyle(ButtonStyle.Primary)
           break
         case 'unlock':
           this._setUnlockedPreset()
-          buttons[1].setStyle('PRIMARY')
+          buttons[1].setStyle(ButtonStyle.Primary)
           break
         case 'performance':
           this._setPerformancePreset()
-          buttons[2].setStyle('PRIMARY')
+          buttons[2].setStyle(ButtonStyle.Primary)
           break
         case 'edit':
           this._setProgrammeEditPreset()
-          buttons[3].setStyle('PRIMARY')
+          buttons[3].setStyle(ButtonStyle.Primary)
           break
         case 'display':
           this._setProgrammeDisplayPreset()
-          buttons[4].setStyle('PRIMARY')
+          buttons[4].setStyle(ButtonStyle.Primary)
           break
         case 'lecture':
           this._setLecturePreset()
-          buttons[5].setStyle('PRIMARY')
+          buttons[5].setStyle(ButtonStyle.Primary)
           break
       }
       interaction.update({ content: content, components: actionRows })
