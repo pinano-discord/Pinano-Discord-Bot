@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionCollector } = require('discord.js')
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionCollector, PermissionFlagsBits } = require('discord.js')
 const { log } = require('../library/util')
 
 class EventDispatcher {
@@ -134,7 +134,7 @@ class EventDispatcher {
     const collector = new InteractionCollector(this._client, { message: message })
     collector.on('collect', async interaction => {
       if (!interaction.isButton()) return
-      if (interaction.member.id !== request.author.id && !interaction.member.permissions.has('MANAGE_MESSAGES')) {
+      if (interaction.member.id !== request.author.id && !interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
         interaction.deferUpdate()
         return
       }

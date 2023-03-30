@@ -350,7 +350,7 @@ class QuizAdapter {
         embeds: [
           new EmbedBuilder()
             .setTitle('Notes')
-            .setColor(this._config.get('embedColor') || 'DEFAULT')
+            .setColor(this._config.get('embedColor') || 'Default')
             .setTimestamp(message.createdTimestamp)
             .setDescription(content)
         ]
@@ -361,7 +361,7 @@ class QuizAdapter {
         embeds: [
           new EmbedBuilder()
             .setTitle('Notes')
-            .setColor(this._config.get('embedColor') || 'DEFAULT')
+            .setColor(this._config.get('embedColor') || 'Default')
             .setTimestamp(message.createdTimestamp)
             .setDescription(`${embed.description}\n${content}`)
         ]
