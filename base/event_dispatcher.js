@@ -100,15 +100,19 @@ class EventDispatcher {
   }
 
   async reactableMessage (request, response, timeout, reacts) {
-    const row = new ActionRowBuilder()
-    Object.keys(reacts).forEach(react => {
-      row.addComponents(new ButtonBuilder().setCustomId(react).setStyle(ButtonStyle.Primary).setEmoji(react))
-    })
-    if (response.components == null) {
-      response.components = [row]
-    } else {
-      response.components.push(row)
+    const originalComponents = response.components
+    function createComponents () {
+      const row = new ActionRowBuilder()
+      Object.keys(reacts).forEach(react => {
+        row.addComponents(new ButtonBuilder().setCustomId(react).setStyle(ButtonStyle.Primary).setEmoji(react).setDisabled(react === '🔒'))
+      })
+      if (originalComponents == null) {
+        return [row]
+      } else {
+        return originalComponents.concat([row])
+      }
     }
+    response.components = createComponents()
     response.ephemeral = true
     const message = await request.channel.send(response)
 
@@ -148,10 +152,9 @@ class EventDispatcher {
           lock: () => {
             clearTimeout(timeoutHandle)
             timeoutCleared = true
-            // HACK HACK HACK HACK HACK find a better way to replace the lock icon
-            // This depends on the lock icon being the first button!
-            row.spliceComponents(0, 1, new ButtonBuilder().setCustomId('🔒').setDisabled(true).setStyle(ButtonStyle.Primary).setEmoji('🔒'))
-            interaction.update({ components: [row] })
+            reacts = Object.assign({}, { '🔒': reacts['🔓'] }, reacts)
+            delete reacts['🔓']
+            interaction.update({ components: createComponents() })
           }
         })
       }
