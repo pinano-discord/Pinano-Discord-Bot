@@ -160,7 +160,7 @@ class PracticeAdapter extends EventEmitter {
             since: currentTimestamp
           }
         }),
-        listening: channel.members.cache.filter(m => this.effectiveMute(m.voice, channel) && !m.voice.deaf).map(m => {
+        listening: channel.members.filter(m => this.effectiveMute(m.voice, channel) && !m.voice.deaf).map(m => {
           return {
             id: m.id,
             since: currentTimestamp
