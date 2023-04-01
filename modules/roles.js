@@ -1,4 +1,4 @@
-const { ActionRowBuilder, EmbedBuilder, MessageSelectMenu } = require('discord.js')
+const { ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js')
 
 const MODULE_NAME = 'Roles'
 
@@ -61,7 +61,7 @@ class RoleManager {
         .setColor(this._config.get('embedColor') || 'Default')
         .setTitle(MODULE_NAME)
         .setDescription(description)
-      const menu = new MessageSelectMenu()
+      const menu = new StringSelectMenuBuilder()
         .setCustomId('roleSelect')
         .setPlaceholder('Select a role')
         .addOptions([{
@@ -82,7 +82,7 @@ class RoleManager {
         ephemeral: true,
         components: [row],
         interactionHandler: async interaction => {
-          if (!interaction.isSelectMenu()) return
+          if (!interaction.isStringSelectMenu()) return
           if (interaction.customId !== 'roleSelect') return
           if (interaction.member !== authorMember) {
             interaction.deferUpdate()
