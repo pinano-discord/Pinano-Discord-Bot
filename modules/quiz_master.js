@@ -6,10 +6,10 @@ const MODULE_NAME = 'Literature Quiz'
 
 class QuizMaster {
   constructor (moduleManager) {
-    const guildId = moduleManager.getGuild().id
+    this._guildId = moduleManager.getGuild().id
     this._activeQueue = []
-    this._userRepository = moduleManager.getPersistence().getUserRepository(guildId)
-    this._quizRepository = moduleManager.getPersistence().getQuizRepository(guildId)
+    this._userRepository = moduleManager.getPersistence().getUserRepository(this._guildId)
+    this._quizRepository = moduleManager.getPersistence().getQuizRepository(this._guildId)
     this._config = moduleManager.getConfig()
     this._moduleManager = moduleManager
     this._priority = 0
@@ -97,6 +97,12 @@ class QuizMaster {
     }
 
     const overflow = this._activeQueue.some(r => r.quizzerId === quizzerId)
+    const extension = url.substring(url.lastIndexOf('.'))
+    if (!fs.existsSync('./quiz_queue/')) {
+      fs.mkdirSync('./quiz_queue')
+    }
+    const filename = `./quiz_queue/${this._guildId}_${riddleId}${extension}`
+    await this._adapter.getBytes(url, filename)
     const riddle = {
       id: riddleId,
       quizzerId: quizzerId,
@@ -104,8 +110,8 @@ class QuizMaster {
       priority: overflow ? 0 : ++this._priority,
       ignore: preventedByPolicy,
       overflow: overflow,
-      content: await this._adapter.getBytes(url),
-      extension: url.substring(url.lastIndexOf('.'))
+      content: filename,
+      extension: extension
     }
 
     // this must happen after we're finished downloading the message.
@@ -161,6 +167,11 @@ class QuizMaster {
     if (riddle.quizzerId !== this._clientId) {
       // house riddles aren't stored in the db.
       await this._quizRepository.removeRiddle(riddle.id)
+      try {
+        fs.unlinkSync(riddle.content)
+      } catch (e) {
+        util.log(`Failed to delete file ${riddle.content}`)
+      }
     }
     this._adapter.endRiddle(quizzerId)
 
@@ -243,6 +254,11 @@ class QuizMaster {
     await this._quizRepository.removeRiddle(id)
     if (index !== -1) {
       const riddle = this._activeQueue.splice(index, 1)
+      try {
+        fs.unlinkSync(riddle.content)
+      } catch (e) {
+        util.log(`Failed to delete file ${riddle.content}`)
+      }
       const promotedRiddle = await this._quizRepository.promoteRiddle(riddle.quizzerId, ++this._priority)
       if (promotedRiddle != null) {
         this._activeQueue.push(promotedRiddle)
