@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js')
+const fs = require('fs')
 const HTTPS = require('https')
 const util = require('../library/util')
 
@@ -296,7 +297,7 @@ class QuizAdapter {
     return quizzers
   }
 
-  getBytes (url) {
+  getBytes (url, filename) {
     return new Promise((resolve, reject) => {
       HTTPS.get(url, response => {
         const chunks = []
@@ -308,7 +309,8 @@ class QuizAdapter {
           if (response.statusCode !== 200) {
             reject(Buffer.concat(chunks).toString())
           } else {
-            resolve(Buffer.concat(chunks))
+            fs.writeFileSync(filename, Buffer.concat(chunks))
+            resolve()
           }
         })
 
