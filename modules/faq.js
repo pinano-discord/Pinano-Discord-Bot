@@ -47,7 +47,7 @@ class FAQ {
           title: MODULE_NAME,
           description: `From ${this._config.get('faqSourceLink') || 'the FAQ'}:`,
           fields: fields,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }

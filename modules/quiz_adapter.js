@@ -132,7 +132,7 @@ class QuizAdapter {
           embeds: [{
             title: 'Queue',
             description: 'The queue is currently empty.',
-            color: this._config.get('embedColor') || 'DEFAULT',
+            color: this._config.get('embedColor') || 0,
             timestamp: new Date()
           }]
         }
@@ -145,7 +145,7 @@ class QuizAdapter {
             title: 'Queue',
             description: activeQueue.reduce(reducer, ''),
             footer: { text: 'Only the first riddle by each user is shown in this list' },
-            color: this._config.get('embedColor') || 'DEFAULT',
+            color: this._config.get('embedColor') || 0,
             timestamp: new Date()
           }]
         }
@@ -352,7 +352,7 @@ class QuizAdapter {
         embeds: [
           new EmbedBuilder()
             .setTitle('Notes')
-            .setColor(this._config.get('embedColor') || 'Default')
+            .setColor(this._config.get('embedColor') || 0)
             .setTimestamp(message.createdTimestamp)
             .setDescription(content)
         ]
@@ -363,7 +363,7 @@ class QuizAdapter {
         embeds: [
           new EmbedBuilder()
             .setTitle('Notes')
-            .setColor(this._config.get('embedColor') || 'Default')
+            .setColor(this._config.get('embedColor') || 0)
             .setTimestamp(message.createdTimestamp)
             .setDescription(`${embed.description}\n${content}`)
         ]

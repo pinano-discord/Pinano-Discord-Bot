@@ -240,7 +240,7 @@ class PracticeAdapter extends EventEmitter {
 
     const embed = new EmbedBuilder()
       .setTitle('Information')
-      .setColor(this._config.get('embedColor') || 'Default')
+      .setColor(this._config.get('embedColor') || 0)
       .setTimestamp(Date.now())
     leaderboards.forEach((leaderboard, index) => {
       embed.addFields({ name: leaderboard.title, value: this._translateLeaderboard(leaderboard.getPageData()), inline: true })
@@ -311,7 +311,7 @@ class PracticeAdapter extends EventEmitter {
         embeds: [{
           title: 'Weekly Leaderboard - Results',
           description: this._translateLeaderboard(leaderboard.getPageData()),
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: Date.now()
         }]
       })

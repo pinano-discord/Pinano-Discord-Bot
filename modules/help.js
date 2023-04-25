@@ -79,7 +79,7 @@ class Help {
       if (this._config.get('enableRestart') && isPrivileged) {
         response.addFields({ name: `\`${prefix}restart [ forced ]\``, value: `Restarts <@${client.user.id}> (if forced, live sessions will not be saved)` })
       }
-      response.setColor(this._config.get('embedColor') || 'Default')
+      response.setColor(this._config.get('embedColor') || 0)
       response.setTimestamp()
       authorMember.user.send({ embeds: [response] }).catch(() => {
         log(`Failed to DM ${authorMember.id} the help file. This message is safe to ignore.`)
@@ -89,7 +89,7 @@ class Help {
         embeds: [{
           title: MODULE_NAME,
           description: 'Sent you a DM with the command list.',
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }

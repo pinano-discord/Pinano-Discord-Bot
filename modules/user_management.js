@@ -42,7 +42,7 @@ class UserManagement {
         embeds: [{
           title: MODULE_NAME,
           description: `Added ${delta} second(s) to <@${targetId}>.`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
@@ -69,7 +69,7 @@ class UserManagement {
         embeds: [{
           title: MODULE_NAME,
           description: `Removed ${delta} second(s) from <@${userId}>.`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
@@ -97,7 +97,7 @@ class UserManagement {
         embeds: [{
           title: MODULE_NAME,
           description: `${tokenized[0]} now has ${pts} point${pts === 1 ? '.' : 's.'}`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
@@ -125,7 +125,7 @@ class UserManagement {
         embeds: [{
           title: MODULE_NAME,
           description: `${tokenized[0]} now has ${pts} point${pts === 1 ? '.' : 's.'}`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
@@ -182,7 +182,7 @@ class UserManagement {
         embeds: [{
           title: MODULE_NAME,
           description: `Recorded ${tokenized[0]} for ${userArr.length} users: ${userArr.join(', ')}.`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }

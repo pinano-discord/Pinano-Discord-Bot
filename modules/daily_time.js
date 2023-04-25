@@ -45,7 +45,7 @@ class DailyTime {
           embeds: [{
             title: MODULE_NAME,
             description: `Turned off daily time tracking for <@${authorMember.id}>`,
-            color: this._config.get('embedColor') || 'DEFAULT',
+            color: this._config.get('embedColor') || 0,
             timestamp: new Date()
           }]
         }
@@ -60,7 +60,7 @@ class DailyTime {
           embeds: [{
             title: MODULE_NAME,
             description: `<@${authorMember.id}>'s daily time will reset at 00:00 UTC${(hour >= 12) ? `+${24 - hour}` : ((0 - hour) || '')}`,
-            color: this._config.get('embedColor') || 'DEFAULT',
+            color: this._config.get('embedColor') || 0,
             timestamp: new Date()
           }]
         }

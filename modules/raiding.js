@@ -59,7 +59,7 @@ class Raiding {
         embeds: [{
           title: MODULE_NAME,
           description: `Raiding <@${target.id}> with ${numUsers} users!`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
