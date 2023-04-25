@@ -24,7 +24,8 @@ class Restart {
   resume () {
     const dispatcher = this._moduleManager.getDispatcher()
     const pracman = this._moduleManager.getModule('Practice Manager')
-    dispatcher.command('restart', this._guild.id, (authorMember, tokenized) => {
+    dispatcher.command('restart', this._guild.id, (message, tokenized) => {
+      authorMember = message.member
       util.requireRole(authorMember, this._managementRole)
       if (tokenized.length > 0 && (tokenized[0] === 'force' || tokenized[0] === 'forced')) {
         // don't do anything - just quit

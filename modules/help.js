@@ -20,7 +20,8 @@ class Help {
   resume () {
     const client = this._moduleManager.getClient()
     const dispatcher = this._moduleManager.getDispatcher()
-    dispatcher.command('help', this._guild.id, (authorMember, tokenized) => {
+    dispatcher.command('help', this._guild.id, (message, tokenized) => {
+      authorMember = message.member
       let isPrivileged = false
       if (this._managementRole != null) {
         isPrivileged = authorMember.roles.cache.has(this._managementRole.id)

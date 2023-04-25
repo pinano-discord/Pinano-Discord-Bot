@@ -32,7 +32,8 @@ class DailyTime {
       userRepository.resetDailyTimes(new Date().getUTCHours())
     })
 
-    dispatcher.command('setdailyreset', guild.id, (authorMember, tokenized) => {
+    dispatcher.command('setdailyreset', guild.id, (message, tokenized) => {
+      authorMember = message.member
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}setdailyreset [ HOUR ]`
       util.requireParameterCount(tokenized, 1, USAGE)
 

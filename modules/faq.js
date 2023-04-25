@@ -9,7 +9,7 @@ class FAQ {
   resume () {
     const guild = this._moduleManager.getGuild()
     const dispatcher = this._moduleManager.getDispatcher()
-    dispatcher.command('faq', guild.id, (authorMember, tokenized) => {
+    dispatcher.command('faq', guild.id, (message, tokenized) => {
       if (tokenized[0] == null) {
         throw new Error(`Usage: \`${this._config.commandPrefix || 'p!'}faq KEYWORD\``)
       }
