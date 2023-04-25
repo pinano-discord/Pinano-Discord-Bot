@@ -14,7 +14,7 @@ class RoleManager {
     if (this._config.get('toggleableRoles') != null) {
       this._config.get('toggleableRoles').forEach(role => {
         dispatcher.command(role.command, guild.id, message => {
-          authorMember = message.member
+          const authorMember = message.member
           if (authorMember.roles.cache.get(role.id) != null) {
             // remove the role
             authorMember.roles.remove(role.id)
@@ -43,7 +43,7 @@ class RoleManager {
     }
 
     dispatcher.command('ranks', guild.id, async (message) => {
-      authorMember = message.member
+      const authorMember = message.member
       if (this._config.get('ranks') == null || this._config.get('ranks').length === 0) {
         throw new Error('No ranks available.')
       }

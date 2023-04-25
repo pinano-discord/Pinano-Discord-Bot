@@ -10,7 +10,7 @@
     "url": "https://github.com/pinano-discord/Pinano-Discord-Bot"
   },
   "dependencies": {
-    "discord.js": "^14.8.0",
+    "discord.js": "^14.9.0",
     "humanize-duration": "^3.23.1",
     "mongodb": "^3.6.1",
     "node-cron": "^2.0.3"

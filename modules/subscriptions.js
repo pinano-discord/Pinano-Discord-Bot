@@ -43,7 +43,7 @@ class Subscriptions {
     })
 
     dispatcher.command('subscribe', guild.id, async (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       const fullyQualifiedName = tokenized.join(' ').trim()
       const member = util.resolveUntaggedMember(guild, fullyQualifiedName)
       if (member.id === authorMember.id) {
@@ -73,7 +73,7 @@ class Subscriptions {
     })
 
     dispatcher.command('unsubscribe', guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       const fullyQualifiedName = tokenized.join(' ').trim()
       const member = util.resolveUntaggedMember(guild, fullyQualifiedName)
 
@@ -90,7 +90,7 @@ class Subscriptions {
     })
 
     dispatcher.command('subscribers', guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}subscribers [ on | off | silent ]`
       util.requireParameterCount(tokenized, 1, USAGE)
       switch (tokenized[0]) {

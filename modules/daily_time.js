@@ -33,7 +33,7 @@ class DailyTime {
     })
 
     dispatcher.command('setdailyreset', guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}setdailyreset [ HOUR ]`
       util.requireParameterCount(tokenized, 1, USAGE)
 

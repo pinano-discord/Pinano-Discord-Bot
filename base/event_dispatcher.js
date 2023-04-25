@@ -43,7 +43,6 @@ class EventDispatcher {
         setTimeout(() => message.delete(), commandDeleteTime * 1000)
         if (this._commandHandlers[guildId] != null) {
           if (this._commandHandlers[guildId][command] != null) {
-            
             // TODO: all callbacks in dispatcher.command events should change to (message, tokenized) input
             const result = await this._commandHandlers[guildId][command](message, tokenized)
             let response

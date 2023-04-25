@@ -22,7 +22,7 @@ class UserManagement {
     const userRepository = this._moduleManager.getPersistence().getUserRepository(this._guild.id)
     const dispatcher = this._moduleManager.getDispatcher()
     dispatcher.command('addtime', this._guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       util.requireRole(authorMember, this._managementRole)
 
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}addtime @user TIME_IN_SECONDS`
@@ -50,7 +50,7 @@ class UserManagement {
     })
 
     dispatcher.command('deltime', this._guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       util.requireRole(authorMember, this._managementRole)
 
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}deltime @user TIME_IN_SECONDS`
@@ -79,7 +79,7 @@ class UserManagement {
 
     // Add a single literature quiz point to a user.
     dispatcher.command('addpoint', this._guild.id, async (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       util.requireRole(authorMember, this._managementRole)
 
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}addpoint @user`
@@ -108,7 +108,7 @@ class UserManagement {
 
     // Remove a single literature quiz point from a user.
     dispatcher.command('delpoint', this._guild.id, async (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       util.requireRole(authorMember, this._managementRole)
 
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}delpoint @user`
@@ -137,7 +137,7 @@ class UserManagement {
 
     // Add a recital ID (role name) to the record of all participants
     dispatcher.command('record', this._guild.id, async (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       util.requireRole(authorMember, this._managementRole)
 
       // p!record @role

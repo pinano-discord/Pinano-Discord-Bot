@@ -28,7 +28,7 @@ class Statistics {
     const badges = this._moduleManager.getModule('Badges')
     const dispatcher = this._moduleManager.getDispatcher()
     dispatcher.command('stats', guild.id, async (message, tokenized, channel) => {
-      authorMember = message.member
+      const authorMember = message.member
       let target = authorMember
       if (tokenized.length > 0) {
         const fullyQualifiedName = tokenized.join(' ').trim()

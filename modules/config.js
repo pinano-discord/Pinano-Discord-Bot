@@ -22,7 +22,7 @@ class ConfigManagement {
   resume () {
     const dispatcher = this._moduleManager.getDispatcher()
     dispatcher.command('config', this._guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       util.requireRole(authorMember, this._managementRole)
 
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}config [ set | unset | add | remove ] KEY [ VALUE ]`

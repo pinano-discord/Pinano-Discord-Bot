@@ -107,7 +107,7 @@ class PolicyEnforcer extends EventEmitter {
     })
 
     dispatcher.command('lock', this._guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       let channel = null
       let target = authorMember
       if (tokenized.length > 0) {
@@ -151,7 +151,7 @@ class PolicyEnforcer extends EventEmitter {
     })
 
     dispatcher.command('unlock', this._guild.id, (message, tokenized) => {
-      authorMember = message.member
+      const authorMember = message.member
       let channel = null
       if (tokenized.length > 0) {
         util.requireRole(authorMember, managementRole)
