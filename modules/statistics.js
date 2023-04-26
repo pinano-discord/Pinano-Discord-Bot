@@ -103,6 +103,10 @@ class Statistics {
       )
       embed.setThumbnail(target.user.displayAvatarURL())
 
+      // Performed recitals
+      const performedRecitals = _collectRecitals(userRecord)
+      embed.addField('Performed Recitals', performedRecitals)
+
       if (badges != null) {
         const badgesCollection = badges.badgesForUser(userRecord, target, livePraccDelta)
         const badgesPerPage = this._config.get('badgesPerPage') || 12
@@ -156,6 +160,71 @@ class Statistics {
       return { embeds: [embed] }
     })
   }
+}
+
+// Text body for Performed Recitals field
+// Given a user record, return a string denoting all performed recitals
+// TODO: solo recitals
+function _collectRecitals (userRecord) {
+  const result = []
+  const recitals = userRecord.recitals
+
+  if (recitals == null) {
+    return 'Sign up for future recitals to fill up this field!'
+  }
+
+  const numbered = _buildRecord(recitals, /^\d+(st|nd|rd|th) Recital$/)
+  numbered.sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]))
+  if (numbered.length > 0) {
+    result.push(`:trophy: ${numbered.join(', ')}`)
+  }
+
+  const holiday = _buildRecord(recitals, /(Christmas|Halloween)/)
+  if (holiday.length > 0) {
+    result.push(`:calendar_spiral: ${holiday.join(', ')}`)
+  }
+
+  const marathoner = _buildRecord(recitals, /Marathoner/)
+  if (marathoner.length > 0) {
+    result.push(`:beethoven: ${marathoner.join(', ')}`)
+  }
+
+  const female = _buildRecord(recitals, /Female Composer/)
+  if (female.length > 0) {
+    result.push(`:female_sign: ${female.join(', ')}`)
+  }
+
+  const composer = _buildRecord(recitals, /Composer Festival/)
+  if (composer.length > 0) {
+    result.push(`:pencil: ${composer.join(', ')}`)
+  }
+
+  const endofyear = _buildRecord(recitals, /End of/)
+  if (endofyear.length > 0) {
+    result.push(`:fireworks: ${endofyear.join(', ')}`)
+  }
+
+  if (result.length > 0) {
+    return result.reduce((acc, curr) => `${acc}\n${curr}`, '')
+  } else {
+    return 'Sign up for future recitals to fill up this field!'
+  }
+}
+
+// Helper function for _collectRecitals. Given an array of recital strings:
+// - filter by a matching pattern
+// - replace all 'Recital' with a space, then trim, and join with commas
+// - name restructuring, e.g. 2020 Christmas -> Christmas 2020
+function _buildRecord (recitalArr, pattern) {
+  const result = recitalArr.filter(r => pattern.test(r))
+    .map(r => {
+      let trimmed = r.replace(/( ?)Recital( ?)/, ' ').trim()
+      if (/^\d{4} /.test(trimmed)) {
+        trimmed = trimmed.slice(5) + ' ' + trimmed.slice(0, 4)
+      }
+      return trimmed
+    })
+  return result
 }
 
 function makeModule (moduleManager) {
