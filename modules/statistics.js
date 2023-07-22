@@ -36,11 +36,6 @@ class Statistics {
       }
 
       const now = new Date()
-      const embed = new Discord.EmbedBuilder()
-        .setTitle(`${target.user.username}#${target.user.discriminator}`)
-        .setColor(this._config.get('embedColor') || 0)
-        .setTimestamp(now)
-
       const userRecord = await userRepository.get(target.id) || {}
       let roomsSeen = userRecord.rooms_practiced || []
       let livePraccDelta = 0
@@ -71,90 +66,93 @@ class Statistics {
           }
         }
       }
-
       roomsSeen = roomsSeen.filter(token => !RoomIdentifiers.invisible.includes(token))
       if (RoomIdentifiers.timeBased.every(token => roomsSeen.includes(token))) {
         roomsSeen = roomsSeen.filter(token => !RoomIdentifiers.timeBased.includes(token))
       }
-
       if (roomsSeen.length === 0) {
         roomsSeen.push(':shrug:')
       }
-
-      if (userRecord != null && userRecord.daily_reset_hour != null) {
-        embed.addFields({ name: 'Daily Time', value: `\`${abbreviateTime((userRecord.daily_session_playtime || 0) + livePraccDelta)}\``, inline: true })
-      }
-
-      embed.addFields(
-        { name: 'Weekly Time', value: `\`${abbreviateTime((userRecord.current_session_playtime || 0) + livePraccDelta)}\``, inline: true },
-        { name: 'Overall Time', value: `\`${abbreviateTime((userRecord.overall_session_playtime || 0) + livePraccDelta)}\``, inline: true },
-        { name: 'Listening Time', value: `\`${abbreviateTime((userRecord.listening_time || 0) + liveListenDelta)}\``, inline: true }
-      )
-
-      if (userRecord != null && userRecord.daily_reset_hour != null) {
-        const dailyStreak = (userRecord.daily_streak || 0) + (userRecord.practiced_today || hasUnsavedLongSession ? 1 : 0)
-        embed.addFields({ name: 'Daily Streak', value: `\`${dailyStreak}\``, inline: true })
-      }
-
-      const joinDate = target.joinedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-      const isAnniversary = target.joinedAt.getMonth() === now.getMonth() && target.joinedAt.getDate() === now.getDate()
-      embed.addFields(
-        { name: this._config.get('statsAnniversaryLabel') || 'Pinanoversary', value: isAnniversary ? `${joinDate} 🎂` : joinDate, inline: true },
-        { name: 'Tokens Earned', value: roomsSeen.join('') }
-      )
-      embed.setThumbnail(target.user.displayAvatarURL())
-
+      const badgesPerPage = this._config.get('badgesPerPage') || 12
+      let badgesCollection
       if (badges != null) {
-        const badgesCollection = badges.badgesForUser(userRecord, target, livePraccDelta)
-        const badgesPerPage = this._config.get('badgesPerPage') || 12
-        if (badgesCollection.length <= badgesPerPage) {
-          embed.addFields({ name: 'Badges', value: badgesCollection.reduce((acc, badge) => `${acc}\n${badge}`, '') })
-        } else {
-          let page = 1
-          const generatePageData = function () {
-            let begin = (page - 1) * badgesPerPage
-            let end = page * badgesPerPage
-            if (end > badgesCollection.length) {
-              end = badgesCollection.length
-              begin = end - badgesPerPage
-            }
-            return badgesCollection.slice(begin, end).reduce((acc, badge) => `${acc}\n${badge}`, '')
-          }
+        badgesCollection = badges.badgesForUser(userRecord, target, livePraccDelta)
+      }
 
-          embed.addFields({ name: 'Badges (use 🔼🔽 to scroll)', value: generatePageData() })
-          const reacts = {
-            '🔓': (_, helpers) => helpers.lock(),
-            '❌': (_, helpers) => helpers.close(),
-            '🔼': interaction => {
+      let page = 1
+      function generatePageData () {
+        let begin = (page - 1) * badgesPerPage
+        let end = page * badgesPerPage
+        if (end > badgesCollection.length) {
+          end = badgesCollection.length
+          begin = end - badgesPerPage
+        }
+        return badgesCollection.slice(begin, end).reduce((acc, badge) => `${acc}\n${badge}`, '')
+      }
+
+      const color = this._config.get('embedColor') || 0
+      const statsAnniversaryLabel = this._config.get('statsAnniversaryLabel') || 'Pinanoversary'
+      function getEmbed (expanded, locked) {
+        const embed = new Discord.EmbedBuilder()
+          .setTitle(`${target.user.username}${target.user.discriminator !== '0' ? `#${target.user.discriminator}` : ''}`)
+          .setColor(color)
+          .setTimestamp(now)
+        if (userRecord != null && userRecord.daily_reset_hour != null) {
+          embed.addFields({ name: 'Daily Time', value: `\`${abbreviateTime((userRecord.daily_session_playtime || 0) + livePraccDelta)}\``, inline: true })
+        }
+        embed.addFields(
+          { name: 'Weekly Time', value: `\`${abbreviateTime((userRecord.current_session_playtime || 0) + livePraccDelta)}\``, inline: true },
+          { name: 'Overall Time', value: `\`${abbreviateTime((userRecord.overall_session_playtime || 0) + livePraccDelta)}\``, inline: true },
+          { name: 'Listening Time', value: `\`${abbreviateTime((userRecord.listening_time || 0) + liveListenDelta)}\``, inline: true }
+        )
+        if (userRecord != null && userRecord.daily_reset_hour != null) {
+          const dailyStreak = (userRecord.daily_streak || 0) + (userRecord.practiced_today || hasUnsavedLongSession ? 1 : 0)
+          embed.addFields({ name: 'Daily Streak', value: `\`${dailyStreak}\``, inline: true })
+        }
+        const joinDate = target.joinedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        const isAnniversary = target.joinedAt.getMonth() === now.getMonth() && target.joinedAt.getDate() === now.getDate()
+        embed.addFields({ name: statsAnniversaryLabel, value: isAnniversary ? `${joinDate} 🎂` : joinDate, inline: true })
+        embed.setThumbnail(target.user.displayAvatarURL())
+        const reacts = {}
+        if (locked) {
+          reacts['🔒'] = null
+        } else {
+          reacts['🔓'] = (_, helpers) => helpers.lock()
+        }
+        reacts['❌'] = (_, helpers) => helpers.close()
+        reacts['↕️'] = (interaction, helpers) => {
+          expanded = !expanded
+          const result = getEmbed(expanded, helpers.isLocked())
+          helpers.update(result.embeds, result.reacts)
+        }
+        if (expanded) {
+          embed.addFields({ name: 'Tokens Earned', value: roomsSeen.join('') })
+          if (badgesCollection.length <= badgesPerPage) {
+            embed.addFields({ name: 'Badges', value: badgesCollection.reduce((acc, badge) => `${acc}\n${badge}`, '') })
+          } else {
+            embed.addFields({ name: 'Badges (use 🔼🔽 to scroll)', value: generatePageData() })
+            reacts['🔼'] = (interaction, helpers) => {
               --page
               if (page < 1) {
                 page = 1
               }
-              embed.spliceFields(embed.fields.length - 1, 1, {
-                name: 'Badges (use 🔼🔽 to scroll)',
-                value: generatePageData()
-              })
-              interaction.update({ embeds: [embed] })
-            },
-            '🔽': interaction => {
+              const result = getEmbed(expanded, helpers.isLocked())
+              helpers.update(result.embeds, result.reacts)
+            }
+            reacts['🔽'] = (interaction, helpers) => {
               ++page
               const totalPages = Math.ceil(badgesCollection.length / badgesPerPage)
               if (page > totalPages) {
                 page = totalPages
               }
-              embed.spliceFields(embed.fields.length - 1, 1, {
-                name: 'Badges (use 🔼🔽 to scroll)',
-                value: generatePageData()
-              })
-              interaction.update({ embeds: [embed] })
+              const result = getEmbed(expanded, helpers.isLocked())
+              helpers.update(result.embeds, result.reacts)
             }
           }
-
-          return { embeds: [embed], reacts: reacts }
         }
+        return { embeds: [embed], reacts: reacts }
       }
-
-      return { embeds: [embed] }
+      return getEmbed(false)
     })
   }
 }

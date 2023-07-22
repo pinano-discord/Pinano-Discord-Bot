@@ -156,6 +156,11 @@ class EventDispatcher {
             reacts = Object.assign({}, { '🔒': reacts['🔓'] }, reacts)
             delete reacts['🔓']
             interaction.update({ components: createComponents() })
+          },
+          isLocked: () => { return timeoutCleared },
+          update: (embeds, r) => {
+            reacts = r
+            interaction.update({ embeds: embeds, components: createComponents() })
           }
         })
       }
