@@ -190,11 +190,11 @@ class PracticeAdapter extends EventEmitter {
         minutes = ('00' + minutes).slice(-2)
 
         const timeStr = `${hours}:${minutes}:${seconds}`
-        return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\n \`${timeStr}\`\n`
+        return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\`${timeStr}\`\n`
       }
     } else {
       reducer = (msgStr, row, index) => {
-        return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\n \`${row.time}\`\n`
+        return msgStr + `**${page.startRank + index}. <@${page.data[index].id}>**\`${row.time}\`\n`
       }
     }
 

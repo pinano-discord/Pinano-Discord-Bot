@@ -49,13 +49,13 @@ class ListeningGraph {
       if (listeners.length > 0) {
         listenersField = listeners
           .map(record => { return { id: record.listenerId, time: record.time } })
-          .reduce((acc, rec, idx) => `${acc}\n**${idx + 1}. <@${rec.id}>**\n \`${abbreviateTime(rec.time)}\``, '')
+          .reduce((acc, rec, idx) => `${acc}\n**${idx + 1}. <@${rec.id}>**\`${abbreviateTime(rec.time)}\``, '')
       }
 
       if (prackers.length > 0) {
         prackersField = prackers
           .map(record => { return { id: record.prackerId, time: record.time } })
-          .reduce((acc, rec, idx) => `${acc}\n**${idx + 1}. <@${rec.id}>**\n \`${abbreviateTime(rec.time)}\``, '')
+          .reduce((acc, rec, idx) => `${acc}\n**${idx + 1}. <@${rec.id}>**\`${abbreviateTime(rec.time)}\``, '')
       }
 
       return {
