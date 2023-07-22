@@ -34,7 +34,8 @@ class ListeningGraph {
     })
 
     const dispatcher = this._moduleManager.getDispatcher()
-    dispatcher.command('top', guild.id, async (authorMember, tokenized) => {
+    dispatcher.command('top', guild.id, async (message, tokenized) => {
+      const authorMember = message.member
       let targetId = authorMember.id
       if (tokenized.length > 0) {
         const fullyQualifiedName = tokenized.join(' ').trim()

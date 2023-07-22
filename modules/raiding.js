@@ -12,7 +12,8 @@ class Raiding {
     const guild = this._moduleManager.getGuild()
     const pracman = this._moduleManager.getModule('Practice Manager')
     const dispatcher = this._moduleManager.getDispatcher()
-    dispatcher.command('raid', guild.id, (authorMember, tokenized) => {
+    dispatcher.command('raid', guild.id, (message, tokenized) => {
+      const authorMember = message.member
       if (authorMember.voice == null || authorMember.voice.channel == null) {
         throw new Error('You are not in a practice room.')
       }

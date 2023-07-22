@@ -42,7 +42,8 @@ class Subscriptions {
       userRepository.setField(userId, 'last_subscriber_notification', currentTime)
     })
 
-    dispatcher.command('subscribe', guild.id, async (authorMember, tokenized) => {
+    dispatcher.command('subscribe', guild.id, async (message, tokenized) => {
+      const authorMember = message.member
       const fullyQualifiedName = tokenized.join(' ').trim()
       const member = util.resolveUntaggedMember(guild, fullyQualifiedName)
       if (member.id === authorMember.id) {
@@ -71,7 +72,8 @@ class Subscriptions {
       }
     })
 
-    dispatcher.command('unsubscribe', guild.id, (authorMember, tokenized) => {
+    dispatcher.command('unsubscribe', guild.id, (message, tokenized) => {
+      const authorMember = message.member
       const fullyQualifiedName = tokenized.join(' ').trim()
       const member = util.resolveUntaggedMember(guild, fullyQualifiedName)
 
@@ -87,7 +89,8 @@ class Subscriptions {
       }
     })
 
-    dispatcher.command('subscribers', guild.id, (authorMember, tokenized) => {
+    dispatcher.command('subscribers', guild.id, (message, tokenized) => {
+      const authorMember = message.member
       const USAGE = `${this._config.get('commandPrefix') || 'p!'}subscribers [ on | off | silent ]`
       util.requireParameterCount(tokenized, 1, USAGE)
       switch (tokenized[0]) {
