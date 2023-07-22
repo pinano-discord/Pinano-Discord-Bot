@@ -22,7 +22,7 @@ class RoleManager {
               embeds: [{
                 title: MODULE_NAME,
                 description: `<@${authorMember.id}> no longer has the role <@&${role.id}>.`,
-                color: this._config.get('embedColor') || 'DEFAULT',
+                color: this._config.get('embedColor') || 0,
                 timestamp: new Date()
               }]
             }
@@ -33,7 +33,7 @@ class RoleManager {
               embeds: [{
                 title: MODULE_NAME,
                 description: `<@${authorMember.id}> now has the role <@&${role.id}>.`,
-                color: this._config.get('embedColor') || 'DEFAULT',
+                color: this._config.get('embedColor') || 0,
                 timestamp: new Date()
               }]
             }
@@ -60,7 +60,7 @@ class RoleManager {
       let description = 'Please select a rank:\n'
       ranks.forEach(rank => { description += `\n**<@&${rank.id}>**` })
       const embed = new EmbedBuilder()
-        .setColor(this._config.get('embedColor') || 'Default')
+        .setColor(this._config.get('embedColor') || 0)
         .setTitle(MODULE_NAME)
         .setDescription(description)
       const menu = new StringSelectMenuBuilder()
@@ -98,7 +98,7 @@ class RoleManager {
           })
           if (selection === 'rankless') {
             const embed = new EmbedBuilder()
-              .setColor(this._config.get('embedColor') || 'Default')
+              .setColor(this._config.get('embedColor') || 0)
               .setTitle(MODULE_NAME)
               .setDescription('Rankless you came into this server, and rankless you shall be once more...')
             interaction.update({
@@ -108,7 +108,7 @@ class RoleManager {
           } else {
             interaction.member.roles.add(selection)
             const embed = new EmbedBuilder()
-              .setColor(this._config.get('embedColor') || 'Default')
+              .setColor(this._config.get('embedColor') || 0)
               .setTitle(MODULE_NAME)
               .setDescription(`<@${interaction.member.id}> is now a member of <@&${selection}>.`)
             interaction.update({

@@ -62,7 +62,7 @@ class ListeningGraph {
         embeds: [{
           title: MODULE_NAME,
           description: `Statistics for <@${targetId}>:`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date(),
           fields: [
             { name: 'Top Listeners', value: listenersField, inline: true },

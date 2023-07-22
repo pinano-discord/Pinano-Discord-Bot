@@ -144,7 +144,7 @@ class PolicyEnforcer extends EventEmitter {
         embeds: [{
           title: MODULE_NAME,
           description: `<@${authorMember.id}>, locked <#${channel.id}>.`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
@@ -181,7 +181,7 @@ class PolicyEnforcer extends EventEmitter {
         embeds: [{
           title: MODULE_NAME,
           description: `<@${authorMember.id}>, unlocked <#${channel.id}>.`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }

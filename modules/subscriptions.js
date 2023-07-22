@@ -66,7 +66,7 @@ class Subscriptions {
         embeds: [{
           title: MODULE_NAME,
           description: `Subscribed to <@${member.id}>.`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
@@ -83,7 +83,7 @@ class Subscriptions {
         embeds: [{
           title: MODULE_NAME,
           description: `Unsubscribed from <@${member.id}>.`,
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }]
       }
@@ -100,7 +100,7 @@ class Subscriptions {
             embeds: [{
               title: MODULE_NAME,
               description: `Subscriptions are enabled for <@${authorMember.id}>.`,
-              color: this._config.get('embedColor') || 'DEFAULT',
+              color: this._config.get('embedColor') || 0,
               timestamp: new Date()
             }]
           }
@@ -110,7 +110,7 @@ class Subscriptions {
             embeds: [{
               title: MODULE_NAME,
               description: `Subscriptions are disabled for <@${authorMember.id}>.`,
-              color: this._config.get('embedColor') || 'DEFAULT',
+              color: this._config.get('embedColor') || 0,
               timestamp: new Date()
             }]
           }
@@ -120,7 +120,7 @@ class Subscriptions {
             embeds: [{
               title: MODULE_NAME,
               description: `<@${authorMember.id}>'s subscribers will not be notified.`,
-              color: this._config.get('embedColor') || 'DEFAULT',
+              color: this._config.get('embedColor') || 0,
               timestamp: new Date()
             }]
           }

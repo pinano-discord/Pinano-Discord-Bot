@@ -64,7 +64,7 @@ class EventDispatcher {
           embeds: [{
             title: 'Error',
             description: err.message,
-            color: config.get('embedColor') || 'DEFAULT',
+            color: config.get('embedColor') || 0,
             timestamp: new Date()
           }]
         }, resultDeleteTime)

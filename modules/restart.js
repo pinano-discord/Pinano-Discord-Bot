@@ -37,7 +37,7 @@ class Restart {
         embeds: [{
           title: MODULE_NAME,
           description: 'Press :electric_plug: to restart',
-          color: this._config.get('embedColor') || 'DEFAULT',
+          color: this._config.get('embedColor') || 0,
           timestamp: new Date()
         }],
         reacts: {
@@ -46,7 +46,7 @@ class Restart {
               embeds: [{
                 title: MODULE_NAME,
                 description: 'I\'ll be right back.',
-                color: this._config.get('embedColor') || 'DEFAULT',
+                color: this._config.get('embedColor') || 0,
                 timestamp: new Date()
               }],
               components: []

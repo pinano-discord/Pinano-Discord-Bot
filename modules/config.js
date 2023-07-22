@@ -44,7 +44,7 @@ class ConfigManagement {
             embeds: [{
               title: MODULE_NAME,
               description: `Set configuration key \`${key}\` to \`${value}\`.`,
-              color: this._config.get('embedColor') || 'DEFAULT',
+              color: this._config.get('embedColor') || 0,
               timestamp: new Date()
             }]
           }
@@ -60,7 +60,7 @@ class ConfigManagement {
             embeds: [{
               title: MODULE_NAME,
               description: `Unset configuration key \`${key}\`.`,
-              color: this._config.get('embedColor') || 'DEFAULT',
+              color: this._config.get('embedColor') || 0,
               timestamp: new Date()
             }]
           }
@@ -77,7 +77,7 @@ class ConfigManagement {
             embeds: [{
               title: MODULE_NAME,
               description: `Added \`${value}\` to configuration key \`${key}\`.`,
-              color: this._config.get('embedColor') || 'DEFAULT',
+              color: this._config.get('embedColor') || 0,
               timestamp: new Date()
             }]
           }
@@ -94,7 +94,7 @@ class ConfigManagement {
             embeds: [{
               title: MODULE_NAME,
               description: `Removed \`${value}\` from configuration key \`${key}\`.`,
-              color: this._config.get('embedColor') || 'DEFAULT',
+              color: this._config.get('embedColor') || 0,
               timestamp: new Date()
             }]
           }
