@@ -8,13 +8,14 @@ function logError (message) {
 
 function resolveUntaggedMember (guild, fullyQualifiedName) {
   const tokenized = fullyQualifiedName.split('#')
-  if (tokenized.length !== 2) {
-    throw new Error('Unable to parse name of form username#discriminator')
+  if (tokenized.length > 2) {
+    throw new Error('Unable to parse name')
   }
 
-  const member = guild.members.cache.find(m => m.user.username === tokenized[0] && m.user.discriminator === tokenized[1])
+  const tag = (tokenized.length === 2) ? tokenized[1] : 0
+  const member = guild.members.cache.find(m => m.user.username === tokenized[0] && (tag === 0 || m.user.discriminator === tag))
   if (member == null) {
-    throw new Error(`Unable to find user ${tokenized[0]}#${tokenized[1]}.`)
+    throw new Error(`Unable to find user ${tokenized[0]}.`)
   }
 
   return member

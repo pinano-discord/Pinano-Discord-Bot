@@ -113,7 +113,7 @@ class PolicyEnforcer extends EventEmitter {
       if (tokenized.length > 0) {
         util.requireRole(authorMember, managementRole)
 
-        const USAGE = `${this._config.get('commandPrefix') || 'p!'}lock <#CHANNEL_ID> USERNAME#DISCRIMINATOR`
+        const USAGE = `${this._config.get('commandPrefix') || 'p!'}lock <#CHANNEL_ID> USERNAME`
         util.requireParameterFormat(tokenized[0], arg => arg.startsWith('<#') && arg.endsWith('>'), USAGE)
 
         const channelId = tokenized.shift().replace(/[<#!>]/g, '')
