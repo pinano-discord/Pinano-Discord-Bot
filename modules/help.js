@@ -35,14 +35,14 @@ class Help {
         response.addFields({ name: `\`${prefix}setdailyreset [ HOUR | off ]\``, value: `Daily time tracking will reset at the specified hour in UTC (current hour is ${(new Date()).getUTCHours()}); \`HOUR\` must be between 0 and 23` })
       }
       if (this._config.get('enablePStats')) {
-        response.addFields({ name: `\`${prefix}stats [ USERNAME#DISCRIMINATOR ]\``, value: 'Display statistics for @user (default: calling user)' })
+        response.addFields({ name: `\`${prefix}stats [ USERNAME ]\``, value: 'Display statistics for @user (default: calling user)' })
       }
       if (this._config.get('enableListeningGraph')) {
-        response.addFields({ name: `\`${prefix}top [ USERNAME#DISCRIMINATOR ]\``, value: 'Display top listeners and top listened to for @user (default: calling user)' })
+        response.addFields({ name: `\`${prefix}top [ USERNAME ]\``, value: 'Display top listeners and top listened to for @user (default: calling user)' })
       }
       if (this._config.get('enablePolicyManager')) {
         if (isPrivileged) {
-          response.addFields({ name: `\`${prefix}lock\` [ <#CHANNEL_ID> USERNAME#DISCRIMINATOR ]`, value: 'Lock the specified room for exclusive use by @user (default: currently occupied room)' },
+          response.addFields({ name: `\`${prefix}lock\` [ <#CHANNEL_ID> USERNAME ]`, value: 'Lock the specified room for exclusive use by @user (default: currently occupied room)' },
             { name: `\`${prefix}unlock [ <#CHANNEL_ID> ]\``, value: 'Unlock the specified room for shared use (default: currently occupied room)' })
         } else {
           response.addFields({ name: `\`${prefix}lock\``, value: 'Lock the currently occupied room for exclusive use' },
@@ -50,12 +50,12 @@ class Help {
         }
       }
       if (this._config.get('enableChannelRaiding')) {
-        response.addFields({ name: `\`${prefix}raid USERNAME#DISCRIMINATOR\``, value: 'Transfer all users from locked room to @user\'s locked room' })
+        response.addFields({ name: `\`${prefix}raid USERNAME\``, value: 'Transfer all users from locked room to @user\'s locked room' })
       }
       if (this._config.get('enableSubscriptions')) {
         response.addFields(
-          { name: `\`${prefix}subscribe USERNAME#DISCRIMINATOR\``, value: 'Get a DM when @user starts practicing' },
-          { name: `\`${prefix}unsubscribe USERNAME#DISCRIMINATOR\``, value: 'Stop getting a DM when @user starts practicing' },
+          { name: `\`${prefix}subscribe USERNAME\``, value: 'Get a DM when @user starts practicing' },
+          { name: `\`${prefix}unsubscribe USERNAME\``, value: 'Stop getting a DM when @user starts practicing' },
           { name: `\`${prefix}subscribers [ on | off | silent ]\``, value: 'Enable/disable subscription to self, or disables notifications' }
         )
       }
