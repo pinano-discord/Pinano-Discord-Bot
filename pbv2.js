@@ -20,7 +20,6 @@ const modules = [
   require('./modules/faq'),
   require('./modules/help'),
   require('./modules/listening_graph'),
-  require('./modules/virus'),
   require('./modules/policy_enforcer'),
   require('./modules/quiz_adapter'),
   require('./modules/quiz_master'),

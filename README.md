@@ -214,21 +214,6 @@ If defined in config, this module awards the following badges:
 * `litQuizSolvedBadgeIcon` - awarded for solving at least ten riddles.
 * `litQuizGivenBadgeIcon` - awarded for giving at least ten riddles that are solved.
 
-## Pinonavirus
-
-Controlled by the configuration setting `enableVirus`. This module requires the Practice Manager
-module to be enabled. When enabled, this module configures a status modification that is observable
-via the `virusBadge` (if configured). The status modification is transferred from a practicing user
-with the status modification to any listening user with probability `virusSpreadProbability`
-(default value: `5`); the interval between successive attempts to transfer the status modification
-is given by `virusRefreshCronSpec`. If no `virusRefreshCronSpec` is specified, then initialization
-of this module will fail.
-
-The effects of the status modification are not visible until a configurable delay has passed. The
-config setting `virusIncubationTimeInDays` (default: `5`) specifies the lower range of this delay
-in days; `virusIncubationTimeRangeInSeconds` (default: `172800`) specifies the length of the range
-in seconds. From this range, the delay in status observability is chosen randomly.
-
 ## Policy Enforcer
 
 Controlled by the configuration setting `enablePolicyEnforcer`. When enabled, the `lock` and
