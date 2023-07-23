@@ -117,13 +117,13 @@ class Statistics {
         if (locked) {
           reacts['🔒'] = null
         } else {
-          reacts['🔓'] = (_, helpers) => helpers.lock()
+          reacts['🔓'] = (helpers) => { return helpers.lock() }
         }
-        reacts['❌'] = (_, helpers) => helpers.close()
-        reacts['↕️'] = (interaction, helpers) => {
+        reacts['❌'] = (helpers) => helpers.close()
+        reacts['↕️'] = (helpers) => {
           expanded = !expanded
           const result = getEmbed(expanded, helpers.isLocked())
-          helpers.update(result.embeds, result.reacts)
+          return helpers.update(result.embeds, result.reacts)
         }
         if (expanded) {
           embed.addFields({ name: 'Tokens Earned', value: roomsSeen.join('') })
@@ -131,22 +131,22 @@ class Statistics {
             embed.addFields({ name: 'Badges', value: badgesCollection.reduce((acc, badge) => `${acc}\n${badge}`, '') })
           } else {
             embed.addFields({ name: 'Badges (use 🔼🔽 to scroll)', value: generatePageData() })
-            reacts['🔼'] = (interaction, helpers) => {
+            reacts['🔼'] = (helpers) => {
               --page
               if (page < 1) {
                 page = 1
               }
               const result = getEmbed(expanded, helpers.isLocked())
-              helpers.update(result.embeds, result.reacts)
+              return helpers.update(result.embeds, result.reacts)
             }
-            reacts['🔽'] = (interaction, helpers) => {
+            reacts['🔽'] = (helpers) => {
               ++page
               const totalPages = Math.ceil(badgesCollection.length / badgesPerPage)
               if (page > totalPages) {
                 page = totalPages
               }
               const result = getEmbed(expanded, helpers.isLocked())
-              helpers.update(result.embeds, result.reacts)
+              return helpers.update(result.embeds, result.reacts)
             }
           }
         }
