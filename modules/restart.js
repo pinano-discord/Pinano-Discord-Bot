@@ -1,6 +1,7 @@
 // TODO: restrict usage of this module to privileged guilds only (i.e. the dev
 // guild). This will need to happen once guilds can bootstrap their own config
 // and enable/disable modules.
+const Discord = require('discord.js')
 const util = require('../library/util')
 
 const MODULE_NAME = 'Restart'
@@ -33,6 +34,7 @@ class Restart {
         process.exit(0)
       }
 
+      const color = this._config.get('embedColor') || 0
       return {
         embeds: [{
           title: MODULE_NAME,
@@ -41,16 +43,15 @@ class Restart {
           timestamp: new Date()
         }],
         reacts: {
-          '🔌': (interaction, helpers) => {
-            interaction.update({
-              embeds: [{
-                title: MODULE_NAME,
-                description: 'I\'ll be right back.',
-                color: this._config.get('embedColor') || 0,
-                timestamp: new Date()
-              }],
-              components: []
-            })
+          '🔌': async (helpers) => {
+            await helpers.update(
+              [
+                new Discord.EmbedBuilder()
+                  .setTitle(MODULE_NAME)
+                  .setDescription('I\'ll be right Bach.')
+                  .setColor(color)
+                  .setTimestamp(new Date())],
+              {})
             util.log(`Restart initiated by <@${authorMember.id}>`)
             if (pracman != null) {
               pracman.saveAllSessions().then(() => {
@@ -60,7 +61,7 @@ class Restart {
               process.exit(0)
             }
           },
-          '❌': (message, helpers) => helpers.close()
+          '❌': (helpers) => helpers.close()
         }
       }
     })

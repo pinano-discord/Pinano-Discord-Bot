@@ -101,17 +101,13 @@ class EventDispatcher {
   }
 
   async reactableMessage (request, response, timeout, reacts) {
-    const originalComponents = response.components
     function createComponents () {
       const row = new ActionRowBuilder()
       Object.keys(reacts).forEach(react => {
         row.addComponents(new ButtonBuilder().setCustomId(react).setStyle(ButtonStyle.Primary).setEmoji(react).setDisabled(react === '🔒'))
       })
-      if (originalComponents == null) {
-        return [row]
-      } else {
-        return originalComponents.concat([row])
-      }
+      if (row.components.length === 0) return []
+      return [row]
     }
     response.components = createComponents()
     response.ephemeral = true
@@ -145,22 +141,22 @@ class EventDispatcher {
       }
 
       if (Object.keys(reacts).includes(interaction.customId)) {
-        reacts[interaction.customId](interaction, {
+        reacts[interaction.customId]({
           close: () => {
             deleted = true
-            message.delete()
+            return message.delete()
           },
           lock: () => {
             clearTimeout(timeoutHandle)
             timeoutCleared = true
             reacts = Object.assign({}, { '🔒': reacts['🔓'] }, reacts)
             delete reacts['🔓']
-            interaction.update({ components: createComponents() })
+            return interaction.update({ components: createComponents() })
           },
           isLocked: () => { return timeoutCleared },
           update: (embeds, r) => {
             reacts = r
-            interaction.update({ embeds: embeds, components: createComponents() })
+            return interaction.update({ embeds: embeds, components: createComponents() })
           }
         })
       }
@@ -171,8 +167,8 @@ class EventDispatcher {
 
   cancellableMessage (request, response, timeout) {
     return this.reactableMessage(request, response, timeout, {
-      '🔓': (message, helpers) => helpers.lock(),
-      '❌': (message, helpers) => helpers.close()
+      '🔓': helpers => { return helpers.lock() },
+      '❌': helpers => { return helpers.close() }
     })
   }
 
