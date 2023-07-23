@@ -214,10 +214,6 @@ class MongoUserRepository {
       { current_session_playtime: { $gt: 0 } },
       { $set: { current_session_playtime: 0 } })
   }
-
-  pandemicStarted () {
-    return this._collection.find({ virus_visible_at: { $exists: true } }).hasNext()
-  }
 }
 
 class MongoQuizRepository {
