@@ -20,7 +20,7 @@ class Help {
   resume () {
     const client = this._moduleManager.getClient()
     const dispatcher = this._moduleManager.getDispatcher()
-    dispatcher.command('help', this._guild.id, (message, tokenized) => {
+    dispatcher.command('help', this._guild.id, message => {
       const authorMember = message.member
       let isPrivileged = false
       if (this._managementRole != null) {
@@ -64,9 +64,6 @@ class Help {
       }
       if (this._config.get('enableFaq')) {
         response.addFields({ name: `\`${prefix}faq KEYWORD\``, value: 'Display the FAQ entry for `KEYWORD`' })
-      }
-      if (this._config.get('enableRoles')) {
-        response.addFields({ name: `\`${prefix}ranks\``, value: 'Change ranks' })
       }
       if (this._config.get('enableUserManagement') && isPrivileged) {
         response.addFields(

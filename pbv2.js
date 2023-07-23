@@ -26,7 +26,6 @@ const modules = [
   require('./modules/quiz_master'),
   require('./modules/raiding'),
   require('./modules/restart'),
-  require('./modules/roles'),
   require('./modules/stage_manager'),
   require('./modules/statistics'),
   require('./modules/subscriptions'),
