@@ -65,9 +65,6 @@ class Help {
       if (this._config.get('enableFaq')) {
         response.addFields({ name: `\`${prefix}faq KEYWORD\``, value: 'Display the FAQ entry for `KEYWORD`' })
       }
-      if (this._config.get('enableRoles')) {
-        response.addFields({ name: `\`${prefix}ranks\``, value: 'Change ranks' })
-      }
       if (this._config.get('enableUserManagement') && isPrivileged) {
         response.addFields(
           { name: `\`${prefix}addtime @user TIME_IN_SECONDS\``, value: 'Add practice time to @user\'s record' },
