@@ -285,13 +285,6 @@ module will fail. *This module should not be enabled on untrusted servers; other
 the management role on that server can restart the bot for all servers without committing active
 practice sessions to the database.*
 
-## Roles
-
-Controlled by the configuration setting `enableRoles`. When enabled, users can use the `ranks`
-command to switch between a list of roles described by the `ranks` config setting. A user may only
-have one rank at a time. A user can also discard their current rank. This module is a replacement
-for the `?rank` command in Dyno, which was deemed to be too spammy for Pinano.
-
 ## Stage Manager
 
 Controlled by the configuration setting `enableStageManager`. Requires `recitalManagerRoleId`,
