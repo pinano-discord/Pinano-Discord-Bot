@@ -41,11 +41,6 @@ class Badges {
     const badges = []
     const nowMs = Date.now()
     const now = Math.floor(nowMs / 1000)
-    if (this._config.get('virusBadge') != null && now >= userRecord.virus_visible_at && (userRecord.rooms_practiced == null || !userRecord.rooms_practiced.includes('💉'))) {
-      badges.push(this._config.get('virusBadge'))
-      return badges
-    }
-
     if (userRecord.rooms_practiced != null) {
       if (includesAll(userRecord.rooms_practiced, RoomIdentifiers.original)) {
         if (this._config.get('collectionBadgeAll') != null && includesAll(userRecord.rooms_practiced, RoomIdentifiers.firstGen)) {

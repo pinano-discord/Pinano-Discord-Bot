@@ -66,7 +66,6 @@ class Statistics {
           }
         }
       }
-      roomsSeen = roomsSeen.filter(token => !RoomIdentifiers.invisible.includes(token))
       if (RoomIdentifiers.timeBased.every(token => roomsSeen.includes(token))) {
         roomsSeen = roomsSeen.filter(token => !RoomIdentifiers.timeBased.includes(token))
       }

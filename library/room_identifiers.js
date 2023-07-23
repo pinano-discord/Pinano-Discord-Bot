@@ -13,7 +13,6 @@ const RoomIdentifiers = {
   halloween: ['🎃', '🦇', '🍬', '🕸'],
   lunarNewYear: ['🐀', '🐂', '🥡', '🐰', '🐉', '🐍', '🐴', '🐐', '🐵', '🐓', '🐶', '🐷'],
   timeBased: ['🕛', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚'],
-  invisible: ['💉']
 }
 Object.freeze(RoomIdentifiers)
 
