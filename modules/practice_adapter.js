@@ -312,7 +312,7 @@ class PracticeAdapter extends EventEmitter {
           title: 'Weekly Leaderboard - Results',
           description: this._translateLeaderboard(leaderboard.getPageData()),
           color: this._config.get('embedColor') || 0,
-          timestamp: Date.now()
+          timestamp: new Date()
         }]
       })
       message.pin()
