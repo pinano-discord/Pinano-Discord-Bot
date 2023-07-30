@@ -69,7 +69,8 @@ class ForumHolds {
     }
 
     const dispatcher = this._moduleManager.getDispatcher()
-    dispatcher.on('threadUpdate', async (oldThread, newThread) => {
+    const guild = this._moduleManager.getGuild()
+    dispatcher.on('threadUpdate', guild.id, async (oldThread, newThread) => {
       // not the forum we're monitoring
       if (newThread.parent.id !== this._config.get('forumHoldsChannelId')) return
       // it's already locked, don't bother processing changes.
