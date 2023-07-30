@@ -18,6 +18,7 @@ const modules = [
   require('./modules/config'),
   require('./modules/daily_time'),
   require('./modules/faq'),
+  require('./modules/forum_holds'),
   require('./modules/help'),
   require('./modules/listening_graph'),
   require('./modules/policy_enforcer'),

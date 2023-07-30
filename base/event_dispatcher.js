@@ -98,6 +98,10 @@ class EventDispatcher {
       const guildId = channel.guild.id
       this.emit(guildId, 'channelPinsUpdate', channel)
     })
+    client.on('threadUpdate', async (oldThread, newThread) => {
+      const guildId = newThread.guild.id
+      this.emit(guildId, 'threadUpdate', oldThread, newThread)
+    })
   }
 
   async reactableMessage (request, response, timeout, reacts) {

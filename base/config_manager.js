@@ -14,6 +14,7 @@ const keys = [
   { name: 'blacklist', type: SettingTypes.ARRAY },
   { name: 'enableAutoquiz', type: SettingTypes.BOOLEAN },
   { name: 'enableExclusiveTokens', type: SettingTypes.BOOLEAN },
+  { name: 'forumHoldTimeoutSeconds', type: SettingTypes.INTEGER },
   { name: 'maxConcurrentRiddles', type: SettingTypes.INTEGER },
   { name: 'nagTimeoutInSeconds', type: SettingTypes.INTEGER },
   { name: 'ranks', type: SettingTypes.ARRAY },
