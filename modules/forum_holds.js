@@ -7,7 +7,7 @@ class ForumHolds {
     this._moduleManager = moduleManager
     this._client = this._moduleManager.getClient()
     this._config = moduleManager.getConfig()
-    if (this._config.get('forumHoldsChannelId') == null) {
+    /*if (this._config.get('forumHoldsChannelId') == null) {
       throw new Error('enableForumHolds is true, but no forum channel was specified.')
     }
 
@@ -24,13 +24,13 @@ class ForumHolds {
     this._reviewTagId = this._config.get('forumHoldsReviewTagId')
     if (this._reviewTagId == null) {
       throw new Error('enableForumHolds is true, but no review tag was specified.')
-    }
+    } */
 
     this._timeoutHandles = {}
   }
 
   async resume () {
-    const threads = await this._channel.threads.fetchActive()
+    /*const threads = await this._channel.threads.fetchActive()
     for (const thread of threads.threads) {
       if (thread[1].appliedTags.includes(this._monitorTagId)) {
         // need to determine whether we already have marked this for deletion.
@@ -66,10 +66,11 @@ class ForumHolds {
           }, deadline * 1000 - Date.now())
         }
       }
-    }
+    }*/
 
-    const dispatcher = this._moduleManager.getDispatcher()
-    dispatcher.on('threadUpdate', async (oldThread, newThread) => {
+    //const dispatcher = this._moduleManager.getDispatcher()
+    //dispatcher.on('threadUpdate', async (oldThread, newThread) => {
+    this._client.on('threadUpdate', guild.id, async (oldThread, newThread) => {
       // not the forum we're monitoring
       if (newThread.parent.id !== this._config.get('forumHoldsChannelId')) return
       // it's already locked, don't bother processing changes.
