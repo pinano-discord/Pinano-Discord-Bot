@@ -162,7 +162,10 @@ class ForumHolds {
     notificationMessage.edit({ components: [] })
     thread.send({
       embeds: [
-        new EmbedBuilder().setTitle('This thread is closed.').setTimestamp(new Date())
+        new EmbedBuilder()
+          .setTitle('This thread is closed.')
+          .setColor(this._config.get('embedColor') || 0)
+          .setTimestamp(Date.now())
       ]
     })
     this._timeoutHandles[thread.id] = null
