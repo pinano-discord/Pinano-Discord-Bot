@@ -30,22 +30,22 @@ class ForumHolds {
   }
 
   async resume () {
-    let threads = await this._channel.threads.fetchActive()
-    for (const [_, thread] of threads.threads) {
-      if (thread.appliedTags.includes(this._monitorTagId)) {
+    const threads = await this._channel.threads.fetchActive()
+    for (const thread of threads.threads) {
+      if (thread[1].appliedTags.includes(this._monitorTagId)) {
         // need to determine whether we already have marked this for deletion.
         // This looks at the most 100 recent messages only. We could keep looking
         // past the latest 100, but it's probably not that important - the worst
         // thing that will happen is the timer will reset.
-        const messages = await thread.messages.fetch({ limit: 100 })
+        const messages = await thread[1].messages.fetch({ limit: 100 })
         let deadline = -1
         let messageToEdit
-        for (const [_, message] of messages.filter(m => m.author === this._client.user)) {
-          if (message.embeds.length > 0 && message.embeds[0].description != null) {
-            const matches = message.embeds[0].description.match("<t:([0-9]+):R>")
+        for (const message of messages.filter(m => m.author === this._client.user)) {
+          if (message[1].embeds.length > 0 && message[1].embeds[0].description != null) {
+            const matches = message[1].embeds[0].description.match('<t:([0-9]+):R>')
             if (matches != null) {
               deadline = matches[1]
-              messageToEdit = message
+              messageToEdit = message[1]
               break
             }
           }
@@ -53,16 +53,16 @@ class ForumHolds {
 
         if (deadline === -1) {
           // no message - send one
-          this._notifyAndHoldThread(thread)
+          this._notifyAndHoldThread(thread[1])
         } else if (deadline < Date.now() / 1000) {
           // deadline already passed, lock it.
-          this._lockThread(thread, messageToEdit)
+          this._lockThread(thread[1], messageToEdit)
         } else {
           // deadline is in the future. Collect interactions on this message
           // and set timer to expire when the deadline passes.
           this._collectInteractions(messageToEdit)
-          this._timeoutHandles[thread.id] = setTimeout(() => {
-            this._lockThread(thread, messageToEdit)
+          this._timeoutHandles[thread[1].id] = setTimeout(() => {
+            this._lockThread(thread[1], messageToEdit)
           }, deadline * 1000 - Date.now())
         }
       }
@@ -82,11 +82,11 @@ class ForumHolds {
         // then cancel the timer.
         const messages = await newThread.messages.fetch({ limit: 100 })
         let messageToDelete
-        for (const [_, message] of messages.filter(m => m.author === this._client.user)) {
-          if (message.embeds.length > 0 && message.embeds[0].description != null) {
-            const matches = message.embeds[0].description.match("<t:([0-9]+):R>")
+        for (const message of messages.filter(m => m.author === this._client.user)) {
+          if (message[1].embeds.length > 0 && message[1].embeds[0].description != null) {
+            const matches = message[1].embeds[0].description.match('<t:([0-9]+):R>')
             if (matches != null) {
-              messageToDelete = message
+              messageToDelete = message[1]
               break
             }
           }
@@ -101,7 +101,7 @@ class ForumHolds {
     })
   }
 
-  async _notifyAndHoldThread(newThread) {
+  async _notifyAndHoldThread (newThread) {
     const timeoutMs = (this._config.get('forumHoldTimeoutSeconds') || 60) * 1000
     const deadline = Date.now() + timeoutMs
     const message = await newThread.send({
