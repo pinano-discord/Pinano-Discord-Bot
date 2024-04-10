@@ -150,8 +150,8 @@ class PracticeManager extends EventEmitter {
           })
         }
 
-        await this._weeklyLeaderboard.refresh(livePraccData)
-        await this._overallLeaderboard.refresh(livePraccData)
+        await this._weeklyLeaderboard.refresh(livePraccData, this._adapter.memberExists.bind(this._adapter))
+        await this._overallLeaderboard.refresh(livePraccData, this._adapter.memberExists.bind(this._adapter))
 
         const liveListenData = new Map()
         for (const channelId in this._tracker) {
@@ -163,7 +163,7 @@ class PracticeManager extends EventEmitter {
           }
         }
 
-        await this._topListeners.refresh(liveListenData)
+        await this._topListeners.refresh(liveListenData, this._adapter.memberExists.bind(this._adapter))
         this._adapter.updateInformation()
       })
     }
@@ -171,7 +171,7 @@ class PracticeManager extends EventEmitter {
     if (this._config.get('resetCronSpec') != null) {
       cron.schedule(this._config.get('resetCronSpec'), async () => {
         await this.saveAllSessions()
-        await this._weeklyLeaderboard.refresh()
+        await this._weeklyLeaderboard.refresh(new Map(), this._adapter.memberExists.bind(this._adapter))
         this._weeklyLeaderboard.resetPage()
         this._adapter.postLeaderboard(this._weeklyLeaderboard)
         this._userRepository.resetSessionTimes()

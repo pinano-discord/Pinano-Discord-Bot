@@ -412,6 +412,11 @@ class PracticeAdapter extends EventEmitter {
       this._announcementsChannel.send(`WARNING: not tracking time for <#${channelId}>.`)
     }
   }
+
+  memberExists (memberId) {
+    if (this._guild == null) return true
+    return this._guild.members.cache.has(memberId) && !this._guild.members.cache.get(memberId).deleted
+  }
 }
 
 function makeModule (moduleManager) {

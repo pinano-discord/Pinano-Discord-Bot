@@ -321,6 +321,11 @@ class QuizAdapter {
     })
   }
 
+  memberExists (memberId) {
+    if (this._guild == null) return true
+    return this._guild.members.cache.has(memberId)
+  }
+
   _getQuizzerFromMessage (message) {
     if (message.mentions.repliedUser === this._client.user) {
       // this is a reply to a bot message, i.e. the riddle message itself. The quizzer is the first

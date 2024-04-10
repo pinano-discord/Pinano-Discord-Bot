@@ -149,7 +149,7 @@ class QuizMaster {
     const newRecord = await this._userRepository.incrementField(guesserId, 'quiz_score')
     this._userRepository.incrementField(quizzerId, 'riddles_solved')
     this._adapter.notifyCorrectAnswer(guesserId, guess, reactorId, newRecord.quiz_score)
-    this._leaderboard.refresh()
+    this._leaderboard.refresh(new Map(), this._adapter.memberExists.bind(this._adapter))
     await this.endRiddle(quizzerId)
   }
 
@@ -310,6 +310,7 @@ class QuizMaster {
 
   async addpoint (id, callback) {
     const newRecord = await this._userRepository.incrementField(id, 'quiz_score')
+    this._leaderboard.refresh(new Map(), this._adapter.memberExists.bind(this._adapter))
     callback(newRecord.quiz_score)
   }
 }
