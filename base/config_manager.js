@@ -7,11 +7,12 @@ const SettingTypes = {
 
 // TODO: make more configuration settings modifiable without restart
 const keys = [
+  { name: 'allowlist', type: SettingTypes.ARRAY },
   { name: 'alwaysAutoquiz', type: SettingTypes.BOOLEAN },
   { name: 'autoquizHintTimeout', type: SettingTypes.INTEGER },
   { name: 'autoquizSkipTimeout', type: SettingTypes.INTEGER },
   { name: 'bitrate', type: SettingTypes.INTEGER },
-  { name: 'blacklist', type: SettingTypes.ARRAY },
+  { name: 'blocklist', type: SettingTypes.ARRAY },
   { name: 'enableAutoquiz', type: SettingTypes.BOOLEAN },
   { name: 'enableExclusiveTokens', type: SettingTypes.BOOLEAN },
   { name: 'forumHoldTimeoutSeconds', type: SettingTypes.INTEGER },
@@ -21,10 +22,9 @@ const keys = [
   { name: 'recitalUpperBoundId', type: SettingTypes.STRING },
   { name: 'recitalLowerBoundId', type: SettingTypes.STRING },
   { name: 'rejectedRiddleAction', type: SettingTypes.STRING, values: ['reject', 'ignore'] },
-  { name: 'riddleAcceptancePolicy', type: SettingTypes.STRING, values: ['blacklist', 'whitelist'] },
+  { name: 'riddleAcceptancePolicy', type: SettingTypes.STRING, values: ['blocklist', 'allowlist'] },
   { name: 'quizSuccessTimeout', type: SettingTypes.INTEGER },
-  { name: 'skipTimeoutInSeconds', type: SettingTypes.INTEGER },
-  { name: 'whitelist', type: SettingTypes.ARRAY }
+  { name: 'skipTimeoutInSeconds', type: SettingTypes.INTEGER }
 ]
 
 class ConfigManager {

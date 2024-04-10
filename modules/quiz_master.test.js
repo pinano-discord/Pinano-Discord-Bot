@@ -62,12 +62,12 @@ const multiRiddleConfig = new Map()
 multiRiddleConfig.set('enableLiteratureQuiz', true)
 multiRiddleConfig.set('maxConcurrentRiddles', 3)
 
-const blacklistConfig = new Map()
-blacklistConfig.set('enableLiteratureQuiz', true)
-blacklistConfig.set('maxConcurrentRiddles', 1)
-blacklistConfig.set('riddleAcceptancePolicy', 'blacklist')
-blacklistConfig.set('blacklist', ['blacklisted_quizzer'])
-blacklistConfig.set('rejectedRiddleAction', 'ignore')
+const blocklistConfig = new Map()
+blocklistConfig.set('enableLiteratureQuiz', true)
+blocklistConfig.set('maxConcurrentRiddles', 1)
+blocklistConfig.set('riddleAcceptancePolicy', 'blocklist')
+blocklistConfig.set('blocklist', ['blocklisted_quizzer'])
+blocklistConfig.set('rejectedRiddleAction', 'ignore')
 
 class MockModuleManager {
   constructor (adapter, users, quiz, config) {
@@ -313,18 +313,18 @@ test('queue resumption test', async () => {
   ])
 })
 
-test('blacklist test', async () => {
+test('blocklist test', async () => {
   const mockAdapter = new MockAdapter()
-  const module = QuizMaster.makeModule(new MockModuleManager(mockAdapter, new MockUserRepository(), new MockQuizRepository(), blacklistConfig))
+  const module = QuizMaster.makeModule(new MockModuleManager(mockAdapter, new MockUserRepository(), new MockQuizRepository(), blocklistConfig))
   await module.resume()
 
   await module.enqueue('riddle1', 'quizzer1', 'url.png')
   mockAdapter.getCalls() // clear the mock
 
-  await module.enqueue('riddle2', 'blacklisted_quizzer', 'url.png')
+  await module.enqueue('riddle2', 'blocklisted_quizzer', 'url.png')
   expect(mockAdapter.getCalls()).toStrictEqual([
     { name: 'downloadContent', riddleId: 'riddle2' },
-    { name: 'addToQueue', authorId: 'blacklisted_quizzer', riddleId: 'riddle2' }
+    { name: 'addToQueue', authorId: 'blocklisted_quizzer', riddleId: 'riddle2' }
   ])
 
   await module.endRiddle('quizzer1', 'quizzer1')
@@ -334,19 +334,19 @@ test('blacklist test', async () => {
   ])
 })
 
-test('whitelist test', async () => {
+test('allowlist test', async () => {
   const mockConfig = new Map()
   mockConfig.set('enableLiteratureQuiz', true)
   mockConfig.set('maxConcurrentRiddles', 1)
-  mockConfig.set('riddleAcceptancePolicy', 'whitelist')
-  mockConfig.set('whitelist', ['whitelisted_quizzer1', 'whitelisted_quizzer2'])
+  mockConfig.set('riddleAcceptancePolicy', 'allowlist')
+  mockConfig.set('allowlist', ['allowlisted_quizzer1', 'allowlisted_quizzer2'])
   mockConfig.set('rejectedRiddleAction', 'ignore')
 
   const mockAdapter = new MockAdapter()
   const module = QuizMaster.makeModule(new MockModuleManager(mockAdapter, new MockUserRepository(), new MockQuizRepository(), mockConfig))
   await module.resume()
 
-  await module.enqueue('riddle1', 'whitelisted_quizzer1', 'url.png')
+  await module.enqueue('riddle1', 'allowlisted_quizzer1', 'url.png')
   mockAdapter.getCalls() // clear the mock
 
   await module.enqueue('riddle2', 'quizzer2', 'url.png')
@@ -355,42 +355,42 @@ test('whitelist test', async () => {
     { name: 'addToQueue', authorId: 'quizzer2', riddleId: 'riddle2' }
   ])
 
-  await module.enqueue('riddle3', 'whitelisted_quizzer2', 'url.png')
+  await module.enqueue('riddle3', 'allowlisted_quizzer2', 'url.png')
   expect(mockAdapter.getCalls()).toStrictEqual([
     { name: 'downloadContent', riddleId: 'riddle3' },
-    { name: 'addToQueue', authorId: 'whitelisted_quizzer2', riddleId: 'riddle3' }
+    { name: 'addToQueue', authorId: 'allowlisted_quizzer2', riddleId: 'riddle3' }
   ])
 
-  await module.endRiddle('whitelisted_quizzer1', 'admin')
+  await module.endRiddle('allowlisted_quizzer1', 'admin')
   expect(mockAdapter.getCalls()).toStrictEqual([
-    { name: 'endRiddle', quizzerId: 'whitelisted_quizzer1' },
-    { name: 'newRiddle', quizzerId: 'whitelisted_quizzer2', content: 'content', filename: 'riddle.png' }
+    { name: 'endRiddle', quizzerId: 'allowlisted_quizzer1' },
+    { name: 'newRiddle', quizzerId: 'allowlisted_quizzer2', content: 'content', filename: 'riddle.png' }
   ])
 })
 
 test('acceptance policy ignored on first riddle', async () => {
   const mockAdapter = new MockAdapter()
-  const module = QuizMaster.makeModule(new MockModuleManager(mockAdapter, new MockUserRepository(), new MockQuizRepository(), blacklistConfig))
+  const module = QuizMaster.makeModule(new MockModuleManager(mockAdapter, new MockUserRepository(), new MockQuizRepository(), blocklistConfig))
   await module.resume()
-  await module.enqueue('riddle1', 'blacklisted_quizzer', 'url.png')
+  await module.enqueue('riddle1', 'blocklisted_quizzer', 'url.png')
   expect(mockAdapter.getCalls()).toStrictEqual([
     { name: 'downloadContent', riddleId: 'riddle1' },
-    { name: 'newRiddle', quizzerId: 'blacklisted_quizzer', content: 'content', filename: 'riddle.png' }
+    { name: 'newRiddle', quizzerId: 'blocklisted_quizzer', content: 'content', filename: 'riddle.png' }
   ])
 })
 
 test('rejection test', async () => {
-  const blacklistConfig = new Map()
-  blacklistConfig.set('enableLiteratureQuiz', true)
-  blacklistConfig.set('maxConcurrentRiddles', 1)
-  blacklistConfig.set('riddleAcceptancePolicy', 'blacklist')
-  blacklistConfig.set('blacklist', ['blacklisted_quizzer'])
-  blacklistConfig.set('rejectedRiddleAction', 'reject')
+  const blocklistConfig = new Map()
+  blocklistConfig.set('enableLiteratureQuiz', true)
+  blocklistConfig.set('maxConcurrentRiddles', 1)
+  blocklistConfig.set('riddleAcceptancePolicy', 'blocklist')
+  blocklistConfig.set('blocklist', ['blocklisted_quizzer'])
+  blocklistConfig.set('rejectedRiddleAction', 'reject')
 
   const mockAdapter = new MockAdapter()
-  const module = QuizMaster.makeModule(new MockModuleManager(mockAdapter, new MockUserRepository(), new MockQuizRepository(), blacklistConfig))
+  const module = QuizMaster.makeModule(new MockModuleManager(mockAdapter, new MockUserRepository(), new MockQuizRepository(), blocklistConfig))
   await module.resume()
-  await module.enqueue('riddle1', 'blacklisted_quizzer', 'url.png')
+  await module.enqueue('riddle1', 'blocklisted_quizzer', 'url.png')
   expect(mockAdapter.getCalls()).toStrictEqual([
     { name: 'riddleRejected' },
     { name: 'downloadContent', riddleId: 'riddle1' } // this tells the adapter we don't need the riddle.
