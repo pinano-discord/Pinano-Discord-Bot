@@ -11,11 +11,13 @@ class Leaderboard {
   }
 
   // refresh the cache based on a pull from repository + provided liveness data
-  async refresh (liveData = new Map()) {
+  async refresh (liveData = new Map(), filter = _ => true) {
     const storedData = await this._repository.loadPositive(this._key)
     const pushed = new Set()
     this._cache = []
     storedData.forEach(row => {
+      if (!filter(row.id)) return
+
       let totalTime = row[this._key]
       const liveTime = liveData.get(row.id)
       if (liveTime != null) {
@@ -27,6 +29,7 @@ class Leaderboard {
     })
 
     liveData.forEach((value, key) => {
+      if (!filter(key)) return
       if (!pushed.has(key)) {
         this._cache.push({ id: key, time: value })
       }

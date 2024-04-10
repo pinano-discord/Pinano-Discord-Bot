@@ -292,6 +292,23 @@ test('weekly reset scenario', async () => {
   expect(page.data[2]).toStrictEqual({ id: '80080', time: 200 })
 })
 
+test('filtered users do not appear in leaderboard', async () => {
+  lb._repository.loadPositive = async (keyName) => {
+    return [
+      { id: '11111', key_column: 3456, not_key_column: 3333 },
+      { id: '22222', key_column: 1000, not_key_column: 6000 },
+      { id: '33333', key_column: 2000, not_key_column: 2500 }
+    ]
+  }
+
+  await lb.refresh(new Map(), key => key !== '11111')
+
+  const page = lb.getPageData()
+  expect(page.data.length).toBe(2)
+  expect(page.data[0]).toStrictEqual({ id: '33333', time: 2000 })
+  expect(page.data[1]).toStrictEqual({ id: '22222', time: 1000 })
+})
+
 test('reset page resets to first page', async () => {
   lb.page_ = 2
   lb.resetPage()
