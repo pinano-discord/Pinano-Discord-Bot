@@ -188,10 +188,11 @@ The behaviour of the Literature Quiz module is modified by the following configu
 * `actionOnTaglessGuess` - if set to `ignore`, then Pinano Bot will not consider guesses that do
 not tag the user whose riddle the guess applies to. It is recommended to use `ignore` only when
 `warnOnTaglessGuess` is set to `true`.
+* `allowlist` - see `riddleAcceptancePolicy`.
 * `automaticallyStartQueue` (default: `false`) - if `true`, then when the Literature Quiz module
 starts, Pinano Bot will attempt to post riddles from the queue until there is no more room for
 another active riddle.
-* `blacklist` - see `riddleAcceptancePolicy`.
+* `blocklist` - see `riddleAcceptancePolicy`.
 * `maxConcurrentRiddles` (default: `1`) - specifies how many riddles can be active at once; if
 greater than `1`, then the module is considered to be in multi-riddle mode. When operating in
 multi-riddle mode, guessers must tag the user whose riddle they are guessing.
@@ -200,14 +201,13 @@ give a hint or skip a riddle after the specified timeout.
 * `rejectedRiddleAction` (default: `ignore`) - if set to `reject`, users who have their riddles
 rejected by policy (see `riddleAcceptancePolicy`) are notified immediately that their submission is
 rejected; otherwise, riddles are accepted, but silently skipped in the queue.
-* `riddleAcceptancePolicy` - if set to `whitelist`, only users in the list specified by `whitelist`
-have their riddles accepted into the queue. If set to `blacklist`, then all users except users in
-the list specified by `blacklist` have their riddles accepted into the queue.
+* `riddleAcceptancePolicy` - if set to `allowlist`, only users in the list specified by `allowlist`
+have their riddles accepted into the queue. If set to `blocklist`, then all users except users in
+the list specified by `blocklist` have their riddles accepted into the queue.
 * `skipTimeoutInSeconds` (default: `0`) - if greater than `0`, then Pinano Bot will automatically
 skip unanswered riddles older than the specified timeout.
 * `warnOnTaglessGuess` (default: `false`) - if `true`, Pinano Bot warns guessers if they make a
 guess without tagging the user whose riddle they are guessing, even outside of multi-riddle mode.
-* `whitelist` - see `riddleAcceptancePolicy`.
 
 If defined in config, this module awards the following badges:
 

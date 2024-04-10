@@ -88,8 +88,8 @@ class QuizMaster {
     const willBeActive = this._activeRiddleCount() < (this._config.get('maxConcurrentRiddles') || 1) &&
       !this._activeQueue.some(r => r.active && r.quizzerId === quizzerId)
     const preventedByPolicy =
-      (this._config.get('riddleAcceptancePolicy') === 'blacklist' && (this._config.get('blacklist') || []).includes(quizzerId)) ||
-      (this._config.get('riddleAcceptancePolicy') === 'whitelist' && !(this._config.get('whitelist') || []).includes(quizzerId))
+      (this._config.get('riddleAcceptancePolicy') === 'blocklist' && (this._config.get('blocklist') || []).includes(quizzerId)) ||
+      (this._config.get('riddleAcceptancePolicy') === 'allowlist' && !(this._config.get('allowlist') || []).includes(quizzerId))
     if (preventedByPolicy && this._config.get('rejectedRiddleAction') === 'reject') {
       this._adapter.notifyRiddleRejected()
       this._adapter.onContentDownloaded(riddleId)
